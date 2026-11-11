@@ -88,3 +88,10 @@
 - Nouveau test deux clients : connexions simultanées et captures obtenues ; premier client arrêté pendant activation, code natif Windows -1073740791. La copie d'exécutable Java pour le second n'a pas suffi. Ne pas déclarer ce parcours validé ; ne pas boucler sur la même hypothèse. Demande de pare-feu traitée par l'utilisateur, aucun réglage de sécurité automatisé.
 - Le test solo utilise une copie isolée du monde dédié. Première préparation manuelle de la copie refusée EOF ; restauration Vanilla de sa sauvegarde précédente réussie. Monde dédié original intact ; incident et périmètre documentés.
 - **EN COURS**, P0/P1 partiellement validées ; P2–P7 absentes. Prochaine tâche : validations transverses de P1 (solo bloc, deux clients, cycle de vie/unload/cross-chunk, sauvegardes RPG et adaptateurs de claims) ; ensuite P2-01. Commandes de reprise : `./scripts/gradle.ps1 build runGameTestServer --console=plain`, `./scripts/smoke-server.ps1`.
+
+## Régression transverse P1 — 2026-11-11, 14:59
+- P1-05 publié sur GitHub par push Git natif : `8e227bf`. L'authentification annoncée par l'utilisateur fonctionne désormais ; plus de blocage de publication.
+- Test solo enregistré/fermé proprement à 14:57:24, les trois dimensions sauvegardées. Essai de préparation de bloc via inventaire créatif interrompu après manipulation de caméra ; **pas de validation du transfert de bloc en solo**. Seule la copie jetable du monde a été utilisée.
+- Mini-plan réalisé : `BlockMoveGameTests.java` et gabarit `empty_cross_chunk.nbt` ; dépôt sur une vraie frontière de chunk, transfert inverse interrompu après sauvegarde des deux chunks et double récupération idempotente. Preuves dans `docs/validation/P1-04.md`.
+- Dernière régression : build réussi, **33 JUnit et 20 GameTests requis réussis**, à 14:59:12. Pas de modification du code de production depuis le binaire P1-05 vérifié en solo.
+- Limites restantes et prochaine tâche inchangées : réseau prolongé, bloc solo, unload naturel et robustesse des récompenses aux crashes avant validation globale de P1. Ne pas présenter les injections contrôlées comme un arrêt brutal du processus.

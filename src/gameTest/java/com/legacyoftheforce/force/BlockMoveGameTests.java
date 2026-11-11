@@ -189,6 +189,42 @@ public final class BlockMoveGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty_cross_chunk", timeoutTicks = 200)
+    public static void crossChunkDepositAndInterruptedStageConserveOneBlock(GameTestHelper helper) throws IOException {
+        var level = helper.getLevel();
+        int originX = helper.absolutePos(BlockPos.ZERO).getX();
+        int localX = 2 + Math.floorMod(15 - originX - 2, 16);
+        var source = helper.absolutePos(new BlockPos(localX, 1, 3));
+        var destination = source.east();
+        helper.assertTrue(!new net.minecraft.world.level.ChunkPos(source).equals(new net.minecraft.world.level.ChunkPos(destination)),
+                "Fixture must actually cross a chunk boundary");
+        level.setBlockAndUpdate(source, Blocks.DIRT.defaultBlockState());
+        level.setBlockAndUpdate(destination, Blocks.AIR.defaultBlockState());
+        var player = actor(helper); player.setPos(source.getCenter().add(0, 1, 2));
+        var progress = new TestProgress();
+        var directory = journal(helper);
+        var transfer = coordinator(helper, directory, progress, new VanillaProtectedWorldService(), new VerifiedChunkSaveBarrier());
+        helper.assertTrue(transfer.grabAt(player, source).accepted(), "Cross-chunk source must be grabbed");
+        helper.assertTrue(transfer.dropAt(player, destination).accepted(), "Cross-chunk deposit must succeed");
+        helper.assertTrue(level.getBlockState(source).isAir() && level.getBlockState(destination).is(Blocks.DIRT),
+                "Exactly one dirt block must remain after deposit");
+        helper.assertTrue(transfer.recoverAll(), "Completed transfer must leave a clean journal");
+
+        ChunkDurabilityBarrier interrupted = (world, positions) -> {
+            new VerifiedChunkSaveBarrier().persist(world, positions);
+            if (positions.size() == 2) throw new IOException("TEST: interruption after saving two different chunks");
+        };
+        var interruptedTransfer = coordinator(helper, directory, progress, new VanillaProtectedWorldService(), interrupted);
+        helper.assertTrue(interruptedTransfer.grabAt(player, destination).accepted(), "Reverse transfer must start");
+        helper.assertFalse(interruptedTransfer.dropAt(player, source).accepted(), "Injected stage interruption must be reported");
+        var reopened = coordinator(helper, directory, progress, new VanillaProtectedWorldService(), new VerifiedChunkSaveBarrier());
+        helper.assertTrue(reopened.recoverAll(), "Cross-chunk staged transfer must recover");
+        helper.assertTrue(reopened.recoverAll(), "Recovery must be idempotent");
+        helper.assertTrue(level.getBlockState(source).isAir() && level.getBlockState(destination).is(Blocks.DIRT),
+                "Interrupted reverse transfer must restore exactly one dirt block");
+        helper.succeed();
+    }
+
     private static final class TestProgress implements PlayerProgressService {
         private int level = 100; private double energy = 100; private boolean channeling;
         @Override public Optional<PlayerProgressSnapshot> get(UUID id) { return Optional.of(new PlayerProgressSnapshot(level, 0, 0, 0, 0, energy, 100, false)); }

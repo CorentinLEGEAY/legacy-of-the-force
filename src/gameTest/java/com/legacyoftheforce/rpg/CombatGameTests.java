@@ -11,6 +11,8 @@ import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import com.legacyoftheforce.core.security.VanillaProtectedWorldService;
+import com.legacyoftheforce.core.api.ModificationKind;
 
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
@@ -86,6 +88,25 @@ public final class CombatGameTests {
         var snapshot = actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot();
         helper.assertTrue(snapshot.totalXpEarned() == 40, "Elite tag must give 40 XP");
         helper.assertTrue(snapshot.alignmentTenths() == 5, "Elite tag must give +0.5 alignment");
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void protectionAdaptersFailClosed(GameTestHelper helper) {
+        var actor = player(helper);
+        var position = helper.absolutePos(new net.minecraft.core.BlockPos(1, 1, 1));
+        var service = new VanillaProtectedWorldService();
+        helper.assertTrue(service.mayModify(actor, helper.getLevel(), position, ModificationKind.GRAB),
+                "Normal loaded in-bounds test position must be allowed");
+        service.registerPolicy((a, l, p, k) -> k != ModificationKind.GRAB);
+        helper.assertFalse(service.mayModify(actor, helper.getLevel(), position, ModificationKind.GRAB),
+                "Claim adapter refusal must deny the operation");
+        var failing = new VanillaProtectedWorldService();
+        failing.registerPolicy((a, l, p, k) -> { throw new IllegalStateException("Adapter unavailable"); });
+        helper.assertFalse(failing.mayModify(actor, helper.getLevel(), position, ModificationKind.PLACE),
+                "Broken protection adapter must deny rather than bypass protection");
+        helper.assertFalse(service.mayModify(actor, helper.getLevel(), position.below(1000), ModificationKind.PLACE),
+                "Out-of-world positions must be refused");
         helper.succeed();
     }
 }

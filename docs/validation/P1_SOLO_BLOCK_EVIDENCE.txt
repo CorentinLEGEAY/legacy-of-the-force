@@ -1,0 +1,18 @@
+[15:27:52] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_FIXTURE_READY
+[15:27:52] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_FIXTURE_READY
+[15:28:23] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_BLOCK_HELD
+[15:28:23] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_BLOCK_HELD
+[15:29:14] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:29:14] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:29:14] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:29:14] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:29:36] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[15:30:42] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:30:42] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:30:42] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:30:42] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:31:33] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:31:33] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:31:33] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_BLOCK_TRANSFER_PASS
+[15:31:33] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [ForceTesterTwo] SOLO_NO_ORPHAN_DISPLAY
+[15:31:47] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved

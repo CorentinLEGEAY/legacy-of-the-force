@@ -17,7 +17,7 @@
 | P0-03 | VALIDÉ (socle de tests) | 3 tests JUnit anti-rejeu/taux/bornes ; script smoke dédié, arrêt propre et redémarrage du même monde | Pas de tests de gameplay tant que systèmes absents |
 | P1-01 | Implémenté, validation partielle | Profil, NBT, HUD et énergie vérifiés sur dédié, mort, dimension, redémarrage | Solo et deux clients stables ouverts |
 | P1-02 / P1-03 | Implémentés, validation partielle | 19 JUnit + 4 GameTests : attribution, XP, alignement, anti-farm, cooldown | Solo, clients stables et crash disque ouverts |
-| P1-04 | Implémenté, validation partielle | Bloc réel, journal durable, 12 GameTests cumulés, essai V et crash HELD réel | Voir rapport P1-04 ; solo et validations transverses ouverts |
+| P1-04 | Implémenté, validation partielle | Bloc réel, journal durable ; solo/dédié, crash HELD, mort/dimension/logout et transfert inter-chunks vérifiés | Réseau prolongé, unload pendant contrôle, claims tiers et profiling ouverts |
 | P1-05 | Implémenté, validation partielle | R/H sur dédié et solo ; 33 JUnit et 19 GameTests cumulés | Deux clients prolongés, claims tiers et cycle de vie réseau à compléter |
 | P2 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée globalement |
 
@@ -111,3 +111,11 @@
 - Arrêt brutal réel du seul serveur PID 8680 : récompense de test +7 persistée au checkpoint révision 1 tandis que le fichier vanilla reste révision 0 (hash identique avant/après crash). Redémarrage + reconnexion : 1000007 XP cumulés et révision 1 ; récupération répétée sans double paiement ; sauvegarde finale correcte. Ce crash utilise la commande debug passant par la même transaction, pas un kill réel prétendu. Détails/extraits dans `docs/validation/P1_RPG_REPRISE.md` et `P1_RPG_CRASH_EVIDENCE.txt`.
 - Limites : étapes intermédiaires couvertes par injections, pas par quatre interruptions de processus ; pas de preuve de panne électrique. Coût des fsync et croissance des reçus à profiler en P7. Le checkpoint ne journalise pas chaque tick d'énergie/Vanilla.
 - **EN COURS**. Prochaine tâche : télékinésie de bloc en solo avec scénario reproductible, puis réseau prolongé et unload naturel/claims. P0/P1 non déclarées globalement validées, P2–P7 toujours non commencées. Reprise : `./scripts/gradle.ps1 build runGameTestServer --console=plain`, `./scripts/smoke-server.ps1` ; rapport ci-dessus pour les données de reprise.
+
+## P1-04 — parcours solo fermé (2026-11-11, 15:31)
+- Correction RPG publiée sur main : `7e7074a`. Arbre propre vérifié avant les essais suivants, aucune mutation de production durant ces essais.
+- Mini-plan réalisé : fixture jetable de positionnement/contrôle, essai V réel, nouvelle visée, V dépôt, sauvegarde/rechargement, V/G restitution, preuves et procédure versionnées dans `docs/validation/fixtures/solo-block`, rapport P1-04 et `P1_SOLO_BLOCK_EVIDENCE.txt`.
+- Sur serveur intégré : ancre HELD réellement détectée, source air + destination terre confirmées, projection absente et journal vide. Après rechargement du même monde, mêmes succès ; puis restitution G vérifiée. Énergie consommée pendant maintien, régénération après dépôt. Trois dimensions sauvegardées et client arrêté proprement.
+- L'essai utilise une nouvelle copie isolée du monde ; activation des commandes correcte cette fois (recherche de tag ordinale), aucun EOF. La fixture modifie uniquement le terrain de cette copie, aucun monde d'origine.
+- Derniers tests de code : **40 JUnit, 21 GameTests requis**, zéro échec ; smoke dédié PASS. Pas de nouvelle compilation nécessaire pour les seuls documents/fixtures copiés depuis le test déjà exécuté, exclus du JAR.
+- Prochaine tâche : contrôle prolongé à deux clients et unload naturel pendant contrôle, puis intégration des protections. Éviter de répéter la même activation de fenêtre ayant causé les crashes natifs ; nouvelle approche justifiée ou validation humaine explicitement tracée. P0/P1 restent partielles ; ne pas annoncer la phase ni V1 terminée. P2–P7 non commencées.

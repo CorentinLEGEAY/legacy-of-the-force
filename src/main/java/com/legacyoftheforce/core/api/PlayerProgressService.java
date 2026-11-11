@@ -7,5 +7,6 @@ import java.util.UUID;
 public interface PlayerProgressService {
     Optional<PlayerProgressSnapshot> get(UUID playerId);
     boolean trySpendForceEnergy(UUID playerId, double amount);
+    void setChanneling(UUID playerId, boolean channeling);
     RewardResult awardBoss(UUID playerId, BossReward reward);
 }

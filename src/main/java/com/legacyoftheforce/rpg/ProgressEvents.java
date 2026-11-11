@@ -32,9 +32,8 @@ public final class ProgressEvents {
         if (!(event.getEntity() instanceof ServerPlayer player) || !player.isAlive() || player.tickCount % 20 != 0) return;
         var progress = player.getData(ProgressAttachments.PLAYER_PROGRESS);
         var before = progress.snapshot();
-        // P1-01 has no channelled powers yet. Later casts must explicitly suppress this regeneration.
         progress.setEnergyCapacity(ServerConfig.MAX_ENERGY.get());
-        progress.regenerateEnergy(ServerConfig.ENERGY_REGEN_PER_SECOND.get());
+        if (!progress.isChanneling()) progress.regenerateEnergy(ServerConfig.ENERGY_REGEN_PER_SECOND.get());
         if (!before.equals(progress.snapshot())) sync(player);
     }
 

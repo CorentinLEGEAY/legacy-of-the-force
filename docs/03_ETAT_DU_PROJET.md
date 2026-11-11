@@ -69,3 +69,11 @@
 - Dernier build : succès avec 24 JUnit, 0 échec. Dernier GameTest serveur : 5 requis réussis. Smoke dédié : PASS.
 - Global : EN COURS ; validations complètes P0 réseau et P1 ouvertes ; aucun sabre, speeder, planète ou boss implémenté.
 - Prochain travail : ancre/coordinateur de transfert P1-04, puis P1-05. Reprise : `./scripts/gradle.ps1 build runGameTestServer --console=plain`, puis procédure P1-04_REPRISE.
+
+## P1-04 — intégration jouable (2026-11-11)
+- Tranche réalisée : ancre versionnée, projection du vrai BlockState, coordinateur journal/chunks, barrières synchronisées et relues, validations/permissions/collisions/énergie, touches et commandes, gestion du cycle de vie.
+- Fichiers principaux : `force/BlockMoveCoordinator`, `BlockMoveRecord`, `ForceModule`, `ForceConfig`, `content/Transaction*`, `WorldTransactionAnchors`, `core/operation/VerifiedChunkSaveBarrier`, `client/ForceKeys`, API partagées et tags/ressources FR/EN. RPG suspend la régénération pendant canalisation.
+- Preuves : build, 25 JUnit, 12 GameTests requis ; smoke dédié PASS. En jeu : V saisit/déplace/dépose, source vide et destination terre vérifiées par serveur. Arrêt brutal vérifié du seul serveur de test pendant HELD puis redémarrage : terre restituée, aucun display orphelin, journal fermé.
+- Rapport détaillé et périmètre exact : `docs/validation/P1-04.md`, extraits `P1-04_EVIDENCE.txt`. Test réel HELD avant les derniers durcissements, tests automatiques après ceux-ci ; aucun résultat inventé pour le binaire final ou d'autres phases de crash.
+- P1-04 implémenté mais validation totale encore ouverte (solo, deux clients stables, vrais claims, unload/cross-chunk). P1 n'est donc pas encore validée globalement. Aucun ticket P2–P7 commencé.
+- Prochaine tranche admissible : P1-05 poussée/attraction de mobs, via contrat de progression/énergie et permissions, sans import des internes RPG. Ensuite régression P1 et fermeture des validations ouvertes avant P2.

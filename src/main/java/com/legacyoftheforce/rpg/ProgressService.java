@@ -10,6 +10,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ProgressService implements PlayerProgressService {
+    @Override public void setChanneling(UUID playerId, boolean channeling) {
+        var player = onlinePlayer(playerId);
+        if (player != null) player.getData(ProgressAttachments.PLAYER_PROGRESS).setChanneling(channeling);
+    }
     private ServerPlayer onlinePlayer(UUID playerId) {
         var server = ServerLifecycleHooks.getCurrentServer();
         if (server == null || !server.isSameThread() || playerId == null) return null;

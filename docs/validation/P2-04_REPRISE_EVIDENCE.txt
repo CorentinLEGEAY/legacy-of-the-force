@@ -1,0 +1,76 @@
+# P2-04 — reprise reelle 2026-11-11
+Fixtures injectees par console ; ne pas confondre leurs dommages avec un clic client.
+Force payee, kill credite, parade resolue, choix specialise :
+[11nov.2026 17:35:22.168] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {schemaVersion: 1, bondProgress: 1L, bondLevel: 1, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 56412L, activities: ["FORCE"], specialization: "none", nextAction: 56413L, targets: ["7974ef1f-9106-4158-b632-71afb95f68e7"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}
+[11nov.2026 17:35:22.169] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 89.8399999325092d
+[11nov.2026 17:35:22.170] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Zombie has the following entity data: [0.8660253902546369d, 0.06593756351656056d, 0.0d]
+[11nov.2026 17:36:03.462] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {rewardEvents: [{id: [I; -1175381539, 134303327, -2002588492, -1317900117]}, {id: [I; -817405699, 1440366805, -1567025982, 1808108588]}, {id: [I; -1679475362, -414629076, -1875003010, -1654594532]}, {id: [I; -1729180210, -241352429, -1697646869, -874236944]}], schemaVersion: 1, level: 100, skillPoints: 99, forceEnergy: 100.0d, rewardRevision: 3L, alignmentTenths: 0, recentKills: [{tick: 57237L, cell: "minecraft:the_nether/minecraft:zombie/0/0"}], xpInLevel: 0L, maxForceEnergy: 100.0d, totalXpEarned: 1000013L, powerCooldowns: {"legacyoftheforce:telekinetic_impulse": 56452L}, bossRewardCooldowns: {}}
+[11nov.2026 17:36:26.707] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: [{count: 1, Slot: 0b, id: "minecraft:leather"}, {count: 1, Slot: 1b, components: {"legacyoftheforce:saber_assembly": {schemaVersion: 1, crystal: {schemaVersion: 1, bondProgress: 2L, bondLevel: 2, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 56412L, activities: ["COMBAT", "FORCE"], specialization: "none", nextAction: 57238L, targets: ["98eecdce-f19d-4113-9acf-f6ebcbe433f0", "7974ef1f-9106-4158-b632-71afb95f68e7"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}, parts: {grip: "legacyoftheforce:grip_basic", circuit: "legacyoftheforce:circuit_basic", pommel: "legacyoftheforce:pommel_basic", control: "legacyoftheforce:control_basic", neck: "legacyoftheforce:neck_basic", emitter: "legacyoftheforce:emitter_basic"}, active: 1b, saberId: [I; 1924477490, -375895569, -1486940107, -1373664280], type: "single"}}, id: "legacyoftheforce:lightsaber"}]
+[11nov.2026 17:36:26.708] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 8
+[11nov.2026 17:36:26.708] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: [-0.30000001192092896d, 99.0d, 2.9767187869006784d]
+[11nov.2026 17:39:28.114] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 20.0f
+[11nov.2026 17:39:28.117] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 18.775f
+[11nov.2026 17:39:28.118] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {schemaVersion: 1, bondProgress: 3L, bondLevel: 2, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 61331L, activities: ["COMBAT", "PARRY", "FORCE"], specialization: "none", nextAction: 61332L, targets: ["482f5dc6-10da-40c1-98e7-99dcd52abe69"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}
+[11nov.2026 17:40:03.113] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {schemaVersion: 1, bondProgress: 4L, bondLevel: 2, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 61331L, activities: ["COMBAT", "PARRY", "FORCE"], specialization: "none", nextAction: 62032L, targets: ["cbc556a7-bf72-4255-a450-289c2f6d503d", "482f5dc6-10da-40c1-98e7-99dcd52abe69"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}
+[11nov.2026 17:40:50.561] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {schemaVersion: 1, crystal: {schemaVersion: 1, bondProgress: 4L, bondLevel: 3, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 61331L, activities: ["COMBAT", "PARRY", "FORCE"], specialization: "defense", nextAction: 62032L, targets: ["cbc556a7-bf72-4255-a450-289c2f6d503d", "482f5dc6-10da-40c1-98e7-99dcd52abe69"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}, parts: {grip: "legacyoftheforce:grip_basic", circuit: "legacyoftheforce:circuit_basic", pommel: "legacyoftheforce:pommel_basic", control: "legacyoftheforce:control_basic", neck: "legacyoftheforce:neck_basic", emitter: "legacyoftheforce:emitter_basic"}, active: 1b, saberId: [I; 1924477490, -375895569, -1486940107, -1373664280], type: "single"}
+[11nov.2026 17:40:50.687] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved
+[11nov.2026 17:41:12.671] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved
+Apres redemarrage :
+[11nov.2026 17:43:53.671] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: {schemaVersion: 1, crystal: {schemaVersion: 1, bondProgress: 4L, bondLevel: 3, purity: 0.75d, bondPractice: {schemaVersion: 1, windowStart: 61331L, activities: ["COMBAT", "PARRY", "FORCE"], specialization: "defense", nextAction: 62032L, targets: ["cbc556a7-bf72-4255-a450-289c2f6d503d", "482f5dc6-10da-40c1-98e7-99dcd52abe69"]}, baseKind: "blue", state: "natural", originPlanet: "legacyoftheforce:ilum", resonance: "defense", crystalId: [I; 1720462232, 98452018, -1330844063, 502723551], stability: 0.85d}, parts: {grip: "legacyoftheforce:grip_basic", circuit: "legacyoftheforce:circuit_basic", pommel: "legacyoftheforce:pommel_basic", control: "legacyoftheforce:control_basic", neck: "legacyoftheforce:neck_basic", emitter: "legacyoftheforce:emitter_basic"}, active: 1b, saberId: [I; 1924477490, -375895569, -1486940107, -1373664280], type: "single"}
+Comparaison ordinale hors prefixe log : identique, 882 caracteres.
+Seuils normaux restaures 30/90/180, cadence 20 ; touches clic gauche/droit.
+Solo : extrait de la sauvegarde apres rituel :
+{
+  "count": 1,
+  "Slot": 7,
+  "components": {
+    "legacyoftheforce:saber_assembly": {
+      "schemaVersion": 1,
+      "crystal": {
+        "schemaVersion": 1,
+        "bondProgress": 0,
+        "bondLevel": 1,
+        "purity": 0.75,
+        "bondPractice": {
+          "schemaVersion": 1,
+          "windowStart": 62198,
+          "activities": [],
+          "specialization": "none",
+          "nextAction": 62198,
+          "targets": []
+        },
+        "baseKind": "blue",
+        "state": "natural",
+        "originPlanet": "legacyoftheforce:ilum",
+        "resonance": "defense",
+        "crystalId": [
+          1624961042,
+          1622165022,
+          -1735958607,
+          709359808
+        ],
+        "stability": 0.85
+      },
+      "parts": {
+        "grip": "legacyoftheforce:grip_basic",
+        "circuit": "legacyoftheforce:circuit_basic",
+        "pommel": "legacyoftheforce:pommel_basic",
+        "control": "legacyoftheforce:control_basic",
+        "neck": "legacyoftheforce:neck_basic",
+        "emitter": "legacyoftheforce:emitter_basic"
+      },
+      "active": 1,
+      "saberId": [
+        -2061844401,
+        -101235303,
+        -1876457086,
+        -1441160787
+      ],
+      "type": "single"
+    }
+  },
+  "id": "legacyoftheforce:lightsaber"
+}
+[11nov.2026 17:46:28.717] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [ForceTesterTwo] BOND_FIXTURE_READY
+[11nov.2026 17:46:28.764] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] [ForceTesterTwo] BOND_FIXTURE_READY
+[11nov.2026 17:47:09.639] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved

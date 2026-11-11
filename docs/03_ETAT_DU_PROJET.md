@@ -1,6 +1,6 @@
 # 03 — Journal d'avancement
 
-**Statut : EN COURS — infrastructure P0 opérationnelle, V1.0 non validée.**
+**Statut : EN COURS — P0 opérationnelle, RPG/Force et sabres initiaux jouables ; V1.0 non validée.**
 
 ## Configuration vérifiée (2026-11-11)
 - Minecraft 1.21.1 ; NeoForge 21.1.265 ; ModDevGradle 2.0.148 ; Gradle 9.2.1.
@@ -15,18 +15,21 @@
 | P0-01 | VALIDÉ (amorçage) | `build` réussi ; JAR 0.1.0-dev ; client observé au menu et mod à l'état loaded ; serveur Done, stop et sauvegarde | Aucun gameplay encore implémenté |
 | P0-02 | Implémenté, validation réseau partielle | Packages, configurations serveur/client séparées, événement métier immuable, protocole 1, intention diagnostic bornée, contrôle OP/anti-rejeu/taux et nettoyage connexion | Paquets malveillants et protocole à deux clients à tester en situation ; contrats métiers ajoutés au fil des tickets |
 | P0-03 | VALIDÉ (socle de tests) | 3 tests JUnit anti-rejeu/taux/bornes ; script smoke dédié, arrêt propre et redémarrage du même monde | Pas de tests de gameplay tant que systèmes absents |
-| P1-01 | Implémenté, validation partielle | Profil, NBT, HUD et énergie vérifiés sur dédié, mort, dimension, redémarrage | Solo et deux clients stables ouverts |
-| P1-02 / P1-03 | Implémentés, validation partielle | 19 JUnit + 4 GameTests : attribution, XP, alignement, anti-farm, cooldown | Solo, clients stables et crash disque ouverts |
-| P1-04 | Implémenté, validation partielle | Bloc réel, journal durable ; solo/dédié, crash HELD, mort/dimension/logout et transfert inter-chunks vérifiés | Réseau prolongé, unload pendant contrôle, claims tiers et profiling ouverts |
+| P1-01 | Implémenté, validation partielle | Profil, NBT, HUD et énergie vérifiés en solo/dédié, mort, dimension, redémarrage | Deux clients stables et régression finale de phase ouverts |
+| P1-02 / P1-03 | Implémentés, validation partielle | Attribution serveur, XP/alignement, anti-farm et journal de reprise après crash ; cas automatisés et vrais kills dédiés | Réseau prolongé, autres étapes de panne et profiling ouverts |
+| P1-04 | Implémenté, validation partielle | Bloc réel, journal durable ; solo/dédié, crash HELD, mort/dimension/logout, inter-chunks et unload naturel vérifiés | Deux interfaces stables, claims tiers et profiling ouverts |
 | P1-05 | Implémenté, validation partielle | R/H sur dédié et solo ; 33 JUnit et 19 GameTests cumulés | Deux clients prolongés, claims tiers et cycle de vie réseau à compléter |
-| P2-01 | Implémenté, validation partielle | Atelier, six familles, deux émetteurs, consommation serveur, UUID et inventaire conservés après reload ; 44 JUnit/25 GameTests cumulés | Réseau graphique, crash/transferts et compléments P2 ouverts ; lame inactive |
-| P2-02 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée globalement |
+| P2-01 | Implémenté, validation partielle | Atelier, six familles, deux émetteurs, consommation serveur ; solo/dédié et UUID conservés après reload | Deux interfaces stables et crash/transferts ouverts |
+| P2-02 | Implémenté, validation partielle | Cristal bleu identifié, échange sûr localement, lame et sons ; solo/dédié, save/reload et mort keepInventory=true | Dépôt/transfert/crash et identité globale à compléter |
+| P2-03 | Implémenté, validation partielle | Vrais dégâts, parade, endurance, XP ; solo/dédié, cache d'attributs et réapparition testés | Deux clients, PvP/claims et validation de phase ouverts |
+| P2-04 | Implémenté, validation partielle | Rituel solo/dédié ; Force/combat/parade, paliers 1–3 et historique conservé sur dédié ; 57 JUnit/38 GameTests cumulés | Palier 4 dépend du vrai P4 ; réseau prolongé et crash pratique ouverts |
+| P3 à P7 | À faire | Prochaine tranche indépendante : P3-01, selon roadmap P2/P3 | Aucune phase gameplay validée globalement |
 
 ## Mini-plans et fichiers
 - P0 : `build.gradle`, `gradle.properties`, wrapper, métadonnées, `LegacyOfTheForce`, `core/{config,network,security,api}`, `client/ClientBootstrap`, `scripts/`, tests et procédures sous `docs/validation`.
 - P1-01 : `rpg/PlayerProgress`, attachment versionné, service serveur, snapshot `core/api`, payload S→C et HUD sous `client`. Tests de sérialisation, refus schéma futur, énergie, mort/reconnexion/dimension. Les systèmes de combat ne seront pas anticipés dans ce ticket.
 
-## Vérifications réellement exécutées
+## Vérifications initiales P0 (historique)
 - `./scripts/gradle.ps1 build --console=plain` : succès, 3 tests, 0 échec.
 - Première erreur réseau : `ByteBufCodecs.LONG` absent en 1.21.1 ; corrigé en `VAR_LONG`, recompilation réussie.
 - `./scripts/gradle.ps1 runServer --console=plain` : mod chargé, serveur prêt ; second lancement puis `stop` : toutes dimensions sauvegardées. Entrée standard JavaExec explicitement reliée à Gradle après constat que stop n'était pas transmis par défaut.
@@ -34,14 +37,14 @@
 - `./scripts/gradle.ps1 runClient --console=plain` : client démarré et fermé par Quit Game ; écran Mods observé avec Legacy of the Force, modid correct, état loaded.
 - Test deux clients, crash de sauvegarde RPG et permissions des futurs pouvoirs : NON EXÉCUTÉS.
 
-## Décisions et limites
+## Décisions et limites initiales P0 (historique)
 - Les exemples de prompts limités à un ticket dans docs/08 ne remplacent pas la mission utilisateur explicite de poursuite autonome.
 - Gradle génère un avertissement de dépréciation pour Gradle 10 ; version 9.2.1 épinglée et fonctionnelle.
 - Les runs de développement NeoForge désactivent l'authentification Minecraft ; smoke limité à loopback. Ce mode n'est pas une configuration de production.
 - Les options budgets Force sont une infrastructure ; aucun pouvoir n'est présenté comme implémenté.
 - Aucun asset de film/jeu ajouté ; aucun mod tiers obligatoire.
 
-## Reprise
+## Reprise initiale P0 (historique)
 1. `./scripts/gradle.ps1 build --console=plain`
 2. `./scripts/smoke-server.ps1`
 3. Fermer les validations transverses P0/P1 détaillées dans les dernières entrées et `docs/validation/P1-05.md`, puis P2-01. Ne pas déclarer une phase entièrement validée avant ses preuves.
@@ -171,3 +174,10 @@
 - Client réel sur dédié : nouveau bouton et coût visibles ; clic → matériaux consommés et niveau 1 dans le vrai composant, même sabre/cristal, lame active conservée. Seuils temporairement 2/4/6 et cooldown 1 dans le profil de test seulement. Tentative R interrompue par arrêt Computer Use via Échap, progrès observé encore 0 : aucune preuve Force/kill réelle revendiquée. Utilisateur « reprend », puis outil encore arrêté par ce signal ; pas de nouvelle entrée GUI dans ce tour.
 - **État vivant à reprendre** : serveur dev exec **85868** confirmé actif, client exec **45745**, PID serveur 25384/client isolé 24648 lors du dernier inventaire. Vérifier avant action, ne pas relancer de doublon. ForceTesterTwo tient le sabre lié actif slot 7 devant la cible immobile (AI active, vitesse de test 0). Options J/K et configuration de seuils de test encore en place pour préserver la reprise après interruption. Restaurer après fermeture depuis `.tools/options-before-bond-test.txt` et `.tools/saber-config-before-bond-test.toml` ; procédure du rapport.
 - Prochaine action : preuve Force payée puis kill réel d'un autre ennemi → diversité et niveau 2 accéléré ; inspection tooltip/bonus, sauvegarde/rechargement, puis solo et fermeture des gates P2. Ne pas passer à P3 sur cette seule compilation. Réseau graphique à deux, claims/PvP et robustesse globale des transferts/crash restent ouverts. V1 **EN COURS**, aucune phase globale déclarée terminée.
+
+## P2-04 — intégrations, bonus et reprise fermés (2026-11-11, 17:48)
+- Tour précédent = progrès, code publié à `5e922aa`, arbre propre avant reprise. Serveur/client existants vérifiés vivants, aucun doublon lancé. Visée initiale modifiée → première commande de poussée sans effet ; après repositionnement dans le même batch, vraie poussée payée, mouvement du zombie et pratique 0→1/FORCE. Kill injecté via damage player_attack attribué au joueur connecté → récompense RPG +5 et catégorie COMBAT, lien 2 avec seuil de test 2. Ce n'est pas un clic client prétendu ; le vrai kill client au sabre était déjà prouvé en P2-03.
+- Fenêtre GUI de nouveau accessible, tooltip réellement lu : lien 2/4, pratique 2 et bonus 5 %. Vraie garde + mob_attack sur autre zombie AI : dégâts Easy 5 réduits à 1,225, santé 20→18,775 et pratique PARRY ajoutée. Poussée d'une nouvelle cible →4 points ; choix Défense via bouton client → niveau 3 volontaire, aucune pièce supplémentaire consommée.
+- Sauvegarde flush, déconnexion/arrêt puis redémarrage avec seuils normaux restaurés 30/90/180 et cooldown 20 : composant complet strictement identique, **882 caractères**, niveau/spécialisation/pratique/quota/UUID et lame active conservés. Aucun downgrade ni second objet constaté. Client et serveur fermés proprement à 17:44:22, touches originales restaurées.
+- Solo : nouvelle fixture `bond_setup` sur ForceP1Validation2, clic Lier réel, améthystes/lapis consommés ; NBT de la sauvegarde contient le niveau 1 et les UUID solo P2-01/P2-02 inchangés. Arrêt propre à 17:47:09 et touche Utiliser restaurée. Aucun client/serveur de test laissé vivant. Code de production inchangé depuis les 57 JUnit/38 GameTests/build/smoke réussis ; pas de rerun gratuit pour documents/fixture.
+- **EN COURS** : palier 4 reste dépendant des vrais sanctuaires/boss P4, deux clients graphiques stables et crash/transferts/claims encore ouverts. La roadmap autorise P2/P3 par étapes indépendantes ; après ces preuves jouables (et pas sur une seule compilation), **P3-01 est admissible** sans cocher P2. Refuser toute progression jusqu'au palier 4 avant P3/P4 créerait une dépendance circulaire de validation ; les gates de release restent intégralement conservées. Prochaine tâche : plans de modules et garage minimal P3-01, puis véhicule réel P3-02 ; pas d'anticipation des six planètes ni d'extensions hors MVP.

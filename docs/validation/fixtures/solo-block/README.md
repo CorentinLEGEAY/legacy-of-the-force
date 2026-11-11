@@ -24,3 +24,7 @@ Après assemblage, `kyber_setup` replace le joueur devant l'atelier et donne deu
 ## Combat P2-03
 
 Tenir un sabre actif. Sur la copie jetable uniquement, `combat_setup` passe en survie, positionne le joueur, place un petit sol de pierre et invoque une vache immobile à 10 PV. Attendre la charge complète puis attaquer normalement : `/data get entity @e[tag=lotf_saber_target,limit=1,sort=nearest] Health` doit afficher 2,5 avec les valeurs par défaut. B ouvre la parade et coûte 12 points. Inspecter `/data get entity @s "neoforge:attachments"."legacyoftheforce:saber_endurance"` avant/après sauvegarde ; tenir compte du temps de régénération. Ne pas rejouer la préparation pour comparer un rechargement, sinon une deuxième cible serait créée. Voir `P2-03.md` pour les réglages temporaires utilisés et les tests non encore clos.
+
+## Rituel P2-04
+
+`bond_setup` replace le joueur devant l'atelier en Nether et donne exactement quatre améthystes et deux lapis, sans toucher au cristal. Tenir un sabre avec cristal dormant, ouvrir l'atelier, cliquer Lier : matériaux consommés, cristal éveillé, UUID inchangés. Ne pas répéter la fixture pour tester la persistance ; les matières supplémentaires ne constituent pas une récompense de gameplay. Sauvegarder/quitter et inspecter le même composant après reprise. Seule une copie jetable doit recevoir cette préparation.

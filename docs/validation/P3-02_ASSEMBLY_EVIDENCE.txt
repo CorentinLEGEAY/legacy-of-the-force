@@ -1,0 +1,22 @@
+P3-02 fabrication — controle client dedie du 11 novembre 2026, code69d32fd
+Tests source : .tools/test-speeder-assembly-final.log
+80 JUnit / 53 GameTests requis reussis, BUILD SUCCESSFUL a19:52:13.
+
+Client reel ForceTesterOne, plateforme additive assembly_setup, plan et 4 pieces preexistants.
+Clic Build -> Vehicle assembled. Inventaire graphique : papier seul.
+Fichier journal : DONE ; fichier joueur : receipt.revision=1 ; InventoryEntries=1.
+Comparaisons structurelles : nativeInventoryEqualsJournalAfter=True ; nativeReceiptEqualsJournalAfter=True ; paperBlueprintUnchanged=True.
+UUID paye : bba25dcf-edfa-4861-8f06-5596db06ad35.
+[19:59:48] Pos=[1002.5,240,1005.5].
+Clic droit normal pour monter, HUD1000 ; touche locale Z.
+[20:00:12] Pos=[1002.5,242.00002011090183,1005.9257480516825], energy=972.4239999999991.
+[20:00:47] Client quitte en selle ; [20:00:48] arret/sauvegardes, BUILD SUCCESSFUL.
+Fichier joueur apres conduite : RootVehicle=False, receiptRevision=1, InventoryEntries=1.
+[20:02:29] Meme monde redemarre, ForceTesterOne connecte.
+[20:02:51] Meme UUID, owner/blueprintId=[605339901,-1477097867,-1387708651,258338205], modules4/HP100, pose=[1002.5,240,1006.5364141425248], energy=904.2639999999965.
+[20:03:24] Selecteur de tous les speeders a20 blocs de la plateforme : une seule reponse, UUID paye.
+[20:04:16] Client ferme, stop, toutes dimensions sauvegardees, BUILD SUCCESSFUL.
+Apres reload : journalUnchanged=True ; inventoryStillPaid=True ; receiptStillSame=True ; RootVehicle=False.
+Sources locales : .tools/speeder-paid-first-dedicated.log, .tools/speeder-paid-reload-dedicated.log, .tools/assembly-{journal,player}-after-{build,reload}.json.
+JAR SHA256 : 37E282FF67BC6E9515DFA49B8304C67782A6EBB3F40BF8C5768123201E3B2DFD.
+Pas une preuve d arret brutal, de solo, de deux clients ou de recharge. Aucun processus client/serveur de test laisse vivant.

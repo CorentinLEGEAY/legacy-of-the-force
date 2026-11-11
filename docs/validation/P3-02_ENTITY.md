@@ -1,6 +1,6 @@
 # P3-02 — entité, réseau et stockage monde
 
-**EN COURS**, 11 novembre 2026, 19:27. L'entité est réellement pilotable avec une fixture de développement ; **la fabrication et le garage d'instance ne sont pas livrés**, P3-02 non validé. Cette fiche actualise les étapes internes antérieures de `P3-02.md` qui annonçaient encore l'entité à implémenter.
+**EN COURS**, fiche initiale du 11 novembre 2026, 19:27, actualisée à 20:05. L'entité a d'abord été vérifiée avec une fixture de développement ; la fabrication payée est maintenant intégrée et vérifiée dans [P3-02_ASSEMBLY.md](P3-02_ASSEMBLY.md). Garage d'instance/recharge et validations complètes restent ouverts, P3-02 non validé.
 
 ## Mini-plan et code
 
@@ -45,6 +45,6 @@ Traces locales non versionnées : `.tools/speeder-entity-first-dedicated.log`, `
 
 ## Limites et prochaine tranche
 
-Le **paiement durable n'existe pas encore**, aucun bouton ne fabrique de véhicule. Relier le devis à un journal avec preuve durable du fichier joueur avant/après, puis publication unique et reprise après crash. Garder l'entité de publication immobilisée jusqu'à fermeture de cette transaction ; ne pas consommer à la seule préparation du devis. L'existence de la barrière d'entités ne suffit pas à prouver une transaction multi-fichiers.
+Mise à jour à 20:05 : la tranche de paiement/publication est implémentée depuis `69d32fd`, avec bouton de fabrication et parcours client dédié ; voir [P3-02_ASSEMBLY.md](P3-02_ASSEMBLY.md) pour le journal et les preuves actuelles. Les indications ci-dessus antérieures à cette intégration décrivent bien la fixture de développement utilisée pour les premiers tests de l'entité, sans la confondre avec une fabrication payée. La vraie panne de processus reste à valider séparément des interruptions injectées.
 
 Ensuite : intégration garage d'instance/recharge, parcours complet craftable en solo et dédié, changement de dimension/mort/déconnexion en mouvement/chunks et pannes injectées. Deux interfaces stables et vrai adaptateur de claims tiers restent ouverts. Les tests du service de protection n'attestent pas l'intégration à un plugin de claims absent. Aucune garantie de crash en mouvement ou de migration globale n'est revendiquée par les sauvegardes normales ci-dessus. Dommages/réparation, couleurs effectives et Force restent P3-03/P3-04. Aucune phase globale ni V1.0 validée.

@@ -13,5 +13,11 @@
     "south",
     "east",
     "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 27
+    }
   ]
 }

@@ -31,6 +31,17 @@ public final class SpeederEntity extends Entity {
     private long nextDamage;
     private int lerpSteps;
     private double lerpX, lerpY, lerpZ, lerpYaw, lerpPitch;
+    private long retirementEpoch = -1;
+    private SpeederRetirement.Status retirementStatus = SpeederRetirement.Status.ABSENT;
+    private boolean retired() {
+        if (!(level() instanceof ServerLevel level)) return false;
+        long epoch = SpeederRetirement.epoch(level.getServer());
+        if (retirementEpoch != epoch) {
+            retirementStatus = state.snapshot().map(s -> SpeederRetirement.status(level.getServer(), getUUID(), s.owner())).orElse(SpeederRetirement.Status.UNSUPPORTED);
+            retirementEpoch = epoch;
+        }
+        return retirementStatus != SpeederRetirement.Status.ABSENT;
+    }
 
     public SpeederEntity(EntityType<? extends SpeederEntity> type, Level level) { this(type, level, new VanillaProtectedWorldService()); }
     SpeederEntity(EntityType<? extends SpeederEntity> type, Level level, ProtectedWorldService protection) {
@@ -72,12 +83,13 @@ public final class SpeederEntity extends Entity {
     @Override protected void addAdditionalSaveData(CompoundTag tag) { tag.put("vehicleState", state.tag()); }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         state = new VehicleState(tag.getCompound("vehicleState")); intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE;
+        retirementEpoch = -1;
         // Vanilla pose wins when loading the entity; its own UUID must agree before gameplay is allowed.
         project(); refreshDimensions();
     }
     private Optional<VehicleState.Snapshot> supported() {
         var snapshot = state.snapshot();
-        if (state.tag().contains("assemblyId") || state.tag().contains("rechargeId") || snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
+        if (retired() || state.tag().contains("assemblyId") || state.tag().contains("rechargeId") || snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
                 || !snapshot.get().pose().dimension().equals(level().dimension().location())) return Optional.empty();
         return snapshot;
     }
@@ -156,6 +168,7 @@ public final class SpeederEntity extends Entity {
             if (lerpSteps > 0) { lerpPositionAndRotationStep(lerpSteps, lerpX, lerpY, lerpZ, lerpYaw, lerpPitch); lerpSteps--; }
             return;
         }
+        if (retired() && retirementStatus == SpeederRetirement.Status.RETIRED) { ejectPassengers(); discard(); return; }
         var snapshot = supported(); if (snapshot.isEmpty()) { ejectPassengers(); return; }
         var layout = snapshot.get().blueprint(); var validated = BlueprintValidator.inspect(layout, SpeederCatalog.definitions(), SpeederConfig.limits());
         if (!validated.valid() || snapshot.get().motion().energy() > validated.stats().capacity()) { ejectPassengers(); return; }

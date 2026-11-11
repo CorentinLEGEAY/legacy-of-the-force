@@ -17,6 +17,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     private Button rechargeButton;
     private Button repairButton;
     private Button dyeButton, zoneButton, paintButton;
+    private Button recycleButton;
     public SpeederGarageScreen(SpeederGarageMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title); imageWidth = 320; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
     }
@@ -60,6 +61,8 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
                 .bounds(leftPos + 260, topPos + 20, 52, 16).build());
         zoneButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(63)).bounds(leftPos + 260, topPos + 60, 52, 16).build());
         paintButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(menu.diagnostic() ? 65 : 64)).bounds(leftPos + 260, topPos + 82, 52, 16).build());
+        recycleButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(66)).bounds(leftPos + 260, topPos + 202, 52, 16)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.recycle_help"))).build());
         updateMode();
     }
     private void updateMode() {
@@ -67,6 +70,8 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         modeButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "design" : "diagnostic")));
         rechargeButton.visible = menu.diagnostic(); rechargeButton.active = menu.diagnostic() && menu.diagnosticStatus() == GarageDiagnostics.Status.READY;
         repairButton.visible = menu.diagnostic(); repairButton.active = rechargeButton.active;
+        recycleButton.visible = menu.diagnostic(); recycleButton.active = rechargeButton.active;
+        recycleButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.recycleArmed() ? "recycle_confirm" : "recycle")));
         dyeButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(new ItemStack(net.minecraft.world.item.DyeItem.byColor(menu.paintDye())).getHoverName()));
         zoneButton.setMessage(Component.translatable("speeder.legacyoftheforce.paint_zone", menu.primaryZone() ? 1 : 2));
         zoneButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.paint_" + (menu.primaryZone() ? "primary" : "secondary"))));

@@ -68,6 +68,10 @@ Formule d'essai de coût pour **passer du niveau L au niveau L+1** :
 - `garage.dyePerPaint=1` (borné1–64) : teinture de la couleur choisie, par zone d'une instance entière. Paiement réparti sur les piles de l'inventaire natif si nécessaire ; couleur déjà identique = aucun coût. Palette du brouillon gratuite, fabrication initiale facturée en modules uniquement. Les deux zones suivent les16 teintures vanilla ; RGB24bits sauvegardé, sans effet sur les performances. C'est un choix d'équilibrage initial non verrouillé.
 - Ces valeurs initiales ne sont pas des décisions verrouillées du concepteur. Vitesse, impact, coûts et lisibilité des dégâts restent à équilibrer en partie réelle. Recyclage, dégâts de feu/lave et PvP véhicule non définis dans cette tranche.
 
+### Recyclage du prototype
+
+Seulement un véhicule dont tous les châssis légers sont à0HP, au garage et sous les mêmes droits/délai que l'entretien. Deux clics à moins de100ticks, cible UUID inchangée ; aucune démolition de véhicule intact. Rendement par matière et par module : `floor(quantité JSON × HP /100)`. Valeurs initiales du champ `salvage` dans `speeder_modules/*.json`, modifiables par données : châssis27 pépites de fer ; moteur9 pépites de fer +1 lingot cuivre ; batterie9 pépites de fer +1 cuivre ; siège4 pépites de fer +2 cuirs. Une pièce détruite rend0. Pas de module rechargé, cellule, teinture ou redstone rendus par ces règles initiales. Une épave0/75/100/100 rend19 pépites,1 cuivre,2 cuirs ; plan papier conservé. Règle absente, stockage inconnu ou inventaire plein : refus intégral.
+
 ## Planètes — proposition
 - Un type principal de cristal rare par planète ; rareté associée à la structure plutôt qu'à un taux de minerai omniprésent.
 - 1 boss Jedi et 1 boss Sith par planète ; arènes persistantes, réinvocation encadrée.

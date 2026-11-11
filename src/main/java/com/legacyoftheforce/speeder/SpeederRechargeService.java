@@ -22,8 +22,8 @@ import static com.legacyoftheforce.speeder.RechargeTransaction.Phase;
 
 /** Paid garage maintenance. Historical recharge journal/attachment IDs stay stable; schema 2 adds repair. */
 public final class SpeederRechargeService {
-    public enum Result { NONE, CHARGED, FULL, MISSING, PERMISSION, OCCUPIED, MOVING, BUSY, UNAVAILABLE, CLEAR_CURSOR, PENDING, REPAIRED, UNDAMAGED, KIT_MISSING, NEEDS_REPAIR, PAINTED, UNCHANGED, DYE_MISSING }
-    private enum Operation { RECHARGE, REPAIR, PAINT }
+    public enum Result { NONE, CHARGED, FULL, MISSING, PERMISSION, OCCUPIED, MOVING, BUSY, UNAVAILABLE, CLEAR_CURSOR, PENDING, REPAIRED, UNDAMAGED, KIT_MISSING, NEEDS_REPAIR, PAINTED, UNCHANGED, DYE_MISSING, RECYCLED, NOT_WRECKED, INVENTORY_FULL, UNSUPPORTED_STORAGE, CONFIRM_RECYCLE }
+    private enum Operation { RECHARGE, REPAIR, PAINT, RECYCLE }
     enum Checkpoint { PREPARED, FROZEN, PAYMENT_MEMORY, PAYMENT_DURABLE, PAID, ENERGY_MEMORY, ENERGY_DURABLE, APPLIED, ACTIVATED, DONE }
     interface Probe { void reached(Checkpoint checkpoint); }
     private final MinecraftServer server;
@@ -43,12 +43,15 @@ public final class SpeederRechargeService {
     public Result repair(ServerPlayer actor, BlockPos garage, UUID selected) {
         return maintain(actor, garage, selected, Operation.REPAIR, true, null);
     }
+    public Result recycle(ServerPlayer actor, BlockPos garage, UUID selected) {
+        return maintain(actor, garage, selected, Operation.RECYCLE, true, null);
+    }
     public Result paint(ServerPlayer actor, BlockPos garage, UUID selected, boolean primary, DyeColor dye) {
         if (dye == null) return Result.PERMISSION;
         return maintain(actor, garage, selected, Operation.PAINT, primary, dye);
     }
     private Result maintain(ServerPlayer actor, BlockPos garage, UUID selected, Operation operationKind, boolean primary, DyeColor dye) {
-        boolean repair = operationKind == Operation.REPAIR, paint = operationKind == Operation.PAINT;
+        boolean repair = operationKind == Operation.REPAIR, paint = operationKind == Operation.PAINT, recycle = operationKind == Operation.RECYCLE;
         if (actor.server != server || !server.isSameThread() || selected == null || actor.isPassenger()) return Result.PERMISSION;
         if (!actor.containerMenu.getCarried().isEmpty()) return Result.CLEAR_CURSOR;
         var report = GarageDiagnostics.inspect(actor, garage, selected, protection);
@@ -60,12 +63,16 @@ public final class SpeederRechargeService {
             var entity = actor.serverLevel().getEntity(selected);
             if (!(entity instanceof SpeederEntity vehicle) || !protection.mayModify(actor, actor.serverLevel(), vehicle.blockPosition(), ModificationKind.PLACE)) return Result.PERMISSION;
             var state = vehicle.savedState().snapshot().orElseThrow();
+            if (SpeederRetirement.status(server, selected, state.owner()) != SpeederRetirement.Status.ABSENT) return Result.UNAVAILABLE;
             if (!vehicle.getPassengers().isEmpty()) return Result.OCCUPIED;
             if (Math.abs(state.motion().speed()) > .001 || Math.abs(state.motion().verticalSpeed()) > .001 || vehicle.getDeltaMovement().lengthSqr() > .000001) return Result.MOVING;
             var health = new ArrayList<>(state.health());
             var blueprint = state.blueprint();
             double target = state.motion().energy();
-            if (paint) {
+            if (recycle) {
+                if (!SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow().wrecked()) return Result.NOT_WRECKED;
+                if (!SpeederRetirement.supportedStorage(vehicle)) return Result.UNSUPPORTED_STORAGE;
+            } else if (paint) {
                 var plan = blueprint.plan().orElseThrow(); int color = dye.getTextureDiffuseColor() & 0xffffff;
                 if ((primary ? plan.primary() : plan.secondary()) == color) return Result.UNCHANGED;
                 blueprint = blueprint.withColors(primary ? color : plan.primary(), primary ? plan.secondary() : color);
@@ -82,22 +89,30 @@ public final class SpeederRechargeService {
             var before = payment(actor); AssemblyTransaction.validateImage(before);
             var preview = new Inventory(actor); preview.load(before.getList("Inventory", Tag.TAG_COMPOUND));
             if (!preview.save(new ListTag()).equals(before.get("Inventory"))) return Result.UNAVAILABLE;
-            var material = paint ? DyeItem.byColor(dye) : repair ? SpeederContent.REPAIR_KIT.get() : SpeederContent.ENERGY_CELL.get();
-            int needed = paint ? SpeederConfig.PAINT_DYE_COST.get() : 1;
-            if (preview.countItem(material) < needed) return paint ? Result.DYE_MISSING : repair ? Result.KIT_MISSING : Result.MISSING;
-            for (int slot = 0; slot < preview.getContainerSize() && needed > 0; slot++) if (preview.getItem(slot).is(material)) {
-                int take = Math.min(needed, preview.getItem(slot).getCount()); preview.getItem(slot).shrink(take); needed -= take;
+            if (recycle) {
+                final List<SpeederSalvage.Material> materials;
+                try { materials = SpeederSalvage.quote(state, SpeederCatalog.salvage()); }
+                catch (IllegalArgumentException unsupported) { return Result.UNSUPPORTED_STORAGE; }
+                if (!SpeederSalvage.insert(preview, materials)) return Result.INVENTORY_FULL;
+            } else {
+                var material = paint ? DyeItem.byColor(dye) : repair ? SpeederContent.REPAIR_KIT.get() : SpeederContent.ENERGY_CELL.get();
+                int needed = paint ? SpeederConfig.PAINT_DYE_COST.get() : 1;
+                if (preview.countItem(material) < needed) return paint ? Result.DYE_MISSING : repair ? Result.KIT_MISSING : Result.MISSING;
+                for (int slot = 0; slot < preview.getContainerSize() && needed > 0; slot++) if (preview.getItem(slot).is(material)) {
+                    int take = Math.min(needed, preview.getItem(slot).getCount()); preview.getItem(slot).shrink(take); needed -= take;
+                }
             }
             UUID operation = UUID.randomUUID(); var receipt = actor.getData(SpeederContent.RECHARGE_RECEIPT.get());
             var after = new CompoundTag(); after.put("Inventory", preview.save(new ListTag())); after.put("receipt", receipt.next(operation).tag());
-            var record = paint ? RechargeTransaction.preparePaint(actor.getUUID(), operation, before, after, vehicle.savedState(), blueprint)
+            var record = recycle ? RechargeTransaction.prepareRecycle(actor.getUUID(), operation, before, after, vehicle.savedState())
+                    : paint ? RechargeTransaction.preparePaint(actor.getUUID(), operation, before, after, vehicle.savedState(), blueprint)
                     : repair ? RechargeTransaction.prepareRepair(actor.getUUID(), operation, before, after, vehicle.savedState(), health)
                     : RechargeTransaction.prepare(actor.getUUID(), operation, before, after, vehicle.savedState(), target);
             persistPlayer(actor, before); begin(record); probe.reached(Checkpoint.PREPARED);
             nextRecharge.put(actor.getUUID(), server.overworld().getGameTime() + SpeederConfig.RECHARGE_INTERVAL.get());
             changeVehicle(actor, record, Checkpoint.FROZEN); probe.reached(Checkpoint.FROZEN);
             applyPayment(actor, after); probe.reached(Checkpoint.PAYMENT_DURABLE);
-            record = advance(record, Phase.PAID); probe.reached(Checkpoint.PAID); finish(actor, record); return paint ? Result.PAINTED : repair ? Result.REPAIRED : Result.CHARGED;
+            record = advance(record, Phase.PAID); probe.reached(Checkpoint.PAID); finish(actor, record); return recycle ? Result.RECYCLED : paint ? Result.PAINTED : repair ? Result.REPAIRED : Result.CHARGED;
         } catch (IOException | RuntimeException failure) {
             LegacyOfTheForce.LOGGER.error("Speeder recharge retained: {}", failure.getMessage());
             try { recover(actor); }
@@ -146,6 +161,9 @@ public final class SpeederRechargeService {
             level.entityManager.saveAll(); level.entityManager.tick(); entity = level.getEntity(expected.id());
         }
         if (entity == null && action == Checkpoint.PREPARED && !level.entityManager.isLoaded(expected.id())) return;
+        if (value.recycle() && (action == Checkpoint.ENERGY_DURABLE || action == Checkpoint.ACTIVATED)) {
+            retire(level, record, entity, action); return;
+        }
         if (!(entity instanceof SpeederEntity vehicle)) throw new IOException("Existing recharge vehicle unavailable; never respawned");
         var raw = vehicle.savedState().tag(); var state = vehicle.savedState().snapshot().orElseThrow();
         var validation = BlueprintValidator.inspect(state.blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits());
@@ -172,6 +190,24 @@ public final class SpeederRechargeService {
         vehicle.applyRechargeState(new VehicleState(raw));
         if (action == Checkpoint.ENERGY_DURABLE) probe.reached(Checkpoint.ENERGY_MEMORY);
         entities.persist(vehicle);
+    }
+    private void retire(ServerLevel level, RechargeTransaction record, net.minecraft.world.entity.Entity entity, Checkpoint action) throws IOException {
+        var value = record.view(); var expected = value.vehicle().snapshot().orElseThrow();
+        boolean archived = SpeederRetirement.matches(server, record);
+        if (entity != null) {
+            if (!(entity instanceof SpeederEntity vehicle) || !vehicle.getPassengers().isEmpty()) throw new IOException("Conflicting retired entity");
+            var raw = vehicle.savedState().tag();
+            if (!raw.hasUUID("rechargeId") || !raw.getUUID("rechargeId").equals(value.operation())) throw new IOException("Retirement lock mismatch");
+            raw.remove("rechargeId");
+            if (!raw.equals(value.vehicle().tag()) || !entity.chunkPosition().equals(new ChunkPos(BlockPos.containing(expected.pose().x(), expected.pose().y(), expected.pose().z())))) throw new IOException("Retirement state changed");
+            if (!archived) {
+                if (action == Checkpoint.ACTIVATED) throw new IOException("Applied retirement archive missing");
+                SpeederRetirement.archive(server, record, vehicle);
+            }
+            vehicle.discard();
+            if (action == Checkpoint.ENERGY_DURABLE) probe.reached(Checkpoint.ENERGY_MEMORY);
+        } else if (!archived) throw new IOException("Retirement archive missing; never respawn or credit again");
+        entities.persistAbsence(level, new ChunkPos(BlockPos.containing(expected.pose().x(), expected.pose().y(), expected.pose().z())), expected.id());
     }
     private CompoundTag payment(ServerPlayer actor) {
         var image = new CompoundTag(); image.put("Inventory", actor.getInventory().save(new ListTag())); image.put("receipt", actor.getData(SpeederContent.RECHARGE_RECEIPT.get()).tag()); return image;

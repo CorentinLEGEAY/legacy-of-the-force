@@ -213,5 +213,13 @@
   "speeder.legacyoftheforce.build_busy": "Garage busy: please wait",
   "speeder.legacyoftheforce.build_unavailable": "Assembly unavailable",
   "speeder.legacyoftheforce.build_pending": "Assembly recovery pending",
-  "message.legacyoftheforce.assembly_pending": "Speeder assembly is waiting for storage recovery. Reconnect when storage is available; no second payment will be attempted."
+  "message.legacyoftheforce.assembly_pending": "Speeder assembly is waiting for storage recovery. Reconnect when storage is available; no second payment will be attempted.",
+  "speeder.legacyoftheforce.recycle": "Recycle",
+  "speeder.legacyoftheforce.recycle_confirm": "Confirm",
+  "speeder.legacyoftheforce.recycle_help": "Wrecks only. Confirm within 5 seconds. Surviving modules return raw materials; the vehicle is permanently retired. Needs inventory space.",
+  "speeder.legacyoftheforce.recharge_recycled": "Wreck recycled; materials saved",
+  "speeder.legacyoftheforce.recharge_not_wrecked": "Only a wreck can be recycled",
+  "speeder.legacyoftheforce.recharge_inventory_full": "Free inventory space for all returned materials",
+  "speeder.legacyoftheforce.recharge_unsupported_storage": "Unknown storage or salvage rule; wreck preserved",
+  "speeder.legacyoftheforce.recharge_confirm_recycle": "Click Confirm within 5 seconds to retire this wreck"
 }

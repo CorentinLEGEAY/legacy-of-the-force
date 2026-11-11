@@ -34,12 +34,19 @@ write(ASSETS / "blockstates/speeder_garage.json", {"variants": {"": {"model": "l
 write(ASSETS / "models/item/speeder_blueprint.json", {"parent": "minecraft:item/generated", "textures": {"layer0": "minecraft:item/paper"}})
 
 connectors = ["up", "down", "north", "south", "east", "west"]
+salvage = {
+    "chassis_light": [("iron_nugget", 27)],
+    "engine_standard": [("iron_nugget", 9), ("copper_ingot", 1)],
+    "battery_small": [("iron_nugget", 9), ("copper_ingot", 1)],
+    "seat_pilot": [("iron_nugget", 4), ("leather", 2)],
+}
 for name, family, mass, thrust, lift, capacity, stability in [
     ("chassis_light", "chassis", 3, 0, 0, 0, .6), ("engine_standard", "engine", 2, 25, 24, 0, .2),
     ("battery_small", "battery", 2, 0, 0, 1000, 0), ("seat_pilot", "pilot", 1, 0, 0, 0, .2),
 ]:
     write(DATA / f"speeder_modules/{name}.json", {"schemaVersion": 1, "family": family, "mass": mass, "thrust": thrust, "lift": lift,
-          "capacity": capacity, "stability": stability, "connectors": ["down"] if family == "pilot" else connectors})
+          "capacity": capacity, "stability": stability, "connectors": ["down"] if family == "pilot" else connectors,
+          "salvage": [{"item": "minecraft:" + item, "count": count} for item, count in salvage[name]]})
 
 ingredients = {"I": "iron_ingot", "C": "copper_ingot", "R": "redstone", "L": "leather", "T": "crafting_table", "P": "paper", "K": "ink_sac"}
 recipes = {"chassis_light": ["III", " C ", "III"], "engine_standard": [" C ", "IRI", " C "], "battery_small": [" I ", "CRC", " I "],

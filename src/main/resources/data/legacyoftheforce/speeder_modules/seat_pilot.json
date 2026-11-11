@@ -8,5 +8,15 @@
   "stability": 0.2,
   "connectors": [
     "down"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 4
+    },
+    {
+      "item": "minecraft:leather",
+      "count": 2
+    }
   ]
 }

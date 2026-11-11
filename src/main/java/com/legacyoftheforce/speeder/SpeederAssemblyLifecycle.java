@@ -18,7 +18,7 @@ public final class SpeederAssemblyLifecycle {
         var server = event.getServer(); SERVICES.put(server, new SpeederAssemblyService(server, server.getWorldPath(LevelResource.ROOT).resolve("data/legacyoftheforce/speeder_assembly")));
         RECHARGE.put(server, new SpeederRechargeService(server, server.getWorldPath(LevelResource.ROOT).resolve("data/legacyoftheforce/speeder_recharge")));
     }
-    @SubscribeEvent public void stop(ServerStoppedEvent event) { SERVICES.remove(event.getServer()); RECHARGE.remove(event.getServer()); }
+    @SubscribeEvent public void stop(ServerStoppedEvent event) { SERVICES.remove(event.getServer()); RECHARGE.remove(event.getServer()); SpeederRetirement.clear(event.getServer()); }
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer actor && RECHARGE.containsKey(actor.server)) RECHARGE.get(actor.server).forget(actor.getUUID());
     }
@@ -44,6 +44,9 @@ public final class SpeederAssemblyLifecycle {
     }
     public static SpeederRechargeService.Result repair(ServerPlayer actor, BlockPos garage, UUID vehicle) {
         var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.repair(actor, garage, vehicle);
+    }
+    public static SpeederRechargeService.Result recycle(ServerPlayer actor, BlockPos garage, UUID vehicle) {
+        var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.recycle(actor, garage, vehicle);
     }
     public static SpeederRechargeService.Result paint(ServerPlayer actor, BlockPos garage, UUID vehicle, boolean primary, net.minecraft.world.item.DyeColor dye) {
         var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.paint(actor, garage, vehicle, primary, dye);

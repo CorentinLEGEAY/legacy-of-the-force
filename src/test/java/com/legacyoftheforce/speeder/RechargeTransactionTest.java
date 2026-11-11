@@ -7,6 +7,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RechargeTransactionTest {
+    @Test void recycleSchemaRetiresOnlyAWreckAndAllowsZeroSalvageWithoutEnergyChange() {
+        var legacy = record().view(); var wreck = legacy.vehicle().withHealth(List.of(0, 0, 0, 0), 0);
+        var after = legacy.after().copy(); after.put("Inventory", legacy.before().get("Inventory").copy());
+        var record = RechargeTransaction.prepareRecycle(legacy.owner(), legacy.operation(), legacy.before(), after, wreck);
+        assertTrue(record.view().recycle()); assertEquals(0, record.view().charge());
+        assertFalse(record.view().paint()); assertFalse(record.view().repair()); assertFalse(record().view().recycle());
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.prepareRecycle(legacy.owner(), legacy.operation(), legacy.before(), after, legacy.vehicle()));
+        var changedEnergy = record.tag(); changedEnergy.putDouble("charge", 1);
+        assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(changedEnergy).view());
+        var wrongKind = record.tag(); wrongKind.putString("kind", "refund");
+        assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(wrongKind).view());
+        var removed = record.tag(); removed.getCompound("after").put("Inventory", new ListTag());
+        assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(removed).view());
+    }
     private static RechargeTransaction record() {
         UUID owner = UUID.randomUUID(), operation = UUID.randomUUID(); var receipt = AssemblyReceipt.empty();
         var item = new CompoundTag(); item.putByte("Slot", (byte)150); item.putString("id", "legacyoftheforce:speeder_energy_cell"); item.putInt("count", 1);

@@ -18,6 +18,9 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private boolean assemblyAttemptClosed;
     private UUID inspectedVehicle;
     private long nextInspection;
+    private long recycleUntil;
+    private UUID recycleTarget;
+    private final DataSlot recycleArmed = DataSlot.standalone();
     private final DataSlot rechargeStatus = DataSlot.standalone();
     private final DataSlot diagnostic = DataSlot.standalone(), diagnosticStatus = DataSlot.standalone(), integrity = DataSlot.standalone(), damaged = DataSlot.standalone(), modules = DataSlot.standalone();
     private final DataSlot[] vehicleId = new DataSlot[8];
@@ -53,6 +56,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         addDataSlot(selected); addDataSlot(rotation); addDataSlot(status); addDataSlot(error);
         for (var projection : List.of(diagnostic, diagnosticStatus, integrity, damaged, modules, rechargeStatus)) addDataSlot(projection);
         addDataSlot(paintDye); addDataSlot(paintZone); addDataSlot(dyeCost);
+        addDataSlot(recycleArmed);
         for (int i = 0; i < vehicleId.length; i++) { vehicleId[i] = DataSlot.standalone(); addDataSlot(vehicleId[i]); }
         status.set((readOnly ? Status.READ_ONLY : originalId == null ? Status.HOLD_BLUEPRINT : Status.EDITING).ordinal());
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
@@ -74,6 +78,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public net.minecraft.world.item.DyeColor paintDye() { return net.minecraft.world.item.DyeColor.byId(Math.clamp(paintDye.get(), 0, 15)); }
     public boolean primaryZone() { return paintZone.get() == 0; }
     public int dyeCost() { return dyeCost.get(); }
+    public boolean recycleArmed() { return recycleArmed.get() != 0; }
     public SpeederRechargeService.Result rechargeStatus() { return SpeederRechargeService.Result.values()[Math.clamp(rechargeStatus.get(), 0, SpeederRechargeService.Result.values().length - 1)]; }
     public UUID inspectedVehicle() {
         long high = 0, low = 0;
@@ -88,6 +93,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public BlueprintValidator.Error error() { return BlueprintValidator.Error.values()[Math.clamp(error.get(), 0, BlueprintValidator.Error.values().length - 1)]; }
     @Override public void broadcastChanges() {
         if (!inventory.player.level().isClientSide()) {
+            if (recycleTarget != null && inventory.player.level().getGameTime() > recycleUntil) {
+                recycleTarget = null;
+                if (rechargeStatus() == SpeederRechargeService.Result.CONFIRM_RECYCLE) rechargeStatus.set(SpeederRechargeService.Result.NONE.ordinal());
+            }
+            recycleArmed.set(recycleTarget != null && inventory.player.level().getGameTime() <= recycleUntil ? 1 : 0);
             dyeCost.set(SpeederConfig.PAINT_DYE_COST.get());
             draftPrimary.set(draft.plan().map(SpeederBlueprint.Plan::primary).orElse(0)); draftSecondary.set(draft.plan().map(SpeederBlueprint.Plan::secondary).orElse(0));
             if (diagnostic() && inventory.player instanceof ServerPlayer actor && actor.server.overworld().getGameTime() >= nextInspection) {
@@ -116,9 +126,21 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 65)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 66)) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 66) {
+            if (!diagnostic() || inspectedVehicle == null) return false;
+            if (!inspectedVehicle.equals(recycleTarget) || tick > recycleUntil) {
+                recycleTarget = inspectedVehicle; recycleUntil = tick + 100; nextAction = tick + 10;
+                rechargeStatus.set(SpeederRechargeService.Result.CONFIRM_RECYCLE.ordinal()); broadcastChanges(); return true;
+            }
+            var target = recycleTarget; recycleTarget = null;
+            var result = access.evaluate((level, pos) -> SpeederAssemblyLifecycle.recycle(actor, pos, target), SpeederRechargeService.Result.UNAVAILABLE);
+            rechargeStatus.set(result.ordinal()); nextAction = tick + 10; nextInspection = 0; broadcastChanges();
+            return result == SpeederRechargeService.Result.RECYCLED;
+        }
+        recycleTarget = null;
         if (button == 62 || button == 63) {
             if (button == 62) paintDye.set((paintDye.get() + 1) % 16); else paintZone.set(primaryZone() ? 1 : 0);
             nextAction = tick + 2; broadcastChanges(); return true;

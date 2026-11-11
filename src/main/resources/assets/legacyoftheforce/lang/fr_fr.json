@@ -213,5 +213,13 @@
   "speeder.legacyoftheforce.build_busy": "Garage occupé : patienter",
   "speeder.legacyoftheforce.build_unavailable": "Fabrication indisponible",
   "speeder.legacyoftheforce.build_pending": "Reprise en attente",
-  "message.legacyoftheforce.assembly_pending": "Assemblage du speeder en attente de reprise du stockage. Reconnecter quand le stockage sera disponible ; aucun second paiement ne sera tenté."
+  "message.legacyoftheforce.assembly_pending": "Assemblage du speeder en attente de reprise du stockage. Reconnecter quand le stockage sera disponible ; aucun second paiement ne sera tenté.",
+  "speeder.legacyoftheforce.recycle": "Recycler",
+  "speeder.legacyoftheforce.recycle_confirm": "Valider",
+  "speeder.legacyoftheforce.recycle_help": "Épaves seulement. Confirmer sous 5 secondes. Les modules survivants rendent des matières ; le véhicule est retiré définitivement. Place requise en inventaire.",
+  "speeder.legacyoftheforce.recharge_recycled": "Épave recyclée ; matières sauvegardées",
+  "speeder.legacyoftheforce.recharge_not_wrecked": "Seule une épave peut être recyclée",
+  "speeder.legacyoftheforce.recharge_inventory_full": "Libérez de la place pour toutes les matières",
+  "speeder.legacyoftheforce.recharge_unsupported_storage": "Stockage ou butin inconnu ; épave conservée",
+  "speeder.legacyoftheforce.recharge_confirm_recycle": "Validez sous 5 secondes pour retirer cette épave"
 }

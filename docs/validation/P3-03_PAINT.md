@@ -26,7 +26,7 @@ Références : SPEED-01/08/10, architecture des états autoritaires et transacti
 
 ## Limites, validation visuelle et reprise
 
-Le rendu est **branché et compilé, pas encore observé graphiquement**. Aucun nouveau contrôle de fenêtre ou lancement de client/dédié interactif pendant cette tranche. Les tests de menu sont de vrais menus/entités/writers du serveur Minecraft GameTest, sans connexions graphiques ; ne pas les annoncer comme un parcours solo ou deux clients.
+Lors de la tranche initiale22:30, le rendu était branché et compilé sans observation graphique. La reprise suivante a réellement observé peinture blanche/orange, paiement, crafts, recharge, réparation, conduite/HUD et sauvegarde/reconnexion sur dédié avec un client : voir [le rapport natif](P3-03_NATIVE.md), qui précise aussi les corrections et validations encore ouvertes. Les tests de menu automatisés seuls ne constituent toujours pas un parcours solo ou deux clients.
 
 Les dix interruptions sont des Error injectées, pas des kills du Java. Les preuves de vrais kills recharge schéma1 ne valident pas automatiquement la peinture schéma3 ni la réparation schéma2. Reconnexions, mort/dimension/unload, vrais crashs de peinture, protections tierces et performance restent à compléter.
 

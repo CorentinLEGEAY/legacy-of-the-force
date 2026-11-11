@@ -224,7 +224,13 @@ public final class SpeederEntity extends Entity {
         double centerX = (parts.stream().mapToInt(p -> p.at().x()).min().orElse(0) + parts.stream().mapToInt(p -> p.at().x()).max().orElse(0)) / 2.0;
         double centerZ = (parts.stream().mapToInt(p -> p.at().z()).min().orElse(0) + parts.stream().mapToInt(p -> p.at().z()).max().orElse(0)) / 2.0;
         int floor = parts.stream().mapToInt(p -> p.at().y()).min().orElse(0);
-        return new Vec3((seat.get().at().x() - centerX) * .5, (seat.get().at().y() - floor + 1) * .5,
+        // Match the seat model's cushion top (7/16), not the top of its abstract cell.
+        double cushionTop = (seat.get().at().y() - floor) * .5 + .25 + (7.0 / 16 - .5) * .5;
+        // Minecraft 1.21.1: humanoid hips at 12/16, renderer translation 1.501, player scale .9375.
+        double riderScale = passenger instanceof LivingEntity living ? living.getScale() : 1;
+        double hipsAboveFeet = (1.501 - 12.0 / 16) * .9375 * riderScale;
+        double anchorY = cushionTop - hipsAboveFeet + passenger.getVehicleAttachmentPoint(this).y;
+        return new Vec3((seat.get().at().x() - centerX) * .5, anchorY,
                 (seat.get().at().z() - centerZ) * .5).yRot((float)Math.toRadians(180 - getYRot()));
     }
     @Override public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) { super.onSyncedDataUpdated(accessor); if (DESIGN.equals(accessor)) refreshDimensions(); }

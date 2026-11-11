@@ -86,8 +86,10 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(font, font.plainSubstrByWidth(title.getString(), 156), 8, 7, 0xc9f5ff, false);
         graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.paint_title"), 260, 7, 0xc9f5ff, false);
-        graphics.drawString(font, String.format(Locale.ROOT, "#%06X", menu.paintDye().getTextureDiffuseColor() & 0xffffff), 264, 43, 0xffffff, true);
-        graphics.drawString(font, "1", 264, 113, 0xffffff, true); graphics.drawString(font, "2", 264, 131, 0xffffff, true);
+        int dye = menu.paintDye().getTextureDiffuseColor();
+        graphics.drawString(font, String.format(Locale.ROOT, "#%06X", dye & 0xffffff), 264, 43, contrast(dye), false);
+        graphics.drawString(font, "1", 264, 113, contrast(menu.primaryColor()), false);
+        graphics.drawString(font, "2", 264, 131, contrast(menu.secondaryColor()), false);
         graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_cost" : "paint_draft"), menu.dyeCost()), 260, 150, 52, 0xd5e9e9);
         if (menu.diagnostic()) {
             graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.diagnostic_" + menu.diagnosticStatus().name().toLowerCase(Locale.ROOT)), 8, 26, 0xffd085, false);
@@ -105,6 +107,10 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         String key = menu.status() != SpeederGarageMenu.Status.EDITING ? menu.status().name().toLowerCase(Locale.ROOT) : "error_" + menu.error().name().toLowerCase(Locale.ROOT);
         graphics.drawString(font, font.plainSubstrByWidth(Component.translatable("speeder.legacyoftheforce." + key).getString(), 140), 8, 117, 0xffd085, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xd5e9e9, false);
+    }
+    private static int contrast(int rgb) {
+        int brightness = ((rgb >>> 16) & 255) * 299 + ((rgb >>> 8) & 255) * 587 + (rgb & 255) * 114;
+        return brightness > 128000 ? 0x101010 : 0xffffff;
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);

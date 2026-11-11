@@ -43,7 +43,9 @@ public final class SpeederEntityGameTests {
         vehicle.initialize(VehicleState.create(UUID.randomUUID(), actor.getUUID(), snapshot.blueprint().withModules(parts), snapshot.pose(), 1000));
         helper.getLevel().addFreshEntity(vehicle); actor.startRiding(vehicle);
         var offset = vehicle.getPassengerRidingPosition(actor).subtract(vehicle.position());
-        helper.assertTrue(Math.abs(offset.x + .5) < 1e-6 && Math.abs(offset.z) < 1e-6 && Math.abs(offset.y - 1) < 1e-6, "Pilot must sit over the offset seat, not at the fixed chassis center");
+        double renderedHips = offset.y - actor.getVehicleAttachmentPoint(vehicle).y + (1.501 - 12.0 / 16) * .9375;
+        helper.assertTrue(Math.abs(offset.x + .5) < 1e-6 && Math.abs(offset.z) < 1e-6 && Math.abs(renderedHips - .71875) < 1e-6,
+                "Pilot hips must meet the rendered cushion of the offset seat, not float above the abstract cell");
         vehicle.setYRot(90); offset = vehicle.getPassengerRidingPosition(actor).subtract(vehicle.position());
         helper.assertTrue(Math.abs(offset.x) < 1e-6 && Math.abs(offset.z + .5) < 1e-6, "Seat anchor must rotate with the same transform as rendered modules"); helper.succeed();
     }

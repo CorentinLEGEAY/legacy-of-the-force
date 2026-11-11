@@ -206,6 +206,19 @@
       "predicate": {
         "legacyoftheforce:emitter": 1
       }
+    },
+    {
+      "model": "legacyoftheforce:item/lightsaber_active",
+      "predicate": {
+        "legacyoftheforce:lit": 1
+      }
+    },
+    {
+      "model": "legacyoftheforce:item/lightsaber_claw_active",
+      "predicate": {
+        "legacyoftheforce:emitter": 1,
+        "legacyoftheforce:lit": 1
+      }
     }
   ],
   "display": {

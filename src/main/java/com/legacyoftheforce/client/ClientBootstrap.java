@@ -29,6 +29,11 @@ public final class ClientBootstrap {
                             return data != null && data.parts().map(parts -> parts.get(com.legacyoftheforce.lightsaber.SaberSlot.EMITTER)
                                     .equals(com.legacyoftheforce.lightsaber.SaberContent.id("emitter_claw"))).orElse(false) ? 1 : 0;
                         })));
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) -> event.enqueueWork(() ->
+                net.minecraft.client.renderer.item.ItemProperties.register(com.legacyoftheforce.lightsaber.SaberContent.SABER.get(),
+                        com.legacyoftheforce.lightsaber.SaberContent.id("lit"), (stack, level, entity, seed) -> {
+                            var data = stack.get(com.legacyoftheforce.lightsaber.SaberContent.ASSEMBLY.get()); return data != null && data.active() ? 1 : 0;
+                        })));
         NeoForge.EVENT_BUS.addListener(forceKeys::tick);
     }
 }

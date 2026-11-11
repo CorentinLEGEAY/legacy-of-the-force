@@ -41,4 +41,22 @@ public record SaberData(CompoundTag tag) {
         }
         return length <= 24;
     }
+    public boolean supported() {
+        return parts().isPresent() && (!tag.contains("active") || (tag.contains("active", Tag.TAG_BYTE) && (tag.getByte("active") == 0 || tag.getByte("active") == 1)))
+                && (!tag.contains("crystal") || crystal().isPresent());
+    }
+    public Optional<KyberData> crystal() {
+        if (!tag.contains("crystal", Tag.TAG_COMPOUND)) return Optional.empty();
+        var crystal = new KyberData(tag.getCompound("crystal"));
+        return crystal.state().isPresent() ? Optional.of(crystal) : Optional.empty();
+    }
+    public boolean active() { return supported() && crystal().isPresent() && tag.getBoolean("active"); }
+    public SaberData withCrystal(KyberData crystal) {
+        if (!supported() || crystal == null || crystal.state().isEmpty()) throw new IllegalArgumentException("Unsupported crystal or saber");
+        var updated = tag.copy(); updated.put("crystal", crystal.tag()); updated.putBoolean("active", false); return new SaberData(updated);
+    }
+    public SaberData withActive(boolean active) {
+        if (!supported() || (active && crystal().isEmpty())) throw new IllegalArgumentException("Cannot activate unsupported or empty saber");
+        var updated = tag.copy(); updated.putBoolean("active", active); return new SaberData(updated);
+    }
 }

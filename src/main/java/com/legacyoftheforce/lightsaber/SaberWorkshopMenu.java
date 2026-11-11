@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 
 /** Virtual recipe selection: components stay in the player's inventory until the atomic server action. */
 public final class SaberWorkshopMenu extends AbstractContainerMenu {
-    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID }
+    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED }
     private final Inventory inventory;
     private final ContainerLevelAccess access;
     private final DataSlot emitter = DataSlot.standalone();
@@ -27,7 +27,9 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
     public Status status() { return Status.values()[Math.clamp(status.get(), 0, Status.values().length - 1)]; }
     public int owned(SaberSlot slot) { return owned.get(slot.ordinal()).get(); }
     public String partName(SaberSlot slot) { return SaberContent.plan(emitter.get()).get(slot).getPath(); }
+    public boolean previewUsesHeldSaber() { return inventory.getSelected().is(SaberContent.SABER.get()); }
     public ItemStack preview() {
+        if (previewUsesHeldSaber()) return inventory.getSelected().copy();
         var stack = new ItemStack(SaberContent.SABER.get());
         stack.set(SaberContent.ASSEMBLY.get(), SaberData.create(new UUID(0, 0), SaberContent.plan(emitter.get()))); return stack;
     }
@@ -45,9 +47,20 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
                 || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(player)) { status.set(Status.TOO_FAR.ordinal()); return false; }
         if (button == 1) { emitter.set(1 - emitter.get()); status.set(Status.READY.ordinal()); broadcastChanges(); return true; }
-        if (button != 0) { status.set(Status.INVALID.ordinal()); return false; }
+        if (button != 0 && button != 2) { status.set(Status.INVALID.ordinal()); return false; }
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextCraftTick) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 2) {
+            var result = CrystalExchange.install(actor);
+            status.set(Status.valueOf(result.name()).ordinal());
+            boolean success = result == CrystalExchange.Result.INSERTED || result == CrystalExchange.Result.REPLACED;
+            if (success) {
+                nextCraftTick = tick + SaberConfig.CRAFT_INTERVAL.get();
+                // The workshop only exposes main inventory slots; synchronize the offhand projection too.
+                actor.inventoryMenu.broadcastChanges();
+            }
+            broadcastChanges(); return success;
+        }
         var result = SaberData.create(UUID.randomUUID(), SaberContent.plan(emitter.get()));
         if (!result.compatible(SaberCatalog.parts())) { status.set(Status.INCOMPATIBLE.ordinal()); return false; }
         var inputs = new EnumMap<SaberSlot, Integer>(SaberSlot.class);

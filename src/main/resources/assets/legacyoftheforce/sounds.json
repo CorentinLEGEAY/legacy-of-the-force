@@ -1,0 +1,14 @@
+{
+  "saber_ignite": {
+    "subtitle": "subtitles.legacyoftheforce.saber_ignite",
+    "sounds": [
+      "legacyoftheforce:saber/ignite"
+    ]
+  },
+  "saber_extinguish": {
+    "subtitle": "subtitles.legacyoftheforce.saber_extinguish",
+    "sounds": [
+      "legacyoftheforce:saber/extinguish"
+    ]
+  }
+}

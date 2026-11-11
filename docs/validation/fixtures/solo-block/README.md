@@ -16,3 +16,7 @@ Les fonctions de préparation ne déplacent aucun bloc par la Force à la place 
 ## Atelier P2-01
 
 Avec le binaire contenant P2-01, `/function lotf_validation:saber_setup` appelle la même préparation jetable puis place un atelier et donne deux pièces de chaque type, dont les deux émetteurs. Ouvrir l'atelier par clic droit ; assembler la variante standard puis choisir Griffes et assembler. Les pièces communes passent de 2 à 0, les deux émetteurs de 2 à 1, et deux poignées sont livrées. Une demande supplémentaire doit afficher le manque de pièces. Ne pas rejouer la préparation pour vérifier la persistance : sauvegarder/quitter, recharger, comparer `/data get entity @s Inventory`. Voir `P2-01.md` pour le périmètre exact.
+
+## Cristal P2-02
+
+Après assemblage, `kyber_setup` replace le joueur devant l'atelier et donne deux cristaux ; elle ne nettoie pas l'inventaire et doit être appelée une seule fois pour ce test. Tenir le sabre, ouvrir l'atelier puis cliquer Cristal deux fois avec un délai : installé, puis échangé. Fermer et appeler `kyber_turn` pour viser hors atelier. Utiliser allume la lame ; comparer l'inventaire serveur avant/après sauvegarde/rechargement sans rejouer la préparation. Le cristal retiré doit être libre, l'autre embarqué, chacun avec son UUID propre. Voir `P2-02.md`.

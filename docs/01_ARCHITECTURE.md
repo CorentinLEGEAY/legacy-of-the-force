@@ -1,0 +1,112 @@
+# 01 — Architecture, interfaces et sauvegardes
+
+## Contraintes techniques
+- **Un mod Java NeoForge** : un seul projet Gradle, un seul `modid=legacyoftheforce`, un seul JAR distribué. Pas de microservices ni de modules Gradle séparés au MVP.
+- Packages Java `com.legacyoftheforce.{core,rpg,force,lightsaber,speeder,planets,bosses,quests,client,content}`.
+- API et événements partagés : `com.legacyoftheforce.core.api`. Les modules y dépendent **vers l'intérieur**, jamais l'inverse.
+- Documents dans `modules/<module>/SPEC.md` ; le code source réel suivra `src/main/java/...` et `src/main/resources/...` après création du squelette.
+- Java 21 et Minecraft Java 1.21.1/NeoForge 21.1.x (à épingler dans Gradle). Vérifier API dans la documentation de cette version.
+
+## Diagramme logique
+```text
+                             client (HUD, écrans, rendu)
+                                        ↓ lecture
+core (config, registres, API, réseau, permissions, événements, sauvegardes)
+ ├─ rpg (XP, alignement, points, maîtrise)
+ ├─ force (moteur de cibles, énergie, capacités) ← rpg
+ ├─ lightsaber (assemblage, cristal, combat) ← rpg + core.api
+ ├─ speeder (atelier, physique simplifiée, dégâts) ← core.api
+ ├─ planets (dimensions, worldgen, voyages) ← core.api
+ ├─ bosses (combat, arènes, butin) → APIs rpg/force/lightsaber/planets
+ ├─ quests (quêtes, holocrons, événements) → APIs rpg/planets/bosses
+ └─ content (data packs, recettes, items, blocs) → registries core
+```
+Les flèches représentent l'usage **d'API publiques** ; n'autoriser aucun cycle d'import. Les intégrations transverses passent par un service/registre, événement ou contrat commun, pas des imports réciproques.
+
+## Contrats métier à définir dans `core.api`
+Ce sont des **signatures conceptuelles**, pas des API NeoForge existantes. Codex doit les adapter en Java réel avec tests :
+
+```java
+interface PlayerProgressService {
+  PlayerProgressSnapshot get(UUID playerId);
+  XpAwardResult awardKillXp(UUID playerId, KillContext kill);
+  AlignmentResult recordAlignmentAction(UUID playerId, AlignmentEvent event);
+}
+interface ForceTargetAdapter {
+  TargetId id();
+  double effectiveMass();
+  boolean canManipulate(ServerPlayer actor, ForceAction action);
+  ForceActionResult apply(ForceAction action, ForceTransform transform);
+}
+interface ProtectedWorldService {
+  boolean mayModify(ServerPlayer actor, ServerLevel level, BlockPos pos, ModificationKind kind);
+}
+interface VehicleCatalog {
+  Optional<VehicleSnapshot> find(UUID vehicleId);
+  boolean acceptForceAction(UUID vehicleId, ForceAction action, UUID playerId);
+}
+interface RewardEventSink {
+  void onBossDefeated(BossDefeatEvent event);
+  void onCrystalBondChanged(CrystalBondEvent event);
+}
+```
+`PlayerProgressSnapshot`, `KillContext`, `AlignmentEvent` etc. sont des **types à créer** dans le dépôt et à faire évoluer sans exposer des entités/mutations internes.
+
+## Responsabilités serveur / client
+### Serveur (autorité)
+- XP, niveau, alignement, énergie, pouvoirs débloqués, dégâts.
+- Sélection des cibles et validation distance/masse/ligne de visée/permis ; déplacement réel des blocs et mobs.
+- Validation de toutes les recettes/assemblages ; consommation de composants ; création de sabre/speeder.
+- Physique de speeder, dégâts, carburant, collision, stockage et état du véhicule.
+- Voyages, génération, boss, butins et quêtes.
+- Sauvegardes, cooldowns, limitations anti-exploit.
+### Client (présentation)
+- Entrées clavier/souris ; envoie requêtes à faible fréquence avec séquence ; aucun dommage/apparition/XP décidés localement.
+- HUD, écrans d'atelier, prévisualisations 3D, effets, animations, sons ; interpolation des positions validées par serveur.
+
+## Messages réseau (exemples)
+| Intention C→S | Champs | Validation S | Réponse |
+|---|---|---|---|
+| `request_force_grab` | target ID/pos, sequence | niveau, cible, portée, permission, cooldown | action acceptée/refusée + état |
+| `request_force_move` | session ID, transform souhaitée | session valide, vitesse max, budget | position validée |
+| `request_saber_assemble` | plan, atelier | inventaire, compatibilité, recette | item ou erreur |
+| `request_speeder_assemble` | modules, atelier | dimensions, connectivité, composants | véhicule ou erreur |
+| `request_travel` | destination, terminal | planète débloquée, énergie, permission | transfert ou erreur |
+| `request_power_cast` | ID pouvoir, cible | alignement, XP, énergie, cooldown | effet + nouvel état |
+
+Limiter taille, fréquence et nombre d'éléments de chaque paquet. Ne jamais permettre au client de décider des dégâts ou de transmettre une entité arbitraire non accessible.
+
+## Données persistantes (ne pas stocker deux fois la vérité)
+| Élément | Stockage recommandé (conceptuel) | Identifiant |
+|---|---|---|
+| Profil RPG | attachment persistant sur joueur ; gestion mort/respawn explicite | UUID joueur |
+| Assemblage sabre/cristal | data component de l'ItemStack, format versionné | ID instance du sabre/cristal |
+| Speeder en monde | données entité + modules sérialisés | UUID véhicule |
+| Plan sauvegardé | données joueur/monde avec limites | UUID du plan |
+| Boss, arènes, voyages et réapparitions | `SavedData` par monde/level selon besoin | dimension + ID d'arène |
+| Factions/quêtes | profil/monde, selon propriété | UUID joueur, ID faction/quête |
+| Blocs en mouvement | transaction temporaire résolue avant suppression | ID transaction/monde/positions |
+
+### Évolution de schéma
+Chaque structure enregistrée inclut `schemaVersion`. Lire anciennes versions avec migrations idempotentes ; en cas de format inconnu, refuser l'action dangereuse et conserver les données originales. Jamais supprimer silencieusement un sabre ou véhicule.
+
+## Actions atomiques et prévention de duplication
+- **Bloc soulevé** : validation → enregistrement transaction → retrait contrôlé du monde → création représentation mobile → déplacement → dépôt à un emplacement libre OU restauration/sécurisation au point source → clôture transaction. Prévoir crash/reconnexion.
+- **Sabre/vehicule créé** : validation de toutes les pièces → consommation **une seule fois** sur serveur → création unique de l'item/entité → résultat de transaction ; jamais fabrication depuis un aperçu client.
+- **Voyage** : interdire les doubles requêtes pendant un transfert, préserver inventaire et état RPG.
+
+## Performance et cadence
+- Budget configurable de blocs mobiles **par joueur** et **par dimension** ; mise à jour de physique limitée, interpolation client.
+- Collisions simplifiées pour groupes de blocs (ne pas faire 32 appels de physique lourde à chaque tick).
+- Aucune recherche globale de mobs/blocs dans chaque tick ; limiter rayon et fréquence.
+- La génération de planète utilise registres/worldgen data-driven ; ne pas scanner intégralement une dimension.
+- Les écrans 3D sont facultatifs côté faible configuration : aperçu simplifié possible.
+
+## Dépendances externes
+N'ajouter une bibliothèque (animation, rendu, permissions, intégration) que si elle a une version confirmée compatible avec la version cible, et documenter : licence, fonction, version, alternative sans dépendance. Aucun mod tiers obligatoire par défaut.
+
+## Liens de référence versionnés
+- https://docs.neoforged.net/docs/1.21.1/gettingstarted/
+- https://docs.neoforged.net/docs/1.21.1/items/datacomponents/
+- https://docs.neoforged.net/docs/1.21.1/datastorage/attachments/
+- https://docs.neoforged.net/docs/1.21.1/networking/

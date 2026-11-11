@@ -26,7 +26,7 @@ Reprise au login et avant une opération : PREPARED sans paiement durable restau
 - Démarrage dédié à 21:14:08, client ForceTesterOne connecté à 21:14:22. Avant toute nouvelle entrée graphique, Computer Use a signalé un arrêt par Échap physique. Aucune action graphique de recharge ni fabrication de cellule effectuée. Serveur arrêté proprement à21:14:45, toutes dimensions sauvegardées ; client déconnecté par le serveur et laissé ouvert. Ne pas présenter cette connexion comme une preuve du nouveau parcours UI.
 - JAR `build/libs/legacyoftheforce-0.1.0-dev.jar`, SHA256 `03A560C6B13869B3821CE0FC172AFFC43DC753F02D95F6190F172A16DF6432BC`.
 
-Les dix erreurs injectées sont des simulations de coupure du flux Java sur le vrai stockage, **pas des terminaisons de processus**. Les trois vrais kills documentés dans P3-02_CRASH concernent l'assemblage, pas cette nouvelle recharge.
+Les dix erreurs injectées sont des simulations de coupure du flux Java sur le vrai stockage, **pas des terminaisons de processus**. Les trois vrais kills documentés dans P3-02_CRASH concernent l'assemblage. La campagne suivante [P3-02_RECHARGE_CRASH.md](P3-02_RECHARGE_CRASH.md) ajoute trois vraies terminaisons pendant cette recharge sur un dédié isolé sans client connecté ; elle complète ces tests sans valider le rendu ni le solo.
 
 ## Reprise manuelle reproductible restant à exécuter
 

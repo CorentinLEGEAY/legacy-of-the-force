@@ -1,0 +1,28 @@
+P3-02 trois terminaisons forcees, 11 novembre2026, gameplay69d32fd
+Compte de validation ForceTesterOne. Chaque ligne correspond a un nouveau paiement, pas a une reprise facturee deux fois.
+
+[20:20:59] PAYMENT_DURABLE : phase PREPARED, revision native3, inventory==after.
+operation=f7237537-d4aa-43f1-8c52-d9d680a1bc8d, vehicle=23c11d10-9f16-4e1f-8e05-0548e47de3d9.
+PID24160 force-stop, Java-1, exec28961 terminal1, client Connection reset.
+[20:24:42] Login normal ; checker -> DONE, transactionUnchanged=True, nativeInventoryPaid=True, receiptUnchanged=True, rootVehicleAbsent=True.
+[20:25:12] Vehicule exact et unique dans rayon6 du garage1005,240,1025, assemblyId absent, HP100, energie1000.
+
+[20:27:17] ENTITY_DURABLE : phase PAID, revision native4, inventory==after.
+operation=74245ea0-f77b-4275-9297-3d760a466fa1, vehicle=4e31c77f-f61c-4471-b7ce-eeff8b723d59.
+Kill effectif, premier retour WMI transitoirement perime. Exec98043 terminal1, Java-1 ; lecture WMI suivante : aucun serveur dedie. PID numerique non conserve.
+[20:30:09] Login normal ; checker -> DONE, memes preuves natives et recu4.
+[20:30:20] Vehicule exact et unique dans rayon6 du garage1005,240,1045, verrou absent.
+
+[20:31:25] ACTIVATED : phase PUBLISHED, revision native5, inventory==after.
+operation=a58dcfef-ae51-448d-9188-2480310251d7, vehicle=32392c62-c238-4986-bfce-605b19b70ba3.
+PID20276 termine via handle, sortie-1, exec20706 terminal1 ; pas de stop.
+[20:32:28] Login normal ; checker -> DONE, memes preuves natives et recu5.
+[20:32:53] Vehicule exact et unique dans rayon6 du garage1005,240,1065, verrou absent.
+Clic droit normal pour monter puis Z.
+[20:34:32] Pos=[1002.5,242.00002011090183,1065.9257480516824], energie982.0239999999994.
+[20:35:29] Apres preuves, arret normal final et sauvegardes propres.
+[20:38:04] Regression finale : 80JUnit,53GT requis, BUILD SUCCESSFUL. Pas de classes de validation/GT dans le JAR.
+
+Traces .tools/crash-<checkpoint>-r<revision>-* : snapshots avant kill, meta, termination, recovered, logs de reprise ; dernier cas avec fichiers bruts apres reprise egalement conserves.
+Un premier essai revision2 a expire sans kill apres refus du harnais (Python) et ne compte pas comme preuve de crash.
+Scope : trois checkpoints seulement ; pas toute panne d ecriture/mouvement ni solo/deux clients/claims. P3-02 non valide globalement.

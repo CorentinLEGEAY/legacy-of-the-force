@@ -1,6 +1,6 @@
 # P3-02 — assemblage durable
 
-**EN COURS**, 11 novembre 2026, actualisé à 20:05. Le vrai bouton Créer est implémenté, vérifié par GameTests et par un client réel sur dédié, avec redémarrage. Arrêt brutal réel, garage d'instance/recharge et validations de phase restent ouverts.
+**EN COURS**, 11 novembre 2026. Le vrai bouton Créer est implémenté, vérifié par GameTests et par un client réel sur dédié, avec redémarrage. Trois checkpoints de terminaison forcée et reprise ont ensuite été vérifiés dans [P3-02_CRASH.md](P3-02_CRASH.md). Garage d'instance/recharge et validations de phase restent ouverts.
 
 Mini-plan : reçu versionné dans l'attachment du joueur, images natives avant/après du devis, journal durable par joueur et coordinateur idempotent ; barrière joueur, publication gelée puis activation de la même entité, branchement du menu et tests. Références : AGENTS, décisions, architecture, SPEED-01/03/05/06/10, équilibrage et sécurité. Sources épinglées de PlayerDataStorage, attachments et gestionnaire d'entités lues avant implémentation.
 
@@ -40,4 +40,4 @@ Fermeture normale du client en selle à 20:00:47, arrêt du serveur/sauvegardes 
 
 Traces locales : `.tools/speeder-paid-first-dedicated.log`, `.tools/speeder-paid-reload-dedicated.log`, `.tools/speeder-assembly-client.log`, `.tools/speeder-paid-reload-client.log`, `.tools/assembly-{journal,player}-after-{build,reload}.json`. Une comparaison JSON ordinale initiale était non probante à cause de l'ordre/encapsulation des objets ; comparaisons structurelles Python effectuées ensuite et vraies. Archive inspectée, classes de validation/GameTests absentes. JAR SHA-256 : `37E282FF67BC6E9515DFA49B8304C67782A6EBB3F40BF8C5768123201E3B2DFD`.
 
-Point de reprise : tout fermé proprement, plan ForceTesterOne payé une fois, quatre pièces consommées, reçu révision 1 et véhicule ci-dessus sur la plateforme. Ne pas redonner des pièces pour prétendre une reprise du même paiement ni invoquer `lotfvalidation speeder` comme preuve. Prochaine tranche : vraie panne de processus pendant assemblage, puis garage/recharge, solo et lifecycle complet. P3-02 et la V1.0 ne sont pas déclarés validés.
+Point historique de reprise à 20:05 : plan ForceTesterOne payé une fois, reçu révision 1 et véhicule ci-dessus. Les transactions distinctes de panne ont depuis avancé le reçu à 5, sans redonner de pièces entre une coupure et sa reprise ; voir le point courant de [P3-02_CRASH.md](P3-02_CRASH.md). Ne pas invoquer `lotfvalidation speeder` comme preuve de paiement. Prochaine tranche : garage/recharge, puis solo et lifecycle complet. P3-02 et la V1.0 ne sont pas déclarés validés.

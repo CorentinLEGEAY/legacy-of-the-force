@@ -1,0 +1,85 @@
+# P3-01 — preuves du 11 novembre 2026
+Regression finale :
+[18:09:08] [main/INFO] [minecraft/RecipeManager]: Loaded 1305 recipes
+[18:09:08] [main/INFO] [co.le.LegacyOfTheForce/]: Loaded 4 speeder module definitions
+[18:09:11] [Server thread/INFO] [minecraft/GameTestServer]: All 41 required tests passed :)
+BUILD SUCCESSFUL in 32s
+PASS: mod loaded, dedicated server ready, clean stop, all dimensions saved.
+UI solo observee : grille, Base/couche 2, retrait moteur et Save refuse, Base/couche 3, Save reussi.
+Lecture NBT apres fermeture : un plan et chacune des quatre pieces encore count1.
+Composant/quantites :
+{
+  "count": 1,
+  "Slot": 2,
+  "components": {
+    "legacyoftheforce:speeder_blueprint": {
+      "secondary": 13059645,
+      "schemaVersion": 1,
+      "gridSize": [
+        5,
+        3,
+        3
+      ],
+      "name": "Prototype",
+      "authorId": [
+        464954689,
+        1770010876,
+        -1470949347,
+        -370462248
+      ],
+      "blueprintId": [
+        1302753287,
+        1883918123,
+        -1914282563,
+        1508560842
+      ],
+      "modules": [
+        {
+          "at": [
+            2,
+            1,
+            1
+          ],
+          "kind": "legacyoftheforce:chassis_light",
+          "rotation": 0
+        },
+        {
+          "at": [
+            1,
+            1,
+            1
+          ],
+          "kind": "legacyoftheforce:engine_standard",
+          "rotation": 0
+        },
+        {
+          "at": [
+            3,
+            1,
+            1
+          ],
+          "kind": "legacyoftheforce:battery_small",
+          "rotation": 0
+        },
+        {
+          "at": [
+            2,
+            2,
+            1
+          ],
+          "kind": "legacyoftheforce:seat_pilot",
+          "rotation": 0
+        }
+      ],
+      "primary": 3422784
+    }
+  },
+  "id": "legacyoftheforce:speeder_blueprint"
+}
+chassis_light=1
+engine_standard=1
+battery_small=1
+seat_pilot=1
+Rechargement lance, mais inspection apres reload non validee :
+[18:13:17] [Server thread/INFO] [minecraft/PlayerList]: ForceTesterTwo[local:E:6bdea9bd] logged in with entity id 53 at (0.5, 99.0, 0.5)
+[18:13:17] [Server thread/INFO] [minecraft/MinecraftServer]: ForceTesterTwo joined the game

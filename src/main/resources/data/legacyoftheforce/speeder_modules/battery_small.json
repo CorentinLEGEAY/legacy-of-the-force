@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "family": "battery",
+  "mass": 2,
+  "thrust": 0,
+  "lift": 0,
+  "capacity": 1000,
+  "stability": 0,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ]
+}

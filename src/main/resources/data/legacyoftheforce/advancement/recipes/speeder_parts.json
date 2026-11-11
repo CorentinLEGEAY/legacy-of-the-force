@@ -1,0 +1,29 @@
+{
+  "criteria": {
+    "iron": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:iron_ingot"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "iron"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "legacyoftheforce:chassis_light",
+      "legacyoftheforce:engine_standard",
+      "legacyoftheforce:battery_small",
+      "legacyoftheforce:seat_pilot",
+      "legacyoftheforce:speeder_garage",
+      "legacyoftheforce:speeder_blueprint"
+    ]
+  }
+}

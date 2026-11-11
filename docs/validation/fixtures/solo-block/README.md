@@ -28,3 +28,7 @@ Tenir un sabre actif. Sur la copie jetable uniquement, `combat_setup` passe en s
 ## Rituel P2-04
 
 `bond_setup` replace le joueur devant l'atelier en Nether et donne exactement quatre améthystes et deux lapis, sans toucher au cristal. Tenir un sabre avec cristal dormant, ouvrir l'atelier, cliquer Lier : matériaux consommés, cristal éveillé, UUID inchangés. Ne pas répéter la fixture pour tester la persistance ; les matières supplémentaires ne constituent pas une récompense de gameplay. Sauvegarder/quitter et inspecter le même composant après reprise. Seule une copie jetable doit recevoir cette préparation.
+
+## Garage P3-01
+
+`garage_setup` remplace l'atelier de cette copie par un garage et donne un plan et quatre modules. Tenir le plan, ouvrir le garage, Base : couche principale et masse 8/poussée 25. Retirer le moteur doit invalider le plan ; Enregistrer ne doit pas remplacer le papier. Base, couche 3 pour voir le pilote, puis Enregistrer : plan sauvegardé, aucune pièce consommée. Fermer/recharger sans rejouer la fixture et comparer le composant et les quantités. Aucun véhicule n'est créé : assemblage/pilotage relèvent de P3-02.

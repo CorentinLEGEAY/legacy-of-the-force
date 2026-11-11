@@ -36,6 +36,10 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, ForceConfig.SPEC, "legacyoftheforce-force.toml");
         TransactionContent.register(modBus);
         SaberContent.register(modBus);
+        com.legacyoftheforce.speeder.SpeederContent.register(modBus);
+        modBus.addListener(com.legacyoftheforce.speeder.SpeederContent::creative);
+        container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.speeder.SpeederConfig.SPEC, "legacyoftheforce-speeder.toml");
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.speeder.SpeederCatalog::register);
         modBus.addListener(SaberContent::creative);
         container.registerConfig(ModConfig.Type.SERVER, SaberConfig.SPEC, "legacyoftheforce-saber.toml");
         NeoForge.EVENT_BUS.addListener(SaberCatalog::register);

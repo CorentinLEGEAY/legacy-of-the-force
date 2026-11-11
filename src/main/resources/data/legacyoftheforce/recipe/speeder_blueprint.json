@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "legacyoftheforce_speeder",
+  "pattern": [
+    "PPP",
+    "PKP",
+    "PPP"
+  ],
+  "key": {
+    "K": {
+      "item": "minecraft:ink_sac"
+    },
+    "P": {
+      "item": "minecraft:paper"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:speeder_blueprint",
+    "count": 1
+  }
+}

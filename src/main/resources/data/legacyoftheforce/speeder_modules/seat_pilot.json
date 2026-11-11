@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "family": "pilot",
+  "mass": 1,
+  "thrust": 0,
+  "lift": 0,
+  "capacity": 0,
+  "stability": 0.2,
+  "connectors": [
+    "down"
+  ]
+}

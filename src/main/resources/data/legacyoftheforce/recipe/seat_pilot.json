@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "legacyoftheforce_speeder",
+  "pattern": [
+    "L L",
+    "LLL",
+    " I "
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:seat_pilot",
+    "count": 1
+  }
+}

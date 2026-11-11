@@ -19,6 +19,8 @@ public final class ClientBootstrap {
         NeoForge.EVENT_BUS.addListener(hud::onLogout);
         NeoForge.EVENT_BUS.addListener(new DiagnosticCommands()::register);
         var forceKeys = new ForceKeys();
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
+                event.register(com.legacyoftheforce.speeder.SpeederContent.MENU.get(), SpeederGarageScreen::new));
         modBus.addListener(forceKeys::register);
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
                 event.register(com.legacyoftheforce.lightsaber.SaberContent.MENU.get(), SaberWorkshopScreen::new));

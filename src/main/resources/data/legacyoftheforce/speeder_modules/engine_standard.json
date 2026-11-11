@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "family": "engine",
+  "mass": 2,
+  "thrust": 25,
+  "lift": 24,
+  "capacity": 0,
+  "stability": 0.2,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ]
+}

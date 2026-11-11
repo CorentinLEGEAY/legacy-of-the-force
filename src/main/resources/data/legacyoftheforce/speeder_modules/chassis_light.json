@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "family": "chassis",
+  "mass": 3,
+  "thrust": 0,
+  "lift": 0,
+  "capacity": 0,
+  "stability": 0.6,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ]
+}

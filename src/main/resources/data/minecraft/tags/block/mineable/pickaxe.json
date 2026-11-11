@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "legacyoftheforce:saber_workshop"
+    "legacyoftheforce:saber_workshop",
+    "legacyoftheforce:speeder_garage"
   ]
 }

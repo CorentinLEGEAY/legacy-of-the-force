@@ -75,6 +75,8 @@ Le cristal peut être incorporé dans les données persistées de l'item, mais l
 ```
 Le partage d'un plan ne transfère **aucun matériau**, et l'atelier doit contrôler l'intégralité des modules avant assemblage.
 
+Implémentation P3-01 : ce JSON illustre le contenu métier ; le composant ItemStack emploie une enveloppe NBT schéma 1. Les UUID sont des tableaux UUID NBT (`blueprintId`, `authorId`), `gridSize` et `at` des tableaux d'entiers, `modules` une liste de composés et les couleurs des entiers RGB bornés `primary`/`secondary` à la racine (normalisation binaire du champ `paint` illustré ci-dessus). `name` est borné à 40 caractères sans contrôle. Le plan ne contient ni charge restante, ni inventaire, ni UUID d'instance ; chaque véhicule P3-02 devra recevoir sa propre identité. Le prototype de l'éditeur utilise 5×3×3 et quatre IDs physiques ; les formats/classes non pris en charge restent intacts en lecture seule. Les données réelles de modules sont sous `data/legacyoftheforce/speeder_modules/` ; voir `validation/P3-01.md` pour les bornes et validations actuelles.
+
 ## Définition de planète
 ```json
 {

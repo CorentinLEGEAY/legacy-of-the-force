@@ -3,6 +3,9 @@ package com.legacyoftheforce;
 import com.mojang.logging.LogUtils;
 import com.legacyoftheforce.core.config.ServerConfig;
 import com.legacyoftheforce.core.network.ModNetwork;
+import com.legacyoftheforce.rpg.ProgressAttachments;
+import com.legacyoftheforce.rpg.ProgressEvents;
+import com.legacyoftheforce.rpg.ProgressCommands;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -17,6 +20,13 @@ public final class LegacyOfTheForce {
 
     public LegacyOfTheForce(IEventBus modBus, ModContainer container) {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
+        ProgressAttachments.TYPES.register(modBus);
+        var progressEvents = new ProgressEvents();
+        NeoForge.EVENT_BUS.addListener(new ProgressCommands()::register);
+        NeoForge.EVENT_BUS.addListener(progressEvents::onLogin);
+        NeoForge.EVENT_BUS.addListener(progressEvents::onRespawn);
+        NeoForge.EVENT_BUS.addListener(progressEvents::onDimension);
+        NeoForge.EVENT_BUS.addListener(progressEvents::onTick);
         var network = new ModNetwork();
         modBus.addListener(network::register);
         NeoForge.EVENT_BUS.addListener(network::onLogout);

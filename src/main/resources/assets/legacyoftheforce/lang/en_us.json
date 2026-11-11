@@ -1,1 +1,9 @@
-{"message.legacyoftheforce.ready":"Legacy of the Force: protocol %s ready."}
+{
+  "message.legacyoftheforce.ready": "Legacy of the Force: protocol %s ready.",
+  "hud.legacyoftheforce.progress": "Force lv. %s | XP %s | Energy %s/%s | Alignment %s",
+  "hud.legacyoftheforce.unavailable": "Incompatible Force profile: data preserved, contact an administrator.",
+  "command.legacyoftheforce.profile": "Force level %s | XP %s | Energy %s/%s | Alignment %s",
+  "command.legacyoftheforce.energy_spent": "Debug: server energy spent.",
+  "command.legacyoftheforce.energy_refused": "Debug: energy spend refused.",
+  "message.legacyoftheforce.permission_denied": "Diagnostic refused: operator permission required."
+}

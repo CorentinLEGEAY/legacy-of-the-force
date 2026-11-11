@@ -1,1 +1,9 @@
-{"message.legacyoftheforce.ready":"Legacy of the Force : protocole %s prêt."}
+{
+  "message.legacyoftheforce.ready": "Legacy of the Force : protocole %s prêt.",
+  "hud.legacyoftheforce.progress": "Force niv. %s | XP %s | Énergie %s/%s | Alignement %s",
+  "hud.legacyoftheforce.unavailable": "Profil Force incompatible : données préservées, contactez un administrateur.",
+  "command.legacyoftheforce.profile": "Force niveau %s | XP %s | Énergie %s/%s | Alignement %s",
+  "command.legacyoftheforce.energy_spent": "Debug : énergie dépensée par le serveur.",
+  "command.legacyoftheforce.energy_refused": "Debug : dépense refusée.",
+  "message.legacyoftheforce.permission_denied": "Diagnostic refusé : permission opérateur requise."
+}

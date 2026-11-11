@@ -21,13 +21,19 @@ public final class ModNetwork {
 
     public void register(RegisterPayloadHandlersEvent event) {
         event.registrar(PROTOCOL_VERSION).playToServer(DiagnosticRequest.TYPE, DiagnosticRequest.CODEC, this::handle);
+        event.registrar(PROTOCOL_VERSION).playToClient(ProgressSnapshotPayload.TYPE,
+                ProgressSnapshotPayload.CODEC, (payload, context) -> ClientProjection.accept(payload.snapshot()));
     }
 
     private void handle(DiagnosticRequest payload, IPayloadContext context) {
         // NeoForge's default payload handler runs on the main server thread.
-        if (!(context.player() instanceof ServerPlayer player) || !player.hasPermissions(2)) return;
+        if (!(context.player() instanceof ServerPlayer player)) return;
         var gate = gates.computeIfAbsent(player.getUUID(), ignored -> new RequestGate());
         if (!gate.accept(payload.sequence(), player.serverLevel().getGameTime(), ServerConfig.REQUEST_INTERVAL_TICKS.get())) return;
+        if (!player.hasPermissions(2)) {
+            player.sendSystemMessage(Component.translatable("message.legacyoftheforce.permission_denied"));
+            return;
+        }
         NeoForge.EVENT_BUS.post(new DiagnosticRequested(player.getUUID(), payload.sequence()));
         player.sendSystemMessage(Component.translatable("message.legacyoftheforce.ready", PROTOCOL_VERSION));
     }

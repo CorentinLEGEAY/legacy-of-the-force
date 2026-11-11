@@ -41,3 +41,12 @@
 1. `./scripts/gradle.ps1 build --console=plain`
 2. `./scripts/smoke-server.ps1`
 3. P1-01, puis validation réseau transverse de P0/P1 ; ne pas déclarer P0 entièrement validée avant celle-ci.
+
+## Avancement P1-01 — 2026-11-11
+- Commit P0 : `a340dac`.
+- P1-01 : implémenté et testé sur serveur dédié, en attente de validation complète solo/deux clients. Fichiers : attachment RPG versionné, snapshot immuable, S→C, HUD, configurations, commandes, tests NBT/protocole. Voir `docs/validation/P1-01.md`.
+- 11 tests automatisés passent ; démarrage serveur et smoke passent. Vérification en jeu : 100→50 énergie puis régénération, refus sans OP, mort/respawn, Nether, sauvegarde/redémarrage/reconnexion à 37/100.
+- Deux connexions simultanées réelles obtenues ; second client crash natif GLFW deux fois. Test prolongé à deux clients NON validé. Rapports locaux conservés ; ne pas boucler sans nouvelle hypothèse.
+- Push GitHub demandé par l'utilisateur tenté : en attente d'authentification Git Credential Manager. Le distant reste vide au dernier contrôle. Demande d'intervention envoyée ; le travail local continue.
+- P0 demeure partiellement validée pour le réseau ; aucune phase P1–P7 validée globalement.
+- Prochaine tranche développable : P1-02 (XP, attribution, anti-farm), puis P1-03 (alignement), tout en gardant les validations transverses ouvertes. Aucun saut vers P2–P7.

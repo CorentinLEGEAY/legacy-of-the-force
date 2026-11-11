@@ -9,7 +9,18 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 neoForge {
     version = project.neo_version
     runs {
-        client { client() }
+        client {
+            client()
+            gameDirectory = project.file('run-client')
+            programArguments.addAll '--username', 'ForceTesterOne'
+            if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()
+        }
+        clientTwo {
+            client()
+            gameDirectory = project.file('run-client-two')
+            programArguments.addAll '--username', 'ForceTesterTwo'
+            if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()
+        }
         server { server(); programArgument '--nogui' }
         smokeServer {
             server()
@@ -23,6 +34,10 @@ neoForge {
         }
     }
     mods { legacyoftheforce { sourceSet(sourceSets.main) } }
+    unitTest {
+        enable()
+        testedMod = mods.legacyoftheforce
+    }
 }
 repositories { mavenCentral() }
 dependencies {

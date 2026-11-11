@@ -58,3 +58,21 @@ Docs utiles : https://docs.neoforged.net/docs/1.21.1/gettingstarted/ ; https://d
 
 ## Ce qui reste à inventer / valider
 Les chiffres, noms de capacités avancées, modèles 3D, comportements complexes des boss et recettes sont **des propositions de design**, pas des fonctionnalités déjà implémentées. Les tests décideront du calibrage final. Aucun asset officiel Star Wars n'est fourni dans ce dossier : créer des graphismes/sons originaux, et vérifier le cadre juridique avant diffusion publique.
+
+## Développement exécutable (mise à jour du 11 novembre 2026)
+
+Le dépôt contient désormais un socle NeoForge et la première tranche RPG ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement sans pouvoirs, sabres, speeders ni planètes à ce stade.
+
+Prérequis : JDK 21 x64, Git. Le wrapper télécharge Gradle et les dépendances NeoForge 21.1.265. Aucun Gradle global nécessaire.
+
+```powershell
+./scripts/gradle.ps1 build --console=plain
+./scripts/smoke-server.ps1
+./scripts/gradle.ps1 runClient --console=plain
+```
+
+Avec JAVA_HOME configuré, les commandes standard `./gradlew.bat build` (Windows) ou `./gradlew build` (Linux/macOS) fonctionnent également. Le JDK local dans `.tools/java` est détecté par le script PowerShell.
+
+Le smoke utilise exclusivement `127.0.0.1:25575`, un monde isolé conservé entre lancements, et vérifie démarrage + arrêt + sauvegarde. Les configurations de dev ne remplacent pas un serveur de production authentifié.
+
+Profil : `/lotf profile`. Test administrateur : `/lotf debug spend_energy 50`. Diagnostic de protocole : `/lotf_probe 1` (sonde client, vérifiée par le serveur). Procédures et limites dans `docs/validation/`.

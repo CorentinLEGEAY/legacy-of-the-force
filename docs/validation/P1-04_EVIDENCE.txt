@@ -1,0 +1,19 @@
+Legacy of the Force - P1-04 live dedicated evidence - 2026-11-11
+Before forced termination, server-side source marker:
+[11nov.2026 13:45:27.536] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] FORCE_SOURCE_AIR
+[11nov.2026 13:45:36.410] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] FORCE_DEST_DIRT
+[11nov.2026 13:46:19.276] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: 2, 99, 2 has the following block data: {schemaVersion: 1, x: 2, operationId: [I; 1182785366, 1444561539, -1956896550, -1503353587], y: 99, z: 2, id: "legacyoftheforce:transaction_anchor"}
+After process restart, authoritative server checks:
+[11nov.2026 13:47:27.344] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] FORCE_CRASH_RESTORED
+[11nov.2026 13:47:27.345] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] FORCE_NO_ORPHAN_DISPLAY
+{
+  "test": "Forced process termination while HELD",
+  "dimension": "minecraft:the_nether",
+  "serverProcess": 3088,
+  "source": [
+    2,
+    99,
+    2
+  ],
+  "operationFile": "467fdf56-561a-4283-8b5c-20daa664a50d.nbt"
+}

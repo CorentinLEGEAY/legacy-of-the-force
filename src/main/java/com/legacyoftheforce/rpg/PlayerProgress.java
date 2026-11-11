@@ -21,6 +21,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     private double forceEnergy = 100;
     private double maxForceEnergy = 100;
     private boolean unavailable;
+    private boolean channeling;
     private CompoundTag retained = new CompoundTag();
     private RewardHistory history = new RewardHistory();
 
@@ -28,6 +29,8 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
         return new PlayerProgressSnapshot(level, xpInLevel, totalXpEarned, skillPoints,
                 alignmentTenths, forceEnergy, maxForceEnergy, unavailable);
     }
+    public boolean isChanneling() { return channeling; }
+    public void setChanneling(boolean value) { channeling = !unavailable && value; }
 
     public boolean trySpendEnergy(double amount) {
         if (unavailable || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;

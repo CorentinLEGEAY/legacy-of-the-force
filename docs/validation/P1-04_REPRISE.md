@@ -1,6 +1,6 @@
 # P1-04 — point de reprise (11 novembre 2026)
 
-**EN COURS : aucune télékinésie de bloc encore jouable.**
+**Note historique du socle. La télékinésie est désormais implémentée ; voir P1-04.md pour les preuves et validations ouvertes.**
 
 Réalisé : `core.api.{ProtectedWorldService,ProtectionPolicy,ModificationKind}`, `core.security.VanillaProtectedWorldService`, `core.operation.{DurableOperationStore,StoredOperation,OperationPhase}`.
 

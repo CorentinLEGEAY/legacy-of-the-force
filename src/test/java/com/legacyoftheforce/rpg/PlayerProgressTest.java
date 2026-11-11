@@ -5,6 +5,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerProgressTest {
+    @Test void channelingIsTransientAcrossProfileCopies() {
+        var progress = new PlayerProgress();
+        progress.setChanneling(true);
+        assertTrue(progress.isChanneling());
+        var restored = new PlayerProgress();
+        restored.deserializeNBT(null, progress.serializeNBT(null));
+        assertFalse(restored.isChanneling());
+    }
     @Test void energyIsFiniteBoundedAndCannotBeCreatedBySpending() {
         var progress = new PlayerProgress();
         assertFalse(progress.trySpendEnergy(-1));

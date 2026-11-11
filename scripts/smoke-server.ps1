@@ -42,6 +42,7 @@ try {
         Start-Sleep -Milliseconds 500
     }
     if (-not $process.HasExited) {
+        if ($ready) { $process.StandardInput.WriteLine('lotf force recover') }
         $process.StandardInput.WriteLine('stop')
         $process.StandardInput.Flush()
         if (-not $process.WaitForExit(30000)) {
@@ -52,6 +53,7 @@ try {
     $output | Set-Content -LiteralPath (Join-Path $smokeDirectory 'smoke-console.log')
     $logText = Get-Content -LiteralPath $logPath -Raw
     if (-not $ready -or $process.ExitCode -ne 0 -or
+        $output -notmatch 'Block recovery completed|force\.legacyoftheforce\.recovered|Récupération des blocs effectuée' -or
         $logText -notmatch 'infrastructure loaded' -or
         $logText -notmatch 'All dimensions are saved' -or
         $logText -match '\[(?:[^\]]*/)?(?:ERROR|FATAL)\]') {

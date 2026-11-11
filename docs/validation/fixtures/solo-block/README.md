@@ -20,3 +20,7 @@ Avec le binaire contenant P2-01, `/function lotf_validation:saber_setup` appelle
 ## Cristal P2-02
 
 Après assemblage, `kyber_setup` replace le joueur devant l'atelier et donne deux cristaux ; elle ne nettoie pas l'inventaire et doit être appelée une seule fois pour ce test. Tenir le sabre, ouvrir l'atelier puis cliquer Cristal deux fois avec un délai : installé, puis échangé. Fermer et appeler `kyber_turn` pour viser hors atelier. Utiliser allume la lame ; comparer l'inventaire serveur avant/après sauvegarde/rechargement sans rejouer la préparation. Le cristal retiré doit être libre, l'autre embarqué, chacun avec son UUID propre. Voir `P2-02.md`.
+
+## Combat P2-03
+
+Tenir un sabre actif. Sur la copie jetable uniquement, `combat_setup` passe en survie, positionne le joueur, place un petit sol de pierre et invoque une vache immobile à 10 PV. Attendre la charge complète puis attaquer normalement : `/data get entity @e[tag=lotf_saber_target,limit=1,sort=nearest] Health` doit afficher 2,5 avec les valeurs par défaut. B ouvre la parade et coûte 12 points. Inspecter `/data get entity @s "neoforge:attachments"."legacyoftheforce:saber_endurance"` avant/après sauvegarde ; tenir compte du temps de régénération. Ne pas rejouer la préparation pour comparer un rechargement, sinon une deuxième cible serait créée. Voir `P2-03.md` pour les réglages temporaires utilisés et les tests non encore clos.

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
@@ -23,6 +24,8 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /** Keeps vanilla hit resolution, armour, PvP and kill attribution in the damage path. */
 public final class SaberCombat {
+    private static final net.minecraft.resources.ResourceLocation DAMAGE_ID = SaberContent.id("blade_damage");
+    private static final net.minecraft.resources.ResourceLocation SPEED_ID = SaberContent.id("blade_speed");
     static Optional<SaberStats> profile(ItemStack stack) {
         if (!stack.is(SaberContent.SABER.get()) || stack.getCount() != 1) return Optional.empty();
         var data = stack.get(SaberContent.ASSEMBLY.get());
@@ -33,9 +36,24 @@ public final class SaberCombat {
         event.replaceModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(SaberContent.id("blade_damage"), stats.get().damage() - 1, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
         event.replaceModifier(Attributes.ATTACK_SPEED, new AttributeModifier(SaberContent.id("blade_speed"), stats.get().attacksPerSecond() - 4, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
     }
-    @SubscribeEvent(priority = EventPriority.LOWEST) public void attack(AttackEntityEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer actor) || !actor.getMainHandItem().is(SaberContent.SABER.get())) return;
+    static Optional<SaberStats> refreshAttributes(ServerPlayer actor) {
         var stats = profile(actor.getMainHandItem());
+        reconcile(actor.getAttribute(Attributes.ATTACK_DAMAGE), DAMAGE_ID, stats.map(value -> value.damage() - 1));
+        reconcile(actor.getAttribute(Attributes.ATTACK_SPEED), SPEED_ID, stats.map(value -> value.attacksPerSecond() - 4));
+        return stats;
+    }
+    private static void reconcile(AttributeInstance attribute, net.minecraft.resources.ResourceLocation id, Optional<Double> amount) {
+        if (attribute == null) return;
+        var current = attribute.getModifier(id);
+        if (amount.isEmpty()) { if (current != null) attribute.removeModifier(id); return; }
+        var desired = new AttributeModifier(id, amount.get(), AttributeModifier.Operation.ADD_VALUE);
+        // Avoid dirtying/synchronizing an unchanged attribute every tick.
+        if (!desired.equals(current)) { attribute.removeModifier(id); attribute.addTransientModifier(desired); }
+    }
+    @SubscribeEvent(priority = EventPriority.LOWEST) public void attack(AttackEntityEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer actor)) return;
+        var stats = refreshAttributes(actor);
+        if (!actor.getMainHandItem().is(SaberContent.SABER.get())) return;
         if (stats.isEmpty()) return; // An inactive hilt retains the ordinary unarmed vanilla attack.
         var target = event.getTarget();
         if (!valid(actor) || !(target instanceof LivingEntity living) || !living.isAlive() || living.isInvulnerable()
@@ -75,7 +93,9 @@ public final class SaberCombat {
                 .then(Commands.literal("status").executes(context -> { feedback(context.getSource().getPlayerOrException(), "saber.legacyoftheforce.endurance"); return 1; }))));
     }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
-        if (event.getEntity() instanceof ServerPlayer actor && actor.isAlive() && actor.hasData(SaberContent.ENDURANCE)) {
+        if (event.getEntity() instanceof ServerPlayer actor && actor.isAlive()) {
+            refreshAttributes(actor);
+            if (!actor.hasData(SaberContent.ENDURANCE)) return;
             var state = actor.getData(SaberContent.ENDURANCE); state.tick(now(actor), SaberConfig.ENDURANCE_RECOVERY.get());
             if (profile(actor.getMainHandItem()).isEmpty()) state.endGuard();
         }

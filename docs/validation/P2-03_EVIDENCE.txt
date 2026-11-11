@@ -1,0 +1,24 @@
+# P2-03 preuves natives — 2026-11-11
+Premier essai L : conflit avec Avancements, aucun coup, cible 10 PV.
+Essai corrigé J : coup réel, retour actionbar Endurance 92/100 observé, puis B 80/100.
+Relevé après coup :
+[11nov.2026 16:53:23.940] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] Cow has the following entity data: 2.5f
+[11nov.2026 16:53:59.190] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] ForceTesterTwo has the following entity data: {schemaVersion: 1, recoveryAfter: 54959L, nextAttack: 53213L, nextGuard: 53783L, energy: 80.0d}
+Premier rechargement non probant pour la jauge : échéances conservées mais régénération achevée avant relevé.
+Second contrôle : NBT disque avant rechargement, parseur gzip/NBT local en lecture seule :
+{"schemaVersion": 1, "recoveryAfter": 57980, "nextAttack": 53213, "nextGuard": 56804, "energy": 88.0}
+Relevé serveur chargé, même énergie 88 et mêmes trois échéances :
+[11nov.2026 16:57:40.145] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] ForceTesterTwo has the following entity data: {schemaVersion: 1, recoveryAfter: 57980L, nextAttack: 53213L, nextGuard: 56804L, energy: 88.0d}
+Mort/réapparition keepInventory=true, puis jauge après régénération (pas une preuve de conservation exacte à la mort) :
+[11nov.2026 16:57:40.145] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] ForceTesterTwo has the following entity data: {schemaVersion: 1, recoveryAfter: 57980L, nextAttack: 53213L, nextGuard: 56804L, energy: 88.0d}
+[11nov.2026 16:58:25.927] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [ForceTesterTwo: Gamerule keepInventory is now set to: true]
+[11nov.2026 16:58:25.948] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] Gamerule keepInventory is now set to: true
+[11nov.2026 16:58:45.148] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo was killed
+[11nov.2026 16:58:45.161] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] ForceTesterTwo was killed
+[11nov.2026 16:59:23.836] [Render thread/INFO] [net.minecraft.client.gui.components.ChatComponent/]: [System] [CHAT] ForceTesterTwo has the following entity data: {schemaVersion: 1, recoveryAfter: 57980L, nextAttack: 53213L, nextGuard: 56804L, energy: 100.0d}
+[11nov.2026 17:00:15.772] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved
+Inventaire sauvegardé après mort : deux sabres count1, un cristal libre count1 et un cristal embarqué, UUID identiques à P2-02.
+Régression finale :
+[17:02:49] [Server thread/INFO] [minecraft/GameTestServer]: All 35 required tests passed :)
+BUILD SUCCESSFUL in 29s
+PASS: mod loaded, dedicated server ready, clean stop, all dimensions saved.

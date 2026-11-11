@@ -17,6 +17,62 @@ import com.legacyoftheforce.rpg.ProgressAttachments;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class SaberCombatGameTests {
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void respawnCopiesFatigueAndCooldownsWithoutRestoringTheGuardWindow(GameTestHelper helper) {
+        var rules = helper.getLevel().getGameRules();
+        boolean original = rules.getBoolean(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY);
+        try {
+            for (boolean keep : new boolean[]{false, true}) {
+                rules.getRule(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY).set(keep, helper.getLevel().getServer());
+                var previous = actor(helper); long tick = previous.server.overworld().getGameTime();
+                helper.assertTrue(SaberCombat.guard(previous), "Fixture must spend endurance and arm the saved cooldown");
+                var before = previous.getData(SaberContent.ENDURANCE).serializeNBT(null);
+                var replacement = actor(helper); replacement.getInventory().clearContent();
+                replacement.restoreFrom(previous, false);
+                var restored = replacement.getData(SaberContent.ENDURANCE);
+                helper.assertTrue(restored.energy() == 88 && before.equals(restored.serializeNBT(null)),
+                        "Actual vanilla/NeoForge respawn path must copy fatigue and deadlines for either inventory rule");
+                helper.assertFalse(restored.guarding(tick), "A respawn must not reopen a previous defensive window");
+                helper.assertFalse(restored.beginGuard(tick, 12, 6, 24, 20), "Death cannot bypass the saved guard cooldown");
+                helper.assertTrue(keep != replacement.getInventory().isEmpty(), "Inventory must obey the vanilla keepInventory rule");
+            }
+        } finally { rules.getRule(net.minecraft.world.level.GameRules.RULE_KEEPINVENTORY).set(original, helper.getLevel().getServer()); }
+        helper.succeed();
+    }
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void heldBladeReconcilesConfigAndCatalogReloadWithoutRemovingOtherBonuses(GameTestHelper helper) {
+        var actor = actor(helper); var catalog = SaberCatalog.parts(); var originalDamage = SaberConfig.BASE_DAMAGE.get();
+        var otherId = SaberContent.id("test_unrelated_bonus");
+        var damage = actor.getAttribute(Attributes.ATTACK_DAMAGE);
+        damage.addTransientModifier(new net.minecraft.world.entity.ai.attributes.AttributeModifier(otherId, 2,
+                net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation.ADD_VALUE));
+        try {
+            SaberConfig.BASE_DAMAGE.set(9.0);
+            SaberCombat.refreshAttributes(actor);
+            helper.assertTrue(Math.abs(damage.getValue() - 12.5) < .01, "Held blade must use refreshed configuration plus unrelated bonuses");
+            var unchanged = damage.getModifier(SaberContent.id("blade_damage"));
+            SaberCombat.refreshAttributes(actor);
+            helper.assertTrue(unchanged == damage.getModifier(SaberContent.id("blade_damage")), "Unchanged values cannot dirty attributes each tick");
+            new SaberCatalog().apply(java.util.Map.of(), null, null);
+            SaberCombat.refreshAttributes(actor);
+            helper.assertTrue(damage.getModifier(SaberContent.id("blade_damage")) == null && damage.getModifier(otherId) != null
+                    && damage.getValue() == 3, "Missing catalog must remove only blade bonuses immediately");
+        } finally {
+            SaberConfig.BASE_DAMAGE.set(originalDamage);
+            var files = new java.util.HashMap<net.minecraft.resources.ResourceLocation, com.google.gson.JsonElement>();
+            var gson = new com.google.gson.Gson();
+            catalog.forEach((id, part) -> { var json = gson.toJsonTree(part).getAsJsonObject(); json.addProperty("schemaVersion", 1); files.put(id, json); });
+            new SaberCatalog().apply(files, null, null);
+            SaberCombat.refreshAttributes(actor);
+        }
+        helper.assertTrue(Math.abs(damage.getValue() - 9.5) < .01, "Restored catalog must reactivate the still-held blade");
+        actor.getInventory().setItem(0, new ItemStack(net.minecraft.world.item.Items.STICK));
+        var target = helper.spawnWithNoFreeWill(EntityType.COW, 1, 1, 3);
+        new SaberCombat().attack(new net.neoforged.neoforge.event.entity.player.AttackEntityEvent(actor, target));
+        helper.assertTrue(damage.getValue() == 3 && actor.getAttributeValue(Attributes.ATTACK_SPEED) == 4,
+                "Switching then attacking before the next equipment tick must remove both blade bonuses and preserve unrelated damage");
+        helper.succeed();
+    }
     private static ServerPlayer actor(GameTestHelper helper) {
         var level = helper.getLevel(); var id = new GameProfile(UUID.randomUUID(), "SaberCombatTest");
         // No real player tick loop: keep vanilla charge full to isolate our saved server cadence.

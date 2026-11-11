@@ -68,9 +68,12 @@ public final class KyberBondGameTests {
         bonded = KyberBond.practice(bonded, KyberBond.Activity.PARRY, UUID.randomUUID(), 101, rules);
         var actor = actor(helper, bonded); var before = actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());
         var hostile = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 1, 1, 3);
+        // removeFreeWill clears goals, not NoAI: this reduction/codec fixture must not earn fresh practice.
+        hostile.setNoAi(true);
         helper.assertTrue(Math.abs(SaberStats.calculate(before, SaberCatalog.parts()).orElseThrow().parryBonus() - .105) < 1e-6, "Harmonized blue affinity must gain only 5 percent of its base");
         SaberCombat.guard(actor); actor.hurt(helper.getLevel().damageSources().mobAttack(hostile), 8);
         helper.assertTrue(Math.abs(actor.getHealth() - 18.04) < .01, "The first bond bonus must change real server damage reduction");
+        helper.assertTrue(before.equals(actor.getMainHandItem().get(SaberContent.ASSEMBLY.get())), "NoAI fixture must not change bond history before serialization");
         var saved = (net.minecraft.nbt.CompoundTag) actor.getMainHandItem().save(helper.getLevel().registryAccess());
         helper.assertTrue(before.equals(ItemStack.parseOptional(helper.getLevel().registryAccess(), saved).get(SaberContent.ASSEMBLY.get())), "Registry ItemStack codec must preserve the complete history");
         var incoming = new ItemStack(SaberContent.KYBER.get()); incoming.set(SaberContent.KYBER_DATA.get(), KyberItem.freshBlue()); actor.getInventory().setItem(1, incoming);

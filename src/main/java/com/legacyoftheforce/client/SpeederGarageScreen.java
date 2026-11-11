@@ -12,6 +12,8 @@ import net.minecraft.world.item.ItemStack;
 public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGarageMenu> {
     private int layer;
     private Button layerButton;
+    private final List<net.minecraft.client.gui.components.AbstractWidget> editorWidgets = new ArrayList<>();
+    private Button modeButton;
     public SpeederGarageScreen(SpeederGarageMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title); imageWidth = 256; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
     }
@@ -40,13 +42,33 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.save"))).build());
         addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.build"), b -> click(58)).bounds(leftPos + 200, topPos + 112, 48, 16)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.build_help"))).build());
+        editorWidgets.clear();
+        for (var child : children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget) editorWidgets.add(widget);
+        modeButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.diagnostic"), b -> click(59))
+                .bounds(leftPos + 170, topPos + 4, 78, 14).build());
+        updateMode();
     }
+    private void updateMode() {
+        for (var widget : editorWidgets) { widget.visible = !menu.diagnostic(); widget.active = !menu.diagnostic(); }
+        modeButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "design" : "diagnostic")));
+    }
+    @Override protected void containerTick() { super.containerTick(); updateMode(); }
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
         for (var slot : menu.slots) graphics.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff52687a);
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        graphics.drawString(font, title, 8, 7, 0xc9f5ff, false); graphics.drawString(font, "R" + menu.rotation(), 232, 7, 0xc9f5ff, false);
+        graphics.drawString(font, font.plainSubstrByWidth(title.getString(), 156), 8, 7, 0xc9f5ff, false);
+        if (menu.diagnostic()) {
+            graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.diagnostic_" + menu.diagnosticStatus().name().toLowerCase(Locale.ROOT)), 8, 26, 0xffd085, false);
+            if (menu.diagnosticStatus() == GarageDiagnostics.Status.READY || menu.diagnosticStatus() == GarageDiagnostics.Status.OCCUPIED) {
+                graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.instance", menu.inspectedVehicle().toString().substring(0, 8)), 8, 42, 0xc9f5ff, false);
+                graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.charge", String.format(Locale.ROOT, "%.1f", menu.instanceEnergy()), String.format(Locale.ROOT, "%.1f", menu.instanceCapacity())), 8, 58, 0xc9f5ff, false);
+                graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.integrity", menu.integrity(), menu.damaged(), menu.modules()), 8, 74, 0xc9f5ff, false);
+            }
+            graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce.diagnostic_help"), 8, 94, 240, 0xd5e9e9);
+            graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xd5e9e9, false); return;
+        }
         var stats = Component.translatable("speeder.legacyoftheforce.stats", String.format(Locale.ROOT, "%.1f", menu.mass()), String.format(Locale.ROOT, "%.1f", menu.thrust()));
         graphics.drawString(font, font.plainSubstrByWidth(stats.getString(), 140), 8, 106, 0xc9f5ff, false);
         String key = menu.status() != SpeederGarageMenu.Status.EDITING ? menu.status().name().toLowerCase(Locale.ROOT) : "error_" + menu.error().name().toLowerCase(Locale.ROOT);
@@ -55,6 +77,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (menu.diagnostic()) { renderTooltip(graphics, mouseX, mouseY); return; }
         for (int z = 0; z < 3; z++) for (int x = 0; x < 5; x++) {
             int cell = x + 5 * (z + 3 * layer), part = menu.moduleAt(cell);
             if (part >= 0 && part < 4) {

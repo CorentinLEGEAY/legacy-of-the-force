@@ -16,6 +16,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private final boolean readOnly;
     private long nextAction;
     private boolean assemblyAttemptClosed;
+    private UUID inspectedVehicle;
+    private long nextInspection;
+    private final DataSlot diagnostic = DataSlot.standalone(), diagnosticStatus = DataSlot.standalone(), integrity = DataSlot.standalone(), damaged = DataSlot.standalone(), modules = DataSlot.standalone();
+    private final DataSlot[] vehicleId = new DataSlot[8];
+    private final ProjectedFloat instanceEnergy = new ProjectedFloat(), instanceCapacity = new ProjectedFloat();
     private final DataSlot[] cells = new DataSlot[45], owned = new DataSlot[4];
     private final DataSlot selected = DataSlot.standalone(), rotation = DataSlot.standalone(), status = DataSlot.standalone(), error = DataSlot.standalone();
     private final ProjectedFloat mass = new ProjectedFloat(), thrust = new ProjectedFloat(), lift = new ProjectedFloat(), capacity = new ProjectedFloat(), stability = new ProjectedFloat();
@@ -37,6 +42,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         for (int i = 0; i < cells.length; i++) { cells[i] = DataSlot.standalone(); addDataSlot(cells[i]); }
         for (int i = 0; i < owned.length; i++) { owned[i] = DataSlot.standalone(); addDataSlot(owned[i]); }
         addDataSlot(selected); addDataSlot(rotation); addDataSlot(status); addDataSlot(error);
+        for (var projection : List.of(diagnostic, diagnosticStatus, integrity, damaged, modules)) addDataSlot(projection);
+        for (int i = 0; i < vehicleId.length; i++) { vehicleId[i] = DataSlot.standalone(); addDataSlot(vehicleId[i]); }
         status.set((readOnly ? Status.READ_ONLY : originalId == null ? Status.HOLD_BLUEPRINT : Status.EDITING).ordinal());
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
         for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 47 + col * 18, 200));
@@ -45,6 +52,18 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public int rotationAt(int cell) { return cell >= 0 && cell < cells.length ? cells[cell].get() >>> 3 & 3 : 0; }
     public int selected() { return selected.get(); }
     public int rotation() { return rotation.get(); }
+    public boolean diagnostic() { return diagnostic.get() != 0; }
+    public GarageDiagnostics.Status diagnosticStatus() { return GarageDiagnostics.Status.values()[Math.clamp(diagnosticStatus.get(), 0, GarageDiagnostics.Status.values().length - 1)]; }
+    public float instanceEnergy() { return instanceEnergy.get(); }
+    public float instanceCapacity() { return instanceCapacity.get(); }
+    public int integrity() { return integrity.get(); }
+    public int damaged() { return damaged.get(); }
+    public int modules() { return modules.get(); }
+    public UUID inspectedVehicle() {
+        long high = 0, low = 0;
+        for (int i = 0; i < 4; i++) { high = high << 16 | vehicleId[i].get() & 0xffffL; low = low << 16 | vehicleId[i + 4].get() & 0xffffL; }
+        return new UUID(high, low);
+    }
     public int owned(int part) { return owned[part].get(); }
     public int required(int part) { int count = 0; for (int i = 0; i < cells.length; i++) if (moduleAt(i) == part) count++; return count; }
     public float mass() { return mass.get(); } public float thrust() { return thrust.get(); }
@@ -53,6 +72,16 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public BlueprintValidator.Error error() { return BlueprintValidator.Error.values()[Math.clamp(error.get(), 0, BlueprintValidator.Error.values().length - 1)]; }
     @Override public void broadcastChanges() {
         if (!inventory.player.level().isClientSide()) {
+            if (diagnostic() && inventory.player instanceof ServerPlayer actor && actor.server.overworld().getGameTime() >= nextInspection) {
+                var report = access.evaluate((level, pos) -> GarageDiagnostics.inspect(actor, pos, inspectedVehicle,
+                        new com.legacyoftheforce.core.security.VanillaProtectedWorldService()), GarageDiagnostics.Report.unavailable(GarageDiagnostics.Status.DENIED));
+                if (inspectedVehicle == null && report.vehicle() != null) inspectedVehicle = report.vehicle();
+                diagnosticStatus.set(report.status().ordinal()); instanceEnergy.set(report.energy()); instanceCapacity.set(report.capacity());
+                integrity.set(report.integrity()); damaged.set(report.damaged()); modules.set(report.modules());
+                var id = report.vehicle() == null ? new UUID(0, 0) : report.vehicle();
+                for (int i = 0; i < 4; i++) { vehicleId[i].set((short)(id.getMostSignificantBits() >>> (48 - i * 16))); vehicleId[i + 4].set((short)(id.getLeastSignificantBits() >>> (48 - i * 16))); }
+                nextInspection = actor.server.overworld().getGameTime() + 10;
+            }
             for (var cell : cells) cell.set(0);
             draft.plan().ifPresent(plan -> plan.modules().forEach(module -> {
                 var at = module.at(); int index = at.x() + 5 * (at.z() + 3 * at.y()); int kind = SpeederContent.index(module.kind());
@@ -68,10 +97,15 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
-        if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 58)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 59)) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 59) {
+            diagnostic.set(diagnostic() ? 0 : 1); inspectedVehicle = null; nextInspection = 0; nextAction = tick + 10;
+            broadcastChanges(); return true;
+        }
+        if (diagnostic()) return false;
+        if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }
         if (button == 58) {
             if (assemblyAttemptClosed) return false;
             var held = actor.getMainHandItem(); var current = held.get(SpeederContent.BLUEPRINT.get());

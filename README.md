@@ -1,6 +1,6 @@
 # Legacy of the Force — Dossier de conception pour Codex
 
-> Version du dossier : GDD 0.4 — 11 novembre 2026. **Spécifications**, pas encore un mod exécutable.
+> Dossier GDD 0.4 — 11 novembre 2026, avec un **mod de développement exécutable**. V1.0 en cours ; validations et limites dans docs/03_ETAT_DU_PROJET.md.
 
 ## Objectif
 Construire **un mod Minecraft Java unique**, organisé en modules internes, mêlant survie Minecraft, RPG Star Wars, combats, Force physique, sabres laser personnalisés et évolutifs, speeders construits sur mesure et exploration de six planètes. Direction artistique : **monde Minecraft + équipements et effets cinématographiques**.
@@ -76,3 +76,4 @@ Avec JAVA_HOME configuré, les commandes standard `./gradlew.bat build` (Windows
 Le smoke utilise exclusivement `127.0.0.1:25575`, un monde isolé conservé entre lancements, et vérifie démarrage + arrêt + sauvegarde. Les configurations de dev ne remplacent pas un serveur de production authentifié.
 
 Profil : `/lotf profile`. Test administrateur : `/lotf debug spend_energy 50`. Diagnostic de protocole : `/lotf_probe 1` (sonde client, vérifiée par le serveur). Procédures et limites dans `docs/validation/`.
+

@@ -61,3 +61,11 @@
 - Limite de robustesse : atomicité des deux sauvegardes joueur/mob lors d'un arrêt brutal non prouvée. À traiter avant validation de phase/release ; historique borné ne suffit pas seul à garantir déduplication infinie.
 - Prochain ticket : **P1-04**. Avant implémentation, définir un transfert de bloc avec marqueurs de transaction et barrières de sauvegarde : un simple SavedData séparé du chunk ne prouve pas l'absence de duplication après crash. Préserver coffres/claims/spawn ; interface de permission refusant par défaut les cas inconnus.
 - Push GitHub toujours en attente d'authentification au dernier contrôle ; utilisateur a indiqué connecter Git. Aucun push déclaré réussi.
+
+## Point de contrôle GitHub et P1-04 — 2026-11-11
+- Code publié par connecteur GitHub autorisé : `693661b27abeed2ecd05be99c79ab85fe4fb2634` sur main. Fetch vérifié : même code que a6e3085 plus le document d'initialisation. Historiques réunis localement par `27d2044`, sans effacer les commits de tickets.
+- Ancienne tentative de push Git native encore en attente de son authentification ; elle visait un ancien commit et pourra être refusée sans effet destructif. Après connexion, pousser le HEAD courant, jamais forcer.
+- P1-04 : socle permissions/journal réalisé et testé, télékinésie non implémentée, ticket non validé. Point de reprise : `docs/validation/P1-04_REPRISE.md`.
+- Dernier build : succès avec 24 JUnit, 0 échec. Dernier GameTest serveur : 5 requis réussis. Smoke dédié : PASS.
+- Global : EN COURS ; validations complètes P0 réseau et P1 ouvertes ; aucun sabre, speeder, planète ou boss implémenté.
+- Prochain travail : ancre/coordinateur de transfert P1-04, puis P1-05. Reprise : `./scripts/gradle.ps1 build runGameTestServer --console=plain`, puis procédure P1-04_REPRISE.

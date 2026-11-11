@@ -14,17 +14,19 @@ public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWork
     @Override protected void init() {
         super.init();
         addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce.emitter"), b ->
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1)).bounds(leftPos + 173, topPos + 63, 76, 20).build());
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1)).bounds(leftPos + 173, topPos + 54, 76, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce.assemble"), b ->
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0)).bounds(leftPos + 173, topPos + 87, 76, 20).build());
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 0)).bounds(leftPos + 173, topPos + 76, 76, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce.crystal"), b ->
-                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 2)).bounds(leftPos + 173, topPos + 111, 76, 20)
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 2)).bounds(leftPos + 173, topPos + 98, 76, 20)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("workshop.legacyoftheforce.crystal_help"))).build());
+        addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce.bond"), b ->
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 3)).bounds(leftPos + 173, topPos + 120, 76, 20).build());
     }
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
         for (var slot : menu.slots) graphics.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff52687a);
-        graphics.pose().pushPose(); graphics.pose().translate(leftPos + 188, topPos + 17, 0); graphics.pose().scale(2.5f, 2.5f, 2.5f);
+        graphics.pose().pushPose(); graphics.pose().translate(leftPos + 188, topPos + 12, 0); graphics.pose().scale(2.25f, 2.25f, 2.25f);
         graphics.renderItem(menu.preview(), 0, 0); graphics.pose().popPose();
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -41,5 +43,8 @@ public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWork
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick); renderTooltip(graphics, mouseX, mouseY);
+        if (mouseX >= leftPos + 173 && mouseX < leftPos + 249 && mouseY >= topPos + 120 && mouseY < topPos + 140)
+            graphics.renderTooltip(font, java.util.List.of(Component.translatable("workshop.legacyoftheforce.bond_help"),
+                    Component.translatable("workshop.legacyoftheforce.ritual_cost", menu.ritualAmethyst(), menu.ritualLapis())), java.util.Optional.empty(), mouseX, mouseY);
     }
 }

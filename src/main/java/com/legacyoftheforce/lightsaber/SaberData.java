@@ -59,4 +59,10 @@ public record SaberData(CompoundTag tag) {
         if (!supported() || (active && crystal().isEmpty())) throw new IllegalArgumentException("Cannot activate unsupported or empty saber");
         var updated = tag.copy(); updated.putBoolean("active", active); return new SaberData(updated);
     }
+    public SaberData updateCrystal(KyberData updatedCrystal) {
+        if (!supported() || updatedCrystal == null || updatedCrystal.state().isEmpty() || crystal().isEmpty()
+                || !crystal().get().state().orElseThrow().id().equals(updatedCrystal.state().orElseThrow().id()))
+            throw new IllegalArgumentException("Crystal identity cannot change during practice");
+        var updated = tag.copy(); updated.put("crystal", updatedCrystal.tag()); return new SaberData(updated);
+    }
 }

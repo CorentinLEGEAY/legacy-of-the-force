@@ -8,11 +8,12 @@ import net.minecraft.server.level.ServerPlayer;
 
 /** Virtual recipe selection: components stay in the player's inventory until the atomic server action. */
 public final class SaberWorkshopMenu extends AbstractContainerMenu {
-    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED }
+    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY }
     private final Inventory inventory;
     private final ContainerLevelAccess access;
     private final DataSlot emitter = DataSlot.standalone();
     private final DataSlot status = DataSlot.standalone();
+    private final DataSlot ritualAmethyst = DataSlot.standalone(), ritualLapis = DataSlot.standalone();
     private final List<DataSlot> owned = new ArrayList<>();
     private long nextCraftTick;
     public SaberWorkshopMenu(int id, Inventory inventory) { this(id, inventory, ContainerLevelAccess.NULL); }
@@ -20,10 +21,13 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
         super(SaberContent.MENU.get(), id); this.inventory = inventory; this.access = access;
         addDataSlot(emitter); addDataSlot(status);
         for (var slot : SaberSlot.values()) { var count = DataSlot.standalone(); owned.add(count); addDataSlot(count); }
+        ritualAmethyst.set(4); ritualLapis.set(2); addDataSlot(ritualAmethyst); addDataSlot(ritualLapis);
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
         for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 47 + col * 18, 200));
     }
     public int emitterIndex() { return emitter.get(); }
+    public int ritualAmethyst() { return ritualAmethyst.get(); }
+    public int ritualLapis() { return ritualLapis.get(); }
     public Status status() { return Status.values()[Math.clamp(status.get(), 0, Status.values().length - 1)]; }
     public int owned(SaberSlot slot) { return owned.get(slot.ordinal()).get(); }
     public String partName(SaberSlot slot) { return SaberContent.plan(emitter.get()).get(slot).getPath(); }
@@ -39,7 +43,10 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
         return Math.min(32767, total);
     }
     @Override public void broadcastChanges() {
-        if (!inventory.player.level().isClientSide()) for (var slot : SaberSlot.values()) owned.get(slot.ordinal()).set(count(partName(slot)));
+        if (!inventory.player.level().isClientSide()) {
+            for (var slot : SaberSlot.values()) owned.get(slot.ordinal()).set(count(partName(slot)));
+            ritualAmethyst.set(SaberConfig.BOND_AMETHYST.get()); ritualLapis.set(SaberConfig.BOND_LAPIS.get());
+        }
         super.broadcastChanges();
     }
     @Override public boolean clickMenuButton(Player player, int button) {
@@ -47,9 +54,15 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
                 || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(player)) { status.set(Status.TOO_FAR.ordinal()); return false; }
         if (button == 1) { emitter.set(1 - emitter.get()); status.set(Status.READY.ordinal()); broadcastChanges(); return true; }
-        if (button != 0 && button != 2) { status.set(Status.INVALID.ordinal()); return false; }
+        if (button != 0 && button != 2 && button != 3) { status.set(Status.INVALID.ordinal()); return false; }
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextCraftTick) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 3) {
+            var result = KyberRitual.perform(actor); status.set(Status.valueOf(result.name()).ordinal());
+            boolean success = result == KyberRitual.Result.AWAKENED || result == KyberRitual.Result.SPECIALIZED;
+            if (success) nextCraftTick = tick + SaberConfig.CRAFT_INTERVAL.get();
+            actor.inventoryMenu.broadcastChanges(); broadcastChanges(); return success;
+        }
         if (button == 2) {
             var result = CrystalExchange.install(actor);
             status.set(Status.valueOf(result.name()).ordinal());

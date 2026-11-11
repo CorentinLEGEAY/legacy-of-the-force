@@ -29,5 +29,8 @@ public final class KyberItem extends Item {
         lines.add(Component.translatable("crystal.legacyoftheforce.quality", String.format(Locale.ROOT, "%.0f%%", value.purity() * 100),
                 String.format(Locale.ROOT, "%.0f%%", value.stability() * 100)));
         lines.add(Component.translatable("crystal.legacyoftheforce.bond", value.bondLevel()));
+        lines.add(Component.translatable("crystal.legacyoftheforce.bond_stage_" + value.bondLevel(), value.bondProgress()));
+        if (value.bondLevel() >= 2) lines.add(Component.translatable("crystal.legacyoftheforce.bond_bonus",
+                String.format(Locale.ROOT, "%.0f%%", KyberBond.bonus(value.bondLevel(), SaberConfig.BOND_BONUS.get()) * 100)));
     }
 }

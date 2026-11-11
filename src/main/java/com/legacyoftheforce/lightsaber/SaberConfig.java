@@ -8,9 +8,22 @@ public final class SaberConfig {
     public static final ModConfigSpec.IntValue ACTIVATION_INTERVAL;
     public static final ModConfigSpec.IntValue PARRY_WINDOW, PARRY_COOLDOWN, RECOVERY_DELAY;
     public static final ModConfigSpec.DoubleValue ATTACK_COST, PARRY_COST, ENDURANCE_RECOVERY, PARRY_REDUCTION;
+    public static final ModConfigSpec.IntValue BOND_2, BOND_3, BOND_4, BOND_WINDOW, BOND_CAP, BOND_COOLDOWN, BOND_AMETHYST, BOND_LAPIS;
+    public static final ModConfigSpec.DoubleValue BOND_BONUS, BOND_MIN_HEALTH, BOND_MIN_DAMAGE;
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        BOND_2 = builder.defineInRange("bond.harmonizedThreshold", 30, 1, 999998);
+        BOND_3 = builder.defineInRange("bond.resonantThreshold", 90, 2, 999999);
+        BOND_4 = builder.defineInRange("bond.legendaryThreshold", 180, 3, 1000000);
+        BOND_WINDOW = builder.defineInRange("bond.practiceWindowTicks", 1200, 20, 72000);
+        BOND_CAP = builder.defineInRange("bond.practiceWindowCap", 20, 1, 64);
+        BOND_COOLDOWN = builder.defineInRange("bond.practiceCooldownTicks", 20, 1, 1200);
+        BOND_AMETHYST = builder.defineInRange("bond.ritualAmethyst", 4, 1, 64);
+        BOND_LAPIS = builder.defineInRange("bond.ritualLapis", 2, 1, 64);
+        BOND_BONUS = builder.defineInRange("bond.parryBonusPerLevel", .05, 0, .05);
+        BOND_MIN_HEALTH = builder.defineInRange("bond.minimumEnemyMaxHealth", 10.0, 1.0, 200.0);
+        BOND_MIN_DAMAGE = builder.defineInRange("bond.minimumParryIncomingDamage", 1.0, 0.1, 100.0);
         CRAFT_INTERVAL = builder.defineInRange("craftIntervalTicks", 10, 1, 1200);
         ACTIVATION_INTERVAL = builder.defineInRange("activationIntervalTicks", 10, 1, 1200);
         PARRY_WINDOW = builder.defineInRange("combat.parryWindowTicks", 6, 1, 10);
@@ -30,4 +43,5 @@ public final class SaberConfig {
         SPEC = builder.build();
     }
     private SaberConfig() {}
+    public static KyberBond.Rules bondRules() { return new KyberBond.Rules(BOND_2.get(), BOND_3.get(), BOND_4.get(), BOND_WINDOW.get(), BOND_CAP.get(), BOND_COOLDOWN.get()); }
 }

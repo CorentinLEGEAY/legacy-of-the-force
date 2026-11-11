@@ -12,6 +12,13 @@ public final class SaberEndurance implements INBTSerializable<CompoundTag> {
     private long guardUntil = -1, lastTick = -1;
     private boolean supported = true;
     private CompoundTag unknown;
+    private java.util.UUID parryTarget, parryCrystal;
+    private long parryTick = -1;
+    void noteParry(java.util.UUID target, java.util.UUID crystal, long tick) { parryTarget = target; parryCrystal = crystal; parryTick = tick; }
+    java.util.UUID consumeParryProof(java.util.UUID target, long tick) {
+        var proof = tick == parryTick && target.equals(parryTarget) ? parryCrystal : null;
+        parryTarget = null; parryCrystal = null; parryTick = -1; return proof;
+    }
     public double energy() { return energy; }
     public boolean attacking(long tick, double cost, int interval, int recovery) {
         if (!spendable(tick, cost) || tick < nextAttack || guarding(tick)) return false;
@@ -37,7 +44,7 @@ public final class SaberEndurance implements INBTSerializable<CompoundTag> {
         tag.putLong("nextAttack", nextAttack); tag.putLong("nextGuard", nextGuard); tag.putLong("recoveryAfter", recoveryAfter); return tag;
     }
     @Override public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
-        guardUntil = -1; lastTick = -1;
+        guardUntil = -1; lastTick = -1; parryTarget = null; parryCrystal = null; parryTick = -1;
         supported = tag.contains("schemaVersion", Tag.TAG_INT) && tag.getInt("schemaVersion") == 1
                 && tag.contains("energy", Tag.TAG_DOUBLE) && Double.isFinite(tag.getDouble("energy")) && tag.getDouble("energy") >= 0 && tag.getDouble("energy") <= 100;
         for (String key : new String[]{"nextAttack", "nextGuard", "recoveryAfter"}) supported &= tag.contains(key, Tag.TAG_LONG) && tag.getLong(key) >= 0;

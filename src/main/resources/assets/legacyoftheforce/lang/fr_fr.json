@@ -88,5 +88,19 @@
   "saber.legacyoftheforce.endurance": "Endurance : %s/100",
   "saber.legacyoftheforce.guard": "Parade prête — endurance %s/100",
   "saber.legacyoftheforce.guard_unavailable": "Parade indisponible — endurance %s/100",
-  "saber.legacyoftheforce.parried": "Parade réussie — endurance %s/100"
+  "saber.legacyoftheforce.parried": "Parade réussie — endurance %s/100",
+  "workshop.legacyoftheforce.bond": "Lier",
+  "workshop.legacyoftheforce.bond_help": "Tenir le sabre : éveiller le cristal, ou choisir la défense après assez de pratique.",
+  "workshop.legacyoftheforce.ritual_cost": "Éveil : %s éclats d’améthyste et %s lapis.",
+  "workshop.legacyoftheforce.awakened": "Cristal éveillé",
+  "workshop.legacyoftheforce.specialized": "Défense choisie",
+  "workshop.legacyoftheforce.ritual_materials": "Matériaux du rituel manquants",
+  "workshop.legacyoftheforce.bond_not_ready": "Pratique requise",
+  "crystal.legacyoftheforce.bond_stage_0": "Dormant — éveil dans un atelier",
+  "crystal.legacyoftheforce.bond_stage_1": "Éveillé — pratique : %s (varier les activités)",
+  "crystal.legacyoftheforce.bond_stage_2": "Harmonisé — pratique : %s",
+  "crystal.legacyoftheforce.bond_stage_3": "Défense résonante — pratique : %s",
+  "crystal.legacyoftheforce.bond_stage_4": "Légendaire — pratique : %s",
+  "crystal.legacyoftheforce.bond_bonus": "Lien : +%s à l’affinité de parade du cristal (plafond 15 %%)",
+  "crystal.legacyoftheforce.practice": "Lien du cristal %s/4 — pratique %s"
 }

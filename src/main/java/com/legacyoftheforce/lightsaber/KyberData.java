@@ -30,7 +30,7 @@ public record KyberData(CompoundTag tag) {
         double purity = tag.getDouble("purity"), stability = tag.getDouble("stability");
         int bond = tag.getInt("bondLevel"); long progress = tag.getLong("bondProgress");
         if (!Double.isFinite(purity) || purity < 0 || purity > 1 || !Double.isFinite(stability) || stability < 0 || stability > 1
-                || bond < 0 || bond > 4 || progress < 0 || progress > Integer.MAX_VALUE) return Optional.empty();
+                || bond < 0 || bond > 4 || progress < 0 || progress > Integer.MAX_VALUE || !KyberBond.valid(tag)) return Optional.empty();
         return Optional.of(new State(tag.getUUID("crystalId"), purity, stability, bond, progress));
     }
 }

@@ -11,6 +11,7 @@ public record SaberStats(double damage, double attacksPerSecond, double stabilit
         var crystal = saber.crystal().get().state().orElseThrow();
         double modifier = saber.parts().orElseThrow().values().stream().mapToDouble(id -> parts.get(id).stability()).sum();
         return Optional.of(new SaberStats(Math.clamp(SaberConfig.BASE_DAMAGE.get() + crystal.purity() * SaberConfig.PURITY_DAMAGE.get(), 1, 40),
-                SaberConfig.ATTACKS_PER_SECOND.get(), Math.clamp(crystal.stability() + modifier, 0, 1), SaberConfig.BLUE_PARRY_BONUS.get()));
+                SaberConfig.ATTACKS_PER_SECOND.get(), Math.clamp(crystal.stability() + modifier, 0, 1),
+                SaberConfig.BLUE_PARRY_BONUS.get() * (1 + KyberBond.bonus(crystal.bondLevel(), SaberConfig.BOND_BONUS.get()))));
     }
 }

@@ -88,5 +88,19 @@
   "saber.legacyoftheforce.endurance": "Endurance: %s/100",
   "saber.legacyoftheforce.guard": "Parry ready — endurance %s/100",
   "saber.legacyoftheforce.guard_unavailable": "Parry unavailable — endurance %s/100",
-  "saber.legacyoftheforce.parried": "Parried — endurance %s/100"
+  "saber.legacyoftheforce.parried": "Parried — endurance %s/100",
+  "workshop.legacyoftheforce.bond": "Attune",
+  "workshop.legacyoftheforce.bond_help": "Hold your saber: awaken the crystal, or choose defense after enough practice.",
+  "workshop.legacyoftheforce.ritual_cost": "Awakening: %s amethyst shards and %s lapis.",
+  "workshop.legacyoftheforce.awakened": "Crystal awakened",
+  "workshop.legacyoftheforce.specialized": "Defense chosen",
+  "workshop.legacyoftheforce.ritual_materials": "Ritual materials missing",
+  "workshop.legacyoftheforce.bond_not_ready": "Practice required",
+  "crystal.legacyoftheforce.bond_stage_0": "Dormant — awaken at a workshop",
+  "crystal.legacyoftheforce.bond_stage_1": "Awakened — practice: %s (vary your activities)",
+  "crystal.legacyoftheforce.bond_stage_2": "Harmonized — practice: %s",
+  "crystal.legacyoftheforce.bond_stage_3": "Resonant defense — practice: %s",
+  "crystal.legacyoftheforce.bond_stage_4": "Legendary — practice: %s",
+  "crystal.legacyoftheforce.bond_bonus": "Bond: +%s to crystal parry affinity (cap 15%%)",
+  "crystal.legacyoftheforce.practice": "Crystal bond %s/4 — practice %s"
 }

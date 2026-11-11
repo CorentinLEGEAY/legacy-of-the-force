@@ -84,6 +84,7 @@ public final class SaberCombat {
         Vec3 toward = attacker.position().subtract(actor.position()).multiply(1, 0, 1).normalize();
         if (actor.getLookAngle().multiply(1, 0, 1).normalize().dot(toward) < 0.5) return;
         endurance.endGuard(); // One hit per window; repeated hits cannot drain into an infinite block.
+        endurance.noteParry(attacker.getUUID(), actor.getMainHandItem().get(SaberContent.ASSEMBLY.get()).crystal().orElseThrow().state().orElseThrow().id(), now(actor));
         event.setAmount((float) (event.getAmount() * (1 - Math.clamp(SaberConfig.PARRY_REDUCTION.get() + stats.get().parryBonus(), 0, 0.9))));
         feedback(actor, "saber.legacyoftheforce.parried");
     }

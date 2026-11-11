@@ -83,3 +83,16 @@ seat_pilot=1
 Rechargement lance, mais inspection apres reload non validee :
 [18:13:17] [Server thread/INFO] [minecraft/PlayerList]: ForceTesterTwo[local:E:6bdea9bd] logged in with entity id 53 at (0.5, 99.0, 0.5)
 [18:13:17] [Server thread/INFO] [minecraft/MinecraftServer]: ForceTesterTwo joined the game
+
+2026-11-11 18:42 — observations nouvelles, remplaçant le point de reprise historique :
+Solo : fermeture propre après rechargement ; JSON du plan identique (comparaison ordinale) = True.
+chassis_light=1 engine_standard=1 battery_small=1 seat_pilot=1.
+Dédié : fixture garage_setup, compte test ForceTesterOne ; Base -> masse8/poussée25 ; Save -> Plan saved.
+Arrêt /stop à 18:39:52, toutes dimensions sauvegardées.
+Redémarrage, connexion réelle ForceTesterOne à 18:40:44.925.
+Réouverture : couche2 moteur/châssis/batterie, masse8 poussée25 portance24 capacité1000 stabilité100%.
+Après fermeture client et stop console : BUILD SUCCESSFUL, toutes dimensions sauvegardées à 18:41:19.
+Plan avant/après redémarrage identique (comparaison ordinale) = True.
+blueprintId=[605339901,-1477097867,-1387708651,258338205], count1.
+chassis_light=1 engine_standard=1 battery_small=1 seat_pilot=1.
+Aucun serveur/client laissé vivant ; liaison Utiliser normale. Gate deux clients inchangée.

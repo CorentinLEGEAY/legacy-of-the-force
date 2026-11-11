@@ -83,5 +83,10 @@
   "workshop.legacyoftheforce.inserted": "Crystal installed",
   "crystal.legacyoftheforce.quality": "Purity %s · stability %s",
   "workshop.legacyoftheforce.held_preview": "Preview: held saber",
-  "workshop.legacyoftheforce.new_preview": "Preview: new assembly"
+  "workshop.legacyoftheforce.new_preview": "Preview: new assembly",
+  "key.legacyoftheforce.saber_guard": "Saber parry",
+  "saber.legacyoftheforce.endurance": "Endurance: %s/100",
+  "saber.legacyoftheforce.guard": "Parry ready — endurance %s/100",
+  "saber.legacyoftheforce.guard_unavailable": "Parry unavailable — endurance %s/100",
+  "saber.legacyoftheforce.parried": "Parried — endurance %s/100"
 }

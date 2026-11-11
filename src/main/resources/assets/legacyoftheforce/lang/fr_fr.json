@@ -83,5 +83,10 @@
   "workshop.legacyoftheforce.inserted": "Cristal inséré",
   "crystal.legacyoftheforce.quality": "Pureté %s · stabilité %s",
   "workshop.legacyoftheforce.held_preview": "Aperçu : sabre en main",
-  "workshop.legacyoftheforce.new_preview": "Aperçu : nouvel assemblage"
+  "workshop.legacyoftheforce.new_preview": "Aperçu : nouvel assemblage",
+  "key.legacyoftheforce.saber_guard": "Parade au sabre",
+  "saber.legacyoftheforce.endurance": "Endurance : %s/100",
+  "saber.legacyoftheforce.guard": "Parade prête — endurance %s/100",
+  "saber.legacyoftheforce.guard_unavailable": "Parade indisponible — endurance %s/100",
+  "saber.legacyoftheforce.parried": "Parade réussie — endurance %s/100"
 }

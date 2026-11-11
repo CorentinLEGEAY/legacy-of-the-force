@@ -16,6 +16,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 public final class SaberContent {
+    private static final DeferredRegister<net.neoforged.neoforge.attachment.AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.ATTACHMENT_TYPES, LegacyOfTheForce.MOD_ID);
+    public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberEndurance>> ENDURANCE = ATTACHMENTS.register("saber_endurance", () -> net.neoforged.neoforge.attachment.AttachmentType.serializable(SaberEndurance::new).copyOnDeath().build());
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LegacyOfTheForce.MOD_ID);
@@ -42,7 +44,7 @@ public final class SaberContent {
         for (var slot : SaberSlot.values()) plan.put(slot, id(slot.key() + "_basic"));
         plan.put(SaberSlot.EMITTER, id(emitter == 1 ? "emitter_claw" : "emitter_basic")); return Map.copyOf(plan);
     }
-    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); SOUNDS.register(bus); }
+    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); SOUNDS.register(bus); ATTACHMENTS.register(bus); }
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) PART_NAMES.forEach(name -> event.accept(partItem(name)));
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(KYBER.get());

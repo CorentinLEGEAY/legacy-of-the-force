@@ -1,0 +1,65 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+version = mod_version
+group = 'com.legacyoftheforce'
+base { archivesName = mod_id }
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+neoForge {
+    version = project.neo_version
+    addModdingDependenciesTo sourceSets.gameTest
+    runs {
+        client {
+            client()
+            gameDirectory = project.file('run-client')
+            programArguments.addAll '--username', 'ForceTesterOne'
+            if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()
+        }
+        clientTwo {
+            client()
+            gameDirectory = project.file('run-client-two')
+            programArguments.addAll '--username', 'ForceTesterTwo'
+            if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()
+        }
+        server { server(); programArgument '--nogui' }
+        smokeServer {
+            server()
+            gameDirectory = project.file('run-smoke')
+            programArgument '--nogui'
+        }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = project.file('run-gametest')
+        }
+        configureEach {
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            logLevel = org.slf4j.event.Level.INFO
+        }
+    }
+    mods { legacyoftheforce { sourceSet(sourceSets.main); sourceSet(sourceSets.gameTest) } }
+    unitTest {
+        enable()
+        testedMod = mods.legacyoftheforce
+    }
+}
+repositories { mavenCentral() }
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+test { useJUnitPlatform() }
+tasks.named('check') { dependsOn tasks.named('compileGameTestJava') }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(JavaExec).configureEach { standardInput = System.in }
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') { expand(version: project.version) }
+}

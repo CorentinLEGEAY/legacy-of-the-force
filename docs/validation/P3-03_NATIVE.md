@@ -29,6 +29,8 @@ Régression des corrections : `./scripts/gradle.ps1 build runGameTestServer --co
 
 **À terminer dans ce parcours :** observer graphiquement les deux corrections ; utiliser une cellule supplémentaire de fixture pour rouler brièvement, sauvegarder puis vérifier une charge dépensée positive après un second redémarrage. La cellule supplémentaire donnée par console après la première reconnexion n'est pas une seconde preuve de craft.
 
+Reprise23:30 : perte de focus et visée décalée par souris capturée ont empêché la confirmation des corrections. Profil isolé `run-client-two/options.txt` : pause sur perte de focus désactivée, action Utiliser temporairement liée à **K**, ancienne copie `.tools/speeder-native-options-before-key.txt` ; fermer normalement ce client puis remettre `key_key.use:key.mouse.right` après sa fermeture. Ce réglage de fixture ne touche pas les commandes livrées du mod. Client relancé, connexion23:30:45, puis Computer Use a signalé un arrêt utilisateur par **Échap physique** : aucune nouvelle entrée graphique après ce signal, aucune correction annoncée validée visuellement. Vision nocturne de fixture retirée et arrêt normal demandé au serveur. Client laissé ouvert/déconnecté ; à fermer avant toute modification de son profil ou compilation ultérieure. Reprendre avec une observation fraîche et ne pas répéter l'automatisation dans le même tour.
+
 ## Limites
 
 Ce parcours n'est ni du solo ni deux clients simultanés. Mort, unload, protections tierces, charge réseau et vrais kills Java pendant réparation/peinture restent ouverts. Aucun succès de ces cas déduit d'une fermeture normale ou des Error injectées des GameTests. Recyclage, blindages/modules supplémentaires et les autres systèmes de la V1.0 restent à développer ; P3 et V1.0 EN COURS.

@@ -86,10 +86,9 @@ public final class CombatRewards {
         String cell = actor.serverLevel().dimension().location() + "/" + victim.getType().builtInRegistryHolder().key().location()
                 + "/" + Math.floorDiv(victim.blockPosition().getX(), ServerConfig.FARM_CELL_SIZE.get())
                 + "/" + Math.floorDiv(victim.blockPosition().getZ(), ServerConfig.FARM_CELL_SIZE.get());
-        var progress = actor.getData(ProgressAttachments.PLAYER_PROGRESS);
-        var result = progress.awardMob(victim.getUUID(), category, xp, cell, tick,
+        var result = RewardLifecycle.award(actor, victim.getUUID(), progress -> progress.awardMob(victim.getUUID(), category, xp, cell, tick,
                 ServerConfig.FARM_WINDOW_TICKS.get(), ServerConfig.FARM_THRESHOLD.get(),
-                ServerConfig.FARM_XP_MULTIPLIER.get(), configuredRules());
+                ServerConfig.FARM_XP_MULTIPLIER.get(), configuredRules()));
         if (result.accepted()) {
             credit.markPaid();
             ProgressEvents.sync(actor);

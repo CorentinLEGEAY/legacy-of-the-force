@@ -22,9 +22,10 @@ public final class ProgressCommands {
                         .then(Commands.literal("add_xp")
                                 .then(Commands.argument("amount", LongArgumentType.longArg(1, 1_000_000)).executes(context -> {
                                     var player = context.getSource().getPlayerOrException();
-                                    var result = player.getData(ProgressAttachments.PLAYER_PROGRESS).award(
-                                            java.util.UUID.randomUUID(), LongArgumentType.getLong(context, "amount"), 0,
-                                            CombatRewards.configuredRules());
+                                    var id = java.util.UUID.randomUUID();
+                                    var result = RewardLifecycle.award(player, id, progress -> progress.award(
+                                            id, LongArgumentType.getLong(context, "amount"), 0,
+                                            CombatRewards.configuredRules()));
                                     ProgressEvents.sync(player);
                                     return result.accepted() ? 1 : 0;
                                 })))

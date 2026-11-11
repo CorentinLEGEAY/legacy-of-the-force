@@ -11,7 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
-/** Bounded persistent history; a mob's credited flag is the primary duplicate guard. */
+/** Bounded gameplay history; durable receipts remain the cross-save duplicate guard. */
 final class RewardHistory {
     static final int MAX_EVENTS = 256;
     private final Deque<UUID> events = new ArrayDeque<>();

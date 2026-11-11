@@ -21,6 +21,8 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     private double forceEnergy = 100;
     private double maxForceEnergy = 100;
     private boolean unavailable;
+    private boolean rewardRecoveryPending;
+    private long rewardRevision;
     private boolean channeling;
     private CompoundTag retained = new CompoundTag();
     private RewardHistory history = new RewardHistory();
@@ -28,13 +30,21 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
 
     public PlayerProgressSnapshot snapshot() {
         return new PlayerProgressSnapshot(level, xpInLevel, totalXpEarned, skillPoints,
-                alignmentTenths, forceEnergy, maxForceEnergy, unavailable);
+                alignmentTenths, forceEnergy, maxForceEnergy, blocked());
     }
+    private boolean blocked() { return unavailable || rewardRecoveryPending; }
+    long rewardRevision() { return rewardRevision; }
+    void advanceRewardRevision() {
+        if (blocked() || rewardRevision == Long.MAX_VALUE) throw new IllegalStateException("Reward revision unavailable");
+        rewardRevision++;
+    }
+    void suspendRewards() { rewardRecoveryPending = true; }
+    void resumeRewards() { rewardRecoveryPending = false; }
     public boolean isChanneling() { return channeling; }
-    public void setChanneling(boolean value) { channeling = !unavailable && value; }
-    public boolean powerReady(String id, long tick) { return !unavailable && powerCooldowns.ready(id, tick); }
+    public void setChanneling(boolean value) { channeling = !blocked() && value; }
+    public boolean powerReady(String id, long tick) { return !blocked() && powerCooldowns.ready(id, tick); }
     public boolean tryStartPower(String id, long tick, double amount, int cooldownTicks) {
-        if (unavailable || !powerCooldowns.ready(id, tick) || !powerCooldowns.canTrack(id)
+        if (blocked() || !powerCooldowns.ready(id, tick) || !powerCooldowns.canTrack(id)
                 || cooldownTicks < 1 || cooldownTicks > 72000 || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;
         forceEnergy -= amount;
         powerCooldowns.arm(id, tick, cooldownTicks);
@@ -42,32 +52,32 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     }
 
     public boolean trySpendEnergy(double amount) {
-        if (unavailable || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;
+        if (blocked() || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;
         forceEnergy -= amount;
         return true;
     }
 
     public void regenerateEnergy(double amount) {
-        if (!unavailable && Double.isFinite(amount) && amount > 0) {
+        if (!blocked() && Double.isFinite(amount) && amount > 0) {
             forceEnergy = Math.min(maxForceEnergy, forceEnergy + amount);
         }
     }
 
     public void setEnergyCapacity(double capacity) {
-        if (unavailable || !Double.isFinite(capacity) || capacity <= 0 || capacity > 1_000_000) return;
+        if (blocked() || !Double.isFinite(capacity) || capacity <= 0 || capacity > 1_000_000) return;
         maxForceEnergy = capacity;
         forceEnergy = Math.min(forceEnergy, capacity);
     }
 
     public void resetEnergyAfterDeath(double fraction) {
-        if (!unavailable && Double.isFinite(fraction) && fraction >= 0 && fraction <= 1) {
+        if (!blocked() && Double.isFinite(fraction) && fraction >= 0 && fraction <= 1) {
             forceEnergy = maxForceEnergy * fraction;
         }
     }
 
     /** One authoritative reward transaction; no client packet calls this method. */
     public RewardResult award(UUID eventId, long xp, int alignmentChange, ProgressionRules rules) {
-        if (unavailable || eventId == null || xp < 0 || history.contains(eventId)) return RewardResult.REJECTED;
+        if (blocked() || eventId == null || xp < 0 || history.contains(eventId)) return RewardResult.REJECTED;
         int previousLevel = level;
         int previousAlignment = alignmentTenths;
         history.remember(eventId);
@@ -86,13 +96,13 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     }
 
     public boolean recordMobAndIsFarm(String cell, long tick, long windowTicks, int threshold) {
-        if (unavailable || cell == null || cell.isEmpty() || cell.length() > 256 || tick < 0 || windowTicks < 1 || threshold < 1) return true;
+        if (blocked() || cell == null || cell.isEmpty() || cell.length() > 256 || tick < 0 || windowTicks < 1 || threshold < 1) return true;
         return history.recordMobAndIsFarm(cell, tick, windowTicks, threshold);
     }
 
     public RewardResult awardMob(UUID eventId, RewardCategory category, long xp, String cell,
             long tick, long windowTicks, int threshold, double farmMultiplier, ProgressionRules rules) {
-        if (unavailable || eventId == null || history.contains(eventId) || category == null || category.isBoss()
+        if (blocked() || eventId == null || history.contains(eventId) || category == null || category.isBoss()
                 || xp < 0 || cell == null || cell.isEmpty() || cell.length() > 256 || tick < 0 || windowTicks < 1
                 || threshold < 1 || !Double.isFinite(farmMultiplier) || farmMultiplier < 0 || farmMultiplier > 1) {
             return RewardResult.REJECTED;
@@ -105,7 +115,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     /** Boss module supplies verified participation and catalog identity, never client input. */
     public RewardResult awardBoss(UUID eventId, String bossId, RewardCategory category,
             long tick, long cooldownTicks, long xp, ProgressionRules rules) {
-        if (unavailable || eventId == null || bossId == null || bossId.length() > 128 || !bossId.contains(":")
+        if (blocked() || eventId == null || bossId == null || bossId.length() > 128 || !bossId.contains(":")
                 || category == null || !category.isBoss() || tick < 0 || cooldownTicks < 1 || xp < 0
                 || history.contains(eventId) || !history.canTrackBoss(bossId)) return RewardResult.REJECTED;
         if (!history.bossReady(bossId, tick)) {
@@ -125,6 +135,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
         var tag = retained.copy();
         if (unavailable) return tag;
         tag.putInt("schemaVersion", SCHEMA_VERSION);
+        tag.putLong("rewardRevision", rewardRevision);
         tag.putInt("level", level);
         tag.putLong("xpInLevel", xpInLevel);
         tag.putLong("totalXpEarned", totalXpEarned);
@@ -145,13 +156,15 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
         for (String key : new String[]{"schemaVersion", "level", "skillPoints", "alignmentTenths"}) {
             if (tag.contains(key) && !tag.contains(key, Tag.TAG_INT)) { freeze(version); return; }
         }
-        for (String key : new String[]{"xpInLevel", "totalXpEarned"}) {
+        for (String key : new String[]{"xpInLevel", "totalXpEarned", "rewardRevision"}) {
             if (tag.contains(key) && !tag.contains(key, Tag.TAG_LONG)) { freeze(version); return; }
         }
         for (String key : new String[]{"forceEnergy", "maxForceEnergy"}) {
             if (tag.contains(key) && !tag.contains(key, Tag.TAG_DOUBLE)) { freeze(version); return; }
         }
         try {
+            long loadedRevision = tag.getLong("rewardRevision");
+            if (loadedRevision < 0) throw new IllegalArgumentException("Negative reward revision");
             int loadedLevel = tag.contains("level") ? tag.getInt("level") : 1;
             double loadedCapacity = tag.contains("maxForceEnergy") ? tag.getDouble("maxForceEnergy") : 100;
             var loaded = new PlayerProgressSnapshot(loadedLevel, tag.getLong("xpInLevel"),
@@ -169,6 +182,8 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
             maxForceEnergy = loaded.maxForceEnergy();
             history = loadedHistory;
             powerCooldowns = loadedCooldowns;
+            rewardRevision = loadedRevision;
+            rewardRecoveryPending = false;
             unavailable = false;
         } catch (IllegalArgumentException invalid) {
             freeze(version);

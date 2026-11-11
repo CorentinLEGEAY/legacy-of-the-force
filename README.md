@@ -77,6 +77,8 @@ Le smoke utilise exclusivement `127.0.0.1:25575`, un monde isolé conservé entr
 
 Profil : `/lotf profile`. Test administrateur : `/lotf debug spend_energy 50`. Diagnostic de protocole : `/lotf_probe 1` (sonde client, vérifiée par le serveur). Procédures et limites dans `docs/validation/`.
 
+Les récompenses RPG disposent d'un journal de reprise et de reçus durables sous le dossier du monde `data/legacyoftheforce/rewards`. Sauvegarder ce dossier avec le monde et les profils joueur. En cas d'erreur de stockage, les actions de progression concernées sont suspendues et les données conservées ; `/lotf rpg recover` (administrateur) réessaie la récupération après correction du problème. Voir `docs/validation/P1_RPG_REPRISE.md`.
+
 
 La télékinésie minimale de blocs est désormais jouable : niveau 15 pour terre/planches/laine, 35 pour pierre. V saisit/dépose, G restitue ; touches reconfigurables. Voir `docs/validation/P1-04.md` pour les règles, les preuves et les limites. Les autres systèmes de la V1.0 restent à développer.
 

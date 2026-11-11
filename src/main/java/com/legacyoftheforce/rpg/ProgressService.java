@@ -47,9 +47,10 @@ public final class ProgressService implements PlayerProgressService {
     @Override public RewardResult awardBoss(UUID playerId, BossReward reward) {
         var player = onlinePlayer(playerId);
         if (player == null || reward == null) return RewardResult.REJECTED;
-        var result = player.getData(ProgressAttachments.PLAYER_PROGRESS).awardBoss(reward.eventId(), reward.bossId(),
+        var receiptId = UUID.nameUUIDFromBytes(("boss/" + reward.eventId() + "/" + playerId).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var result = RewardLifecycle.award(player, receiptId, progress -> progress.awardBoss(reward.eventId(), reward.bossId(),
                 reward.category(), player.server.overworld().getGameTime(), reward.cooldownTicks(), reward.xp(),
-                CombatRewards.configuredRules());
+                CombatRewards.configuredRules()));
         if (result.accepted()) ProgressEvents.sync(player);
         return result;
     }

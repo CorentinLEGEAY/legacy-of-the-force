@@ -35,5 +35,7 @@
   "force.legacyoftheforce.incompatible_target": "Données de cible incompatibles préservées : contactez un opérateur.",
   "force.legacyoftheforce.progress_unavailable": "Profil de Force indisponible ou incompatible.",
   "key.legacyoftheforce.force_push": "Poussée de Force (créature)",
-  "key.legacyoftheforce.force_pull": "Attraction de Force (créature)"
+  "key.legacyoftheforce.force_pull": "Attraction de Force (créature)",
+  "command.legacyoftheforce.rewards_pending": "Progression suspendue : récupération des récompenses nécessaire. Prévenir un administrateur.",
+  "command.legacyoftheforce.rewards_recovered": "Journal des récompenses récupéré ; profils synchronisés."
 }

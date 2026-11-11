@@ -35,5 +35,7 @@
   "force.legacyoftheforce.incompatible_target": "Incompatible target data preserved; contact an operator.",
   "force.legacyoftheforce.progress_unavailable": "Force profile unavailable or incompatible.",
   "key.legacyoftheforce.force_push": "Force push (mob)",
-  "key.legacyoftheforce.force_pull": "Force pull (mob)"
+  "key.legacyoftheforce.force_pull": "Force pull (mob)",
+  "command.legacyoftheforce.rewards_pending": "Progression suspended: reward recovery required. Contact an administrator.",
+  "command.legacyoftheforce.rewards_recovered": "Reward journal recovered; profiles synchronized."
 }

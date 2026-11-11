@@ -8,6 +8,7 @@ import com.legacyoftheforce.rpg.ProgressEvents;
 import com.legacyoftheforce.rpg.ProgressCommands;
 import com.legacyoftheforce.rpg.CombatRewards;
 import com.legacyoftheforce.rpg.ProgressService;
+import com.legacyoftheforce.rpg.RewardLifecycle;
 import com.legacyoftheforce.content.TransactionContent;
 import com.legacyoftheforce.content.WorldTransactionAnchors;
 import com.legacyoftheforce.core.operation.VerifiedChunkSaveBarrier;
@@ -37,6 +38,7 @@ public final class LegacyOfTheForce {
         ProgressAttachments.TYPES.register(modBus);
         ForceAttachments.TYPES.register(modBus);
         var progressEvents = new ProgressEvents();
+        NeoForge.EVENT_BUS.register(new RewardLifecycle());
         NeoForge.EVENT_BUS.addListener(new ProgressCommands()::register);
         NeoForge.EVENT_BUS.register(new CombatRewards());
         NeoForge.EVENT_BUS.addListener(progressEvents::onLogin);

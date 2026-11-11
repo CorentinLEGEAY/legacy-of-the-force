@@ -17,6 +17,32 @@ import com.legacyoftheforce.core.api.ModificationKind;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class CombatGameTests {
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void oldPlayerAndMobSavesCannotPayASecondTime(GameTestHelper helper) {
+        var actor = player(helper);
+        var profile = actor.getData(ProgressAttachments.PLAYER_PROGRESS);
+        var beforeKill = profile.serializeNBT(null);
+        var victim = helper.spawnWithNoFreeWill(EntityType.ZOMBIE, 2, 1, 1);
+        UUID victimId = victim.getUUID();
+        victim.hurt(helper.getLevel().damageSources().playerAttack(actor), 1000);
+        helper.assertTrue(profile.snapshot().totalXpEarned() == 5, "First real death must award XP");
+
+        // Simulate independent old player/entity saves. The receipt is the durable commit evidence.
+        profile.deserializeNBT(null, beforeKill);
+        var reloaded = EntityType.ZOMBIE.create(helper.getLevel());
+        reloaded.setUUID(victimId); reloaded.setPos(victim.position());
+        reloaded.hurt(helper.getLevel().damageSources().playerAttack(actor), 1000);
+        helper.assertTrue(profile.snapshot().totalXpEarned() == 5 && profile.snapshot().alignmentTenths() == 1,
+                "Redo checkpoint must restore the missed reward while refusing duplicate payment");
+        var other = player(helper);
+        var duplicate = EntityType.ZOMBIE.create(helper.getLevel());
+        duplicate.setUUID(victimId); duplicate.setPos(victim.position());
+        duplicate.hurt(helper.getLevel().damageSources().playerAttack(other), 1000);
+        helper.assertTrue(other.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot().totalXpEarned() == 0,
+                "The same saved mob cannot reward a second player");
+        helper.succeed();
+    }
+
     private static ServerPlayer player(GameTestHelper helper) {
         var level = helper.getLevel();
         var profile = new GameProfile(UUID.randomUUID(), "RewardTest");

@@ -1,0 +1,16 @@
+Crash réel du dédié de test, 11 novembre 2026.
+Avant interruption (PID 8680) :
+[11nov.2026 15:19:13.882] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Saved the game
+[11nov.2026 15:19:13.888] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1000000L
+[11nov.2026 15:19:13.889] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 0L
+[11nov.2026 15:19:31.399] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1000007L
+[11nov.2026 15:19:31.400] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1L
+
+Après redémarrage et reconnexion :
+[11nov.2026 15:21:10.542] [Server thread/INFO] [net.minecraft.server.players.PlayerList/]: ForceTesterTwo[/127.0.0.1:64315] logged in with entity id 47 at (0.5, 99.0, 0.5)
+[11nov.2026 15:21:24.030] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1000007L
+[11nov.2026 15:21:24.031] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1L
+[11nov.2026 15:21:24.035] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Reward journal recovered; profiles synchronized.
+[11nov.2026 15:21:24.035] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo has the following entity data: 1000007L
+[11nov.2026 15:21:24.139] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved
+[11nov.2026 15:21:24.380] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ThreadedAnvilChunkStorage: All dimensions are saved

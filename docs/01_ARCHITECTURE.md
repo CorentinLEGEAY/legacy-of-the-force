@@ -90,6 +90,11 @@ Limiter taille, fréquence et nombre d'éléments de chaque paquet. Ne jamais pe
 ### Évolution de schéma
 Chaque structure enregistrée inclut `schemaVersion`. Lire anciennes versions avec migrations idempotentes ; en cas de format inconnu, refuser l'action dangereuse et conserver les données originales. Jamais supprimer silencieusement un sabre ou véhicule.
 
+### Reprise des récompenses RPG (P1)
+Le profil attachment reste l'état de gameplay du joueur. `rewardRevision` ordonne ses récompenses ; les profils antérieurs sans ce champ migrent à la révision 0. Sous `data/legacyoftheforce/rewards`, une intention temporaire précède toute mutation, un point de reprise par joueur conserve l'après-image de la dernière décision, et un reçu immuable par événement empêche un double paiement même après éviction de l'historique borné. Les reçus sont répartis dans 4096 répertoires ; aucune recherche globale n'est faite lors d'un kill.
+
+Le point de reprise n'est pas un second profil modifiable : il n'est appliqué qu'à un attachment de révision plus ancienne. À révision égale, énergie, cooldowns et changements ultérieurs sont conservés. Ce mécanisme couvre aussi le chargement solo depuis `level.dat`, sans modifier les fichiers vanilla hors de leurs propres sauvegardes. Une copie/sauvegarde de monde doit donc conserver le dossier de reprise avec les données joueur. Les écritures sont bornées, fsync, remplacées atomiquement et relues ; les formats inconnus restent intacts et bloquent la récompense dangereuse. Profiling et croissance disque des reçus restent des sujets P7.
+
 ## Actions atomiques et prévention de duplication
 - **Bloc soulevé** : validation → enregistrement transaction → retrait contrôlé du monde → création représentation mobile → déplacement → dépôt à un emplacement libre OU restauration/sécurisation au point source → clôture transaction. Prévoir crash/reconnexion.
 - **Sabre/vehicule créé** : validation de toutes les pièces → consommation **une seule fois** sur serveur → création unique de l'item/entité → résultat de transaction ; jamais fabrication depuis un aperçu client.

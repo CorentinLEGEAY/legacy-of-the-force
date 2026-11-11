@@ -1,26 +1,43 @@
-# 03 — Journal d'avancement (à maintenir par Codex)
+# 03 — Journal d'avancement
 
-**Statut initial : SPÉCIFICATIONS LIVRÉES — AUCUN CODE DE MOD ENCORE ÉCRIT.**
+**Statut : EN COURS — infrastructure P0 opérationnelle, V1.0 non validée.**
 
-## Configuration de départ
-- Java cible : 21
-- Minecraft cible : Java 1.21.1 (à confirmer à P0)
-- NeoForge : branche 21.1.x ; version patch exacte non encore sélectionnée.
-- Dernier ticket validé : aucun.
+## Configuration vérifiée (2026-11-11)
+- Minecraft 1.21.1 ; NeoForge 21.1.265 ; ModDevGradle 2.0.148 ; Gradle 9.2.1.
+- JDK local Temurin 21.0.13+9 x64 dans `.tools/java` (non versionné).
+- Dépôt initial : uniquement spécifications, sans `.git`, ni Java dans PATH.
+- Dépôt Git initialisé ; origin : https://github.com/CorentinLEGEAY/legacy-of-the-force.git ; distant vide constaté par `git ls-remote`.
+- Commit de conservation des spécifications : `3d5334a`. Identité technique des commits : Codex (aucune identité personnelle présumée).
 
-## Tableau de suivi
-| Ticket | Statut | Fichiers modifiés | Tests / preuves | Limites |
-|---|---|---|---|---|
-| P0-01 | À faire | — | — | — |
-| P0-02 | À faire | — | — | — |
-| P0-03 | À faire | — | — | — |
-| P1-01 | À faire | — | — | — |
+## Suivi
+| Ticket | Statut | Réalisation / preuves | Limites |
+|---|---|---|---|
+| P0-01 | VALIDÉ (amorçage) | `build` réussi ; JAR 0.1.0-dev ; client observé au menu et mod à l'état loaded ; serveur Done, stop et sauvegarde | Aucun gameplay encore implémenté |
+| P0-02 | Implémenté, validation réseau partielle | Packages, configurations serveur/client séparées, événement métier immuable, protocole 1, intention diagnostic bornée, contrôle OP/anti-rejeu/taux et nettoyage connexion | Paquets malveillants et protocole à deux clients à tester en situation ; contrats métiers ajoutés au fil des tickets |
+| P0-03 | VALIDÉ (socle de tests) | 3 tests JUnit anti-rejeu/taux/bornes ; script smoke dédié, arrêt propre et redémarrage du même monde | Pas de tests de gameplay tant que systèmes absents |
+| P1-01 | Prochain développement | Profil versionné, persistance, énergie, synchronisation et HUD | À faire |
+| P1-02 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée |
 
-## Journal des décisions techniques
-- 2026-11-11 : architecture en **un seul mod, modules internes**, version de documentation 0.4.
+## Mini-plans et fichiers
+- P0 : `build.gradle`, `gradle.properties`, wrapper, métadonnées, `LegacyOfTheForce`, `core/{config,network,security,api}`, `client/ClientBootstrap`, `scripts/`, tests et procédures sous `docs/validation`.
+- P1-01 : `rpg/PlayerProgress`, attachment versionné, service serveur, snapshot `core/api`, payload S→C et HUD sous `client`. Tests de sérialisation, refus schéma futur, énergie, mort/reconnexion/dimension. Les systèmes de combat ne seront pas anticipés dans ce ticket.
 
-## Incidents / incompatibilités / questions ouvertes
-- Néant à cette date.
+## Vérifications réellement exécutées
+- `./scripts/gradle.ps1 build --console=plain` : succès, 3 tests, 0 échec.
+- Première erreur réseau : `ByteBufCodecs.LONG` absent en 1.21.1 ; corrigé en `VAR_LONG`, recompilation réussie.
+- `./scripts/gradle.ps1 runServer --console=plain` : mod chargé, serveur prêt ; second lancement puis `stop` : toutes dimensions sauvegardées. Entrée standard JavaExec explicitement reliée à Gradle après constat que stop n'était pas transmis par défaut.
+- `./scripts/smoke-server.ps1` : PASS, monde déterministe isolé, écoute 127.0.0.1:25575, arrêt propre. Relancé sur le même monde.
+- `./scripts/gradle.ps1 runClient --console=plain` : client démarré et fermé par Quit Game ; écran Mods observé avec Legacy of the Force, modid correct, état loaded.
+- Test deux clients, crash de sauvegarde RPG et permissions des futurs pouvoirs : NON EXÉCUTÉS.
 
-## Prochaine tâche
-**P0-01 :** créer le squelette NeoForge avec version vérifiée, lancer client/serveur de développement et compiler un JAR valide.
+## Décisions et limites
+- Les exemples de prompts limités à un ticket dans docs/08 ne remplacent pas la mission utilisateur explicite de poursuite autonome.
+- Gradle génère un avertissement de dépréciation pour Gradle 10 ; version 9.2.1 épinglée et fonctionnelle.
+- Les runs de développement NeoForge désactivent l'authentification Minecraft ; smoke limité à loopback. Ce mode n'est pas une configuration de production.
+- Les options budgets Force sont une infrastructure ; aucun pouvoir n'est présenté comme implémenté.
+- Aucun asset de film/jeu ajouté ; aucun mod tiers obligatoire.
+
+## Reprise
+1. `./scripts/gradle.ps1 build --console=plain`
+2. `./scripts/smoke-server.ps1`
+3. P1-01, puis validation réseau transverse de P0/P1 ; ne pas déclarer P0 entièrement validée avant celle-ci.

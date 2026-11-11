@@ -10,6 +10,8 @@ public final class SpeederConfig {
     public static final ModConfigSpec.DoubleValue GARAGE_RADIUS;
     public static final ModConfigSpec.DoubleValue CELL_ENERGY;
     public static final ModConfigSpec.IntValue RECHARGE_INTERVAL;
+    public static final ModConfigSpec.IntValue REPAIR_POINTS, DAMAGE_INTERVAL, MAX_HIT_DAMAGE;
+    public static final ModConfigSpec.DoubleValue HIT_DAMAGE_SCALE, COLLISION_THRESHOLD, COLLISION_DAMAGE_SCALE, PILOT_MASS, HIT_RANGE;
     public static final ModConfigSpec.DoubleValue FORWARD_SPEED, REVERSE_SPEED, ACCELERATION_SCALE, MAX_ACCELERATION,
             TURN_DEGREES, DRAG, BRAKING_DRAG, HOVER_HEIGHT, HOVER_GAIN, VERTICAL_DAMPING, VERTICAL_SPEED,
             GRAVITY, IDLE_ENERGY, THRUST_ENERGY, STEERING_ENERGY, MASS_ENERGY;
@@ -23,6 +25,14 @@ public final class SpeederConfig {
         GARAGE_RADIUS = builder.defineInRange("garage.serviceRadiusBlocks", 6.0, 2.0, 8.0);
         CELL_ENERGY = builder.defineInRange("garage.energyPerCell", 250.0, 1.0, 1000000.0);
         RECHARGE_INTERVAL = builder.defineInRange("garage.minimumRechargeIntervalTicks", 40, 1, 1200);
+        REPAIR_POINTS = builder.defineInRange("garage.healthPerRepairKit", 25, 1, 100);
+        DAMAGE_INTERVAL = builder.defineInRange("damage.minimumIntervalTicks", 10, 1, 1200);
+        MAX_HIT_DAMAGE = builder.defineInRange("damage.maximumModuleLossPerHit", 50, 1, 100);
+        HIT_DAMAGE_SCALE = builder.defineInRange("damage.healthLossPerDamagePoint", 10.0, .1, 100.0);
+        HIT_RANGE = builder.defineInRange("damage.ownerHitRangeBlocks", 3.0, 1.0, 6.0);
+        COLLISION_THRESHOLD = builder.defineInRange("damage.minimumImpactSpeed", .2, .01, 1.0);
+        COLLISION_DAMAGE_SCALE = builder.defineInRange("damage.healthLossPerImpactSpeed", 100.0, 0.0, 1000.0);
+        PILOT_MASS = builder.defineInRange("motion.pilotMass", 2.0, 0.0, 100.0);
         var motion = SpeederMotion.Settings.defaults();
         builder.comment("Server simulation per tick. Reverse speed and braking drag are capped by forward speed and rolling drag.").push("motion");
         FORWARD_SPEED = builder.defineInRange("forwardBlocksPerTick", motion.forwardSpeed(), .01, 1);

@@ -15,6 +15,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     private final List<net.minecraft.client.gui.components.AbstractWidget> editorWidgets = new ArrayList<>();
     private Button modeButton;
     private Button rechargeButton;
+    private Button repairButton;
     public SpeederGarageScreen(SpeederGarageMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title); imageWidth = 256; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
     }
@@ -46,16 +47,21 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         editorWidgets.clear();
         for (var child : children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget) editorWidgets.add(widget);
         modeButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.diagnostic"), b -> click(59))
-                .bounds(leftPos + 170, topPos + 4, 78, 14).build());
+                .bounds(leftPos + 170, topPos + 4, 78, 14)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.diagnostic_help"))).build());
         rechargeButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.recharge"), b -> click(60))
                 .bounds(leftPos + 8, topPos + 91, 104, 16)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.recharge_help"))).build());
+        repairButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.repair"), b -> click(61))
+                .bounds(leftPos + 128, topPos + 91, 120, 16)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.repair_help"))).build());
         updateMode();
     }
     private void updateMode() {
         for (var widget : editorWidgets) { widget.visible = !menu.diagnostic(); widget.active = !menu.diagnostic(); }
         modeButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "design" : "diagnostic")));
         rechargeButton.visible = menu.diagnostic(); rechargeButton.active = menu.diagnostic() && menu.diagnosticStatus() == GarageDiagnostics.Status.READY;
+        repairButton.visible = menu.diagnostic(); repairButton.active = rechargeButton.active;
     }
     @Override protected void containerTick() { super.containerTick(); updateMode(); }
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
@@ -72,8 +78,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
                 graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.integrity", menu.integrity(), menu.damaged(), menu.modules()), 8, 74, 0xc9f5ff, false);
             }
             var result = Component.translatable("speeder.legacyoftheforce.recharge_" + menu.rechargeStatus().name().toLowerCase(Locale.ROOT));
-            graphics.drawString(font, font.plainSubstrByWidth(result.getString(), 130), 118, 95, 0xffd085, false);
-            graphics.drawString(font, font.plainSubstrByWidth(Component.translatable("speeder.legacyoftheforce.selection_hint").getString(), 240), 8, 114, 0xd5e9e9, false);
+            graphics.drawString(font, font.plainSubstrByWidth(result.getString(), 240), 8, 114, 0xffd085, false);
             graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xd5e9e9, false); return;
         }
         var stats = Component.translatable("speeder.legacyoftheforce.stats", String.format(Locale.ROOT, "%.1f", menu.mass()), String.format(Locale.ROOT, "%.1f", menu.thrust()));

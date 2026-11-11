@@ -99,18 +99,19 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 60)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 61)) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
         if (button == 59) {
             diagnostic.set(diagnostic() ? 0 : 1); inspectedVehicle = null; nextInspection = 0; nextAction = tick + 10; rechargeStatus.set(0);
             broadcastChanges(); return true;
         }
-        if (button == 60) {
+        if (button == 60 || button == 61) {
             if (!diagnostic() || inspectedVehicle == null) return false;
-            var result = access.evaluate((level, pos) -> SpeederAssemblyLifecycle.recharge(actor, pos, inspectedVehicle), SpeederRechargeService.Result.UNAVAILABLE);
+            var result = access.evaluate((level, pos) -> button == 60 ? SpeederAssemblyLifecycle.recharge(actor, pos, inspectedVehicle)
+                    : SpeederAssemblyLifecycle.repair(actor, pos, inspectedVehicle), SpeederRechargeService.Result.UNAVAILABLE);
             rechargeStatus.set(result.ordinal()); nextAction = tick + 10; nextInspection = 0; broadcastChanges();
-            return result == SpeederRechargeService.Result.CHARGED;
+            return result == SpeederRechargeService.Result.CHARGED || result == SpeederRechargeService.Result.REPAIRED;
         }
         if (diagnostic()) return false;
         if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }

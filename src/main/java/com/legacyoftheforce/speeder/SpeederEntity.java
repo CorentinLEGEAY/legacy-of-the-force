@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.*;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.portal.DimensionTransition;
@@ -22,10 +23,12 @@ public final class SpeederEntity extends Entity {
     private static final EntityDataAccessor<CompoundTag> DESIGN = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<Float> CHARGE = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<CompoundTag> HEALTH = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private VehicleState state = new VehicleState(new CompoundTag());
     private final ProtectedWorldService protection;
     private SpeederMotion.Input intent = SpeederMotion.Input.parked();
     private long lastInput = Long.MIN_VALUE;
+    private long nextDamage;
     private int lerpSteps;
     private double lerpX, lerpY, lerpZ, lerpYaw, lerpPitch;
 
@@ -34,7 +37,7 @@ public final class SpeederEntity extends Entity {
         super(type, level); this.protection = Objects.requireNonNull(protection); blocksBuilding = true;
     }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(DESIGN, new CompoundTag()); builder.define(CHARGE, 0f); builder.define(SPEED, 0f);
+        builder.define(DESIGN, new CompoundTag()); builder.define(CHARGE, 0f); builder.define(SPEED, 0f); builder.define(HEALTH, new CompoundTag());
     }
     public SpeederBlueprint design() { return new SpeederBlueprint(entityData.get(DESIGN)); }
     public Optional<SpeederBlueprint.Plan> visualPlan() {
@@ -45,6 +48,9 @@ public final class SpeederEntity extends Entity {
     public float charge() { return entityData.get(CHARGE); }
     public float speed() { return entityData.get(SPEED); }
     public VehicleState savedState() { return state; }
+    public int moduleHealth(int index) { var values = entityData.get(HEALTH).getIntArray("values"); return index >= 0 && index < values.length ? values[index] : 100; }
+    public int integrity() { var values = entityData.get(HEALTH).getIntArray("values"); return values.length == 0 ? 0 : Arrays.stream(values).sum() / values.length; }
+    public int damagedModules() { return (int)Arrays.stream(entityData.get(HEALTH).getIntArray("values")).filter(hp -> hp < 100).count(); }
 
     /** Package-private: only assembly/recovery and server integration tests may initialize an instance. */
     void initialize(VehicleState initial) {
@@ -60,6 +66,7 @@ public final class SpeederEntity extends Entity {
         state.snapshot().ifPresent(snapshot -> {
             var layout = snapshot.blueprint().tag(); if (!layout.equals(entityData.get(DESIGN))) entityData.set(DESIGN, layout);
             entityData.set(CHARGE, (float)snapshot.motion().energy()); entityData.set(SPEED, (float)snapshot.motion().speed());
+            var health = new CompoundTag(); health.putIntArray("values", snapshot.health()); if (!health.equals(entityData.get(HEALTH))) entityData.set(HEALTH, health);
         });
     }
     @Override protected void addAdditionalSaveData(CompoundTag tag) { tag.put("vehicleState", state.tag()); }
@@ -83,14 +90,49 @@ public final class SpeederEntity extends Entity {
         if (level().isClientSide || !updated.snapshot().orElseThrow().id().equals(getUUID())) throw new IllegalArgumentException("Invalid recharge state");
         state = updated; intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE; project();
     }
-    private boolean owner(ServerPlayer actor) {
+    private boolean ownedBy(ServerPlayer actor) {
         return supported().map(snapshot -> snapshot.owner().equals(actor.getUUID())).orElse(false)
                 && actor.isAlive() && !actor.isSpectator() && !actor.isFakePlayer() && actor.serverLevel() == level();
     }
+    private boolean owner(ServerPlayer actor) {
+        return ownedBy(actor) && state.snapshot().flatMap(snapshot -> SpeederPerformance.inspect(snapshot, SpeederCatalog.definitions()))
+                .map(performance -> performance.pilotWorking() && !performance.wrecked()).orElse(false);
+    }
+    @Override public boolean hurt(DamageSource source, float amount) {
+        if (!(level() instanceof ServerLevel level) || !level.getServer().isSameThread() || !Float.isFinite(amount) || amount <= 0
+                || isInvulnerableTo(source) || !(source.getEntity() instanceof ServerPlayer actor) || source.getDirectEntity() != actor
+                || !ownedBy(actor) || actor.isPassenger() || actor.distanceToSqr(this) > SpeederConfig.HIT_RANGE.get() * SpeederConfig.HIT_RANGE.get() || !actor.hasLineOfSight(this)
+                || !protection.mayModify(actor, level, blockPosition(), ModificationKind.PLACE)) return false;
+        var plan = state.snapshot().orElseThrow().blueprint().plan().orElseThrow();
+        double centerX = (plan.modules().stream().mapToInt(p -> p.at().x()).min().orElse(0) + plan.modules().stream().mapToInt(p -> p.at().x()).max().orElse(0)) / 2.0;
+        double centerZ = (plan.modules().stream().mapToInt(p -> p.at().z()).min().orElse(0) + plan.modules().stream().mapToInt(p -> p.at().z()).max().orElse(0)) / 2.0;
+        int floor = plan.modules().stream().mapToInt(p -> p.at().y()).min().orElse(0), closest = 0; double nearest = Double.POSITIVE_INFINITY;
+        double yaw = Math.toRadians(180 - getYRot()); var hitSide = actor.position().add(0, .25, 0);
+        for (int i = 0; i < plan.modules().size(); i++) {
+            var cell = plan.modules().get(i).at(); double x = (cell.x() - centerX) * .5, z = (cell.z() - centerZ) * .5;
+            var point = position().add(x * Math.cos(yaw) + z * Math.sin(yaw), (cell.y() - floor) * .5 + .25, -x * Math.sin(yaw) + z * Math.cos(yaw));
+            double distance = point.distanceToSqr(hitSide); if (distance < nearest) { nearest = distance; closest = i; }
+        }
+        return damageModule(closest, (int)Math.min(SpeederConfig.MAX_HIT_DAMAGE.get(), Math.ceil(amount * SpeederConfig.HIT_DAMAGE_SCALE.get())));
+    }
+    private boolean damageModule(int index, int loss) {
+        var snapshot = supported(); if (snapshot.isEmpty() || loss <= 0 || level().getGameTime() < nextDamage) return false;
+        if (!BlueprintValidator.inspect(snapshot.get().blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()) return false;
+        var health = new ArrayList<>(snapshot.get().health()); if (health.get(index) == 0) return false;
+        health.set(index, Math.max(0, health.get(index) - loss));
+        var damaged = state.withHealth(health, snapshot.get().motion().energy());
+        var performance = SpeederPerformance.inspect(damaged.snapshot().orElseThrow(), SpeederCatalog.definitions()); if (performance.isEmpty()) return false;
+        state = damaged.withHealth(health, Math.min(snapshot.get().motion().energy(), performance.get().stats().capacity()));
+        nextDamage = level().getGameTime() + SpeederConfig.DAMAGE_INTERVAL.get();
+        if (performance.get().wrecked() || !performance.get().pilotWorking()) ejectPassengers(); project(); return true;
+    }
     @Override public InteractionResult interact(net.minecraft.world.entity.player.Player actor, InteractionHand hand) {
         if (level().isClientSide) return InteractionResult.SUCCESS;
-        if (!(actor instanceof ServerPlayer player) || !owner(player) || !getPassengers().isEmpty()
+        if (!(actor instanceof ServerPlayer player) || !ownedBy(player) || !getPassengers().isEmpty()
                 || !protection.mayModify(player, player.serverLevel(), blockPosition(), ModificationKind.MOVE_THROUGH)) return InteractionResult.FAIL;
+        if (!owner(player)) {
+            player.sendSystemMessage(Component.translatable("message.legacyoftheforce.speeder_disabled")); return InteractionResult.FAIL;
+        }
         if (!BlueprintValidator.inspect(state.snapshot().orElseThrow().blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()) {
             player.sendSystemMessage(Component.translatable("message.legacyoftheforce.speeder_unsupported")); return InteractionResult.FAIL;
         }
@@ -117,11 +159,17 @@ public final class SpeederEntity extends Entity {
         var snapshot = supported(); if (snapshot.isEmpty()) { ejectPassengers(); return; }
         var layout = snapshot.get().blueprint(); var validated = BlueprintValidator.inspect(layout, SpeederCatalog.definitions(), SpeederConfig.limits());
         if (!validated.valid() || snapshot.get().motion().energy() > validated.stats().capacity()) { ejectPassengers(); return; }
+        var performance = SpeederPerformance.inspect(snapshot.get(), SpeederCatalog.definitions()).orElseThrow();
+        if (snapshot.get().motion().energy() > performance.stats().capacity()) {
+            state = state.withHealth(snapshot.get().health(), performance.stats().capacity()); snapshot = supported();
+        }
         var pilot = getFirstPassenger() instanceof ServerPlayer actor && owner(actor) ? actor : null;
         if (getFirstPassenger() != null && pilot == null) ejectPassengers();
         // A dropped/stalled input stream brakes and parks after eight server ticks.
         var command = pilot != null && level().getGameTime() - lastInput >= 0 && level().getGameTime() - lastInput <= 8 ? intent : SpeederMotion.Input.parked();
-        var step = SpeederMotion.tick(snapshot.get().motion(), command, validated.stats(), clearance(), SpeederConfig.motion());
+        var stats = performance.stats();
+        var loadedStats = new BlueprintValidator.Stats(stats.mass() + getPassengers().size() * SpeederConfig.PILOT_MASS.get(), stats.thrust(), stats.lift(), stats.capacity(), stats.stability());
+        var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor());
         double dx = step.dx(), dy = step.dy(), dz = step.dz();
         var target = getBoundingBox().move(dx, dy, dz);
         boolean blocked = !loadedAndAllowed(target, pilot);
@@ -135,6 +183,13 @@ public final class SpeederEntity extends Entity {
         if (getY() < level().getMinBuildHeight()) { setPos(getX(), level().getMinBuildHeight(), getZ()); vertical = 0; horizontal = 0; }
         var motion = new SpeederMotion.State(horizontal, vertical, step.state().yaw(), step.state().energy());
         state = state.withMotion(new VehicleState.Pose(level().dimension().location(), getX(), getY(), getZ()), motion);
+        if (!blocked && horizontalCollision && pilot != null && Math.abs(step.state().speed()) > SpeederConfig.COLLISION_THRESHOLD.get()
+                && protection.mayModify(pilot, (ServerLevel)level(), blockPosition(), ModificationKind.PLACE)) {
+            var parts = layout.plan().orElseThrow().modules();
+            for (int i = 0; i < parts.size(); i++) if (SpeederCatalog.definitions().get(parts.get(i).kind()).family() == SpeederModule.Family.CHASSIS && state.snapshot().orElseThrow().health().get(i) > 0) {
+                damageModule(i, (int)Math.min(SpeederConfig.MAX_HIT_DAMAGE.get(), Math.ceil((Math.abs(step.state().speed()) - SpeederConfig.COLLISION_THRESHOLD.get()) * SpeederConfig.COLLISION_DAMAGE_SCALE.get()))); break;
+            }
+        }
         setDeltaMovement(actual); project();
     }
     private OptionalDouble clearance() {

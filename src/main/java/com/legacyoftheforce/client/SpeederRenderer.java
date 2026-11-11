@@ -22,11 +22,13 @@ public final class SpeederRenderer extends EntityRenderer<SpeederEntity> {
             double centerZ = (parts.stream().mapToInt(p -> p.at().z()).min().orElse(0) + parts.stream().mapToInt(p -> p.at().z()).max().orElse(0)) / 2.0;
             int floor = parts.stream().mapToInt(p -> p.at().y()).min().orElse(0);
             poses.pushPose(); poses.mulPose(Axis.YP.rotationDegrees(180 - yaw));
-            for (var part : parts) {
+            for (int module = 0; module < parts.size(); module++) {
+                var part = parts.get(module);
                 int index = SpeederContent.index(part.kind()); if (index < 0) continue;
                 poses.pushPose(); poses.translate((part.at().x() - centerX) * .5, (part.at().y() - floor) * .5 + .25, (part.at().z() - centerZ) * .5);
                 poses.mulPose(Axis.YP.rotationDegrees(-90 * part.rotation())); poses.scale(.5f, .5f, .5f);
-                items.renderStatic(new ItemStack(SpeederContent.part(index)), ItemDisplayContext.NONE, light, OverlayTexture.NO_OVERLAY, poses, buffers, entity.level(), entity.getId());
+                items.renderStatic(new ItemStack(SpeederContent.part(index)), ItemDisplayContext.NONE, light,
+                        entity.moduleHealth(module) < 100 ? OverlayTexture.pack(0f, true) : OverlayTexture.NO_OVERLAY, poses, buffers, entity.level(), entity.getId());
                 poses.popPose();
             }
             poses.popPose();

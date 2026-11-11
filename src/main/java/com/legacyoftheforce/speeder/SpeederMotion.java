@@ -47,6 +47,11 @@ public final class SpeederMotion {
      */
     public static Step tick(State previous, Input input, BlueprintValidator.Stats stats,
             OptionalDouble groundClearance, Settings settings) {
+        return tick(previous, input, stats, groundClearance, settings, 1);
+    }
+    public static Step tick(State previous, Input input, BlueprintValidator.Stats stats,
+            OptionalDouble groundClearance, Settings settings, double engineFactor) {
+        range(engineFactor, 0, 1);
         range(stats.mass(), .1, 12_800); range(stats.thrust(), 0, 128_000);
         range(stats.lift(), 0, 128_000); range(stats.capacity(), 0, 12_800_000); range(stats.stability(), 0, 1);
         if (previous.energy() > stats.capacity()) throw new IllegalArgumentException("Charge exceeds capacity");
@@ -63,7 +68,10 @@ public final class SpeederMotion {
         boolean braking = !input.occupied() || power == 0 || speed * input.throttle() < 0;
         speed *= braking ? settings.brakingDrag() : settings.drag();
         speed += acceleration * input.throttle() * power;
-        speed = Math.clamp(speed, -settings.reverseSpeed(), settings.forwardSpeed());
+        // Lost propulsion brakes toward its reduced limit without erasing momentum in one tick.
+        double residual = Math.abs(previous.speed()) * settings.brakingDrag();
+        speed = Math.clamp(speed, -Math.min(settings.reverseSpeed(), Math.max(settings.reverseSpeed() * engineFactor, residual)),
+                Math.min(settings.forwardSpeed(), Math.max(settings.forwardSpeed() * engineFactor, residual)));
         double yaw = wrap(previous.yaw() - input.steering() * settings.turnDegrees() * stats.stability() * power);
 
         double vertical = previous.verticalSpeed() - settings.gravity();

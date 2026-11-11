@@ -42,4 +42,7 @@ public final class SpeederAssemblyLifecycle {
     public static SpeederRechargeService.Result recharge(ServerPlayer actor, BlockPos garage, UUID vehicle) {
         var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.recharge(actor, garage, vehicle);
     }
+    public static SpeederRechargeService.Result repair(ServerPlayer actor, BlockPos garage, UUID vehicle) {
+        var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.repair(actor, garage, vehicle);
+    }
 }

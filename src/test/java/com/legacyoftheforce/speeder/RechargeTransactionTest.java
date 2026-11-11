@@ -41,4 +41,15 @@ class RechargeTransactionTest {
         assertThrows(IllegalArgumentException.class, () -> done.phase(RechargeTransaction.Phase.PREPARED));
         assertThrows(IllegalArgumentException.class, () -> initial.phase(RechargeTransaction.Phase.DONE));
     }
+    @Test void repairSchemaChangesOneModuleWithoutGrantingChargeAndLegacyRechargeStaysIntact() {
+        var legacy = record(); var view = legacy.view();
+        var damaged = view.vehicle().withHealth(List.of(100, 20, 100, 100), 100);
+        var repair = RechargeTransaction.prepareRepair(view.owner(), view.operation(), view.before(), view.after(), damaged, List.of(100, 45, 100, 100));
+        assertTrue(repair.view().repair()); assertEquals(100, repair.view().charge()); assertEquals(List.of(100, 45, 100, 100), repair.view().health());
+        assertFalse(legacy.view().repair()); assertEquals(1, legacy.tag().getInt("schemaVersion"));
+        var energy = repair.tag(); energy.putDouble("charge", 101); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(energy).view());
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.prepareRepair(view.owner(), view.operation(), view.before(), view.after(), damaged, List.of(100, 20, 100, 100)));
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.prepareRepair(view.owner(), view.operation(), view.before(), view.after(), damaged, List.of(100, 45, 99, 100)));
+        var kind = repair.tag(); kind.putString("kind", "unknown"); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(kind).view());
+    }
 }

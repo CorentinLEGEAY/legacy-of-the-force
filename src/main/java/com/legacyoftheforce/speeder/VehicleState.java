@@ -63,6 +63,12 @@ public record VehicleState(CompoundTag tag) {
         if (!previous.pose().dimension().equals(pose.dimension())) throw new IllegalArgumentException("Vehicle dimension transfer refused");
         var updated = tag.copy(); writePose(updated, pose); writeMotion(updated, motion); return new VehicleState(updated);
     }
+    public VehicleState withHealth(List<Integer> health, double charge) {
+        var previous = snapshot().orElseThrow(() -> new IllegalStateException("Unsupported vehicle is read-only"));
+        if (health.size() != previous.health().size() || health.stream().anyMatch(hp -> hp == null || hp < 0 || hp > 100)
+                || !Double.isFinite(charge) || charge < 0 || charge > previous.motion().energy()) throw new IllegalArgumentException("Invalid health/charge change");
+        var updated = tag.copy(); updated.putIntArray("moduleHealth", health); updated.putDouble("energy", charge); return new VehicleState(updated);
+    }
 
     private static void writePose(CompoundTag tag, Pose pose) {
         tag.putString("dimension", pose.dimension().toString()); tag.putDouble("x", pose.x()); tag.putDouble("y", pose.y()); tag.putDouble("z", pose.z());

@@ -58,6 +58,15 @@ Formule d'essai de coût pour **passer du niveau L au niveau L+1** :
 - Vitesse, rayon de braquage, accélération, autonomie, blindage : calculés sur serveur ; formules centralisées.
 - Déplacement Force possible uniquement selon masse, occupation du véhicule, résistance et niveau ; limiter au freinage/stabilisation au MVP.
 
+### Ajout P3-03 — dégâts et entretien configurables
+- Santé d'un module : pourcentage entier sauvegardé0–100, sorties utiles multipliées par HP/100 ; la masse de la pièce ne disparaît pas avec ses HP.
+- `damage.healthLossPerDamagePoint=10`, `damage.maximumModuleLossPerHit=50`, `damage.minimumIntervalTicks=10`, `damage.ownerHitRangeBlocks=3` : coups directs du propriétaire seulement au prototype, sous permissions et ligne de vue.
+- `damage.minimumImpactSpeed=0.2` bloc/tick, `damage.healthLossPerImpactSpeed=100` : perte au-delà du seuil, plafonnée comme un coup, sur le châssis ; valeur0 du multiplicateur désactive ces dégâts d'impact.
+- `motion.pilotMass=2` : ajout à la masse de l'instance occupée. Le plan décrit toujours la masse des modules, pas celle d'un pilote présent.
+- `garage.healthPerRepairKit=25` : un module réparé par trousse (le plus abîmé, égalités dans l'ordre du plan), plafonné à100 ; pas de débit si tout est intact. Recette JSON de la trousse : fer2, cuivre1, redstone1. La batterie conserve sa charge restante ; sa réparation ne remplace pas une cellule.
+- `garage.minimumRechargeIntervalTicks=40` est désormais le délai commun recharge/réparation, conservant le nom de configuration existant. Recette et quantité restent dans les données content.
+- Ces valeurs initiales ne sont pas des décisions verrouillées du concepteur. Vitesse, impact, coûts et lisibilité des dégâts restent à équilibrer en partie réelle. Recyclage, dégâts de feu/lave et PvP véhicule non définis dans cette tranche.
+
 ## Planètes — proposition
 - Un type principal de cristal rare par planète ; rareté associée à la structure plutôt qu'à un taux de minerai omniprésent.
 - 1 boss Jedi et 1 boss Sith par planète ; arènes persistantes, réinvocation encadrée.

@@ -85,6 +85,7 @@ public final class SpeederEntityGameTests {
         double wall = helper.absolutePos(new BlockPos(5, 1, 9)).getZ();
         helper.assertTrue(vehicle.getZ() > initial.z + 1, "Vehicle must really move through the level");
         helper.assertTrue(vehicle.getBoundingBox().maxZ <= wall + 1e-5, "Collision must prevent crossing the wall");
+        helper.assertTrue(vehicle.moduleHealth(0) < 100, "Actual wall impact must damage the chassis through server collision physics");
         helper.assertTrue(Math.abs(vehicle.getY() - initial.y) < .1, "Hover must stay two blocks above the actual floor");
         helper.assertTrue(vehicle.charge() < 1000 && vehicle.charge() > 900, "Real drive consumes server energy");
         helper.assertTrue(vehicle.getDimensions(Pose.STANDING).width() == 1.5f && vehicle.getDimensions(Pose.STANDING).height() == 1, "Collision derives from the actual module span");

@@ -37,7 +37,7 @@ public final class GarageDiagnosticsGameTests {
         var before = owned.savedState().tag(); var inventory = actor.getInventory().save(new net.minecraft.nbt.ListTag());
         var report = GarageDiagnostics.inspect(actor, setup.garage(), null, (a, l, p, k) -> true);
         helper.assertTrue(report.status() == GarageDiagnostics.Status.READY && owned.getUUID().equals(report.vehicle()), "Closer foreign vehicle must not be selected");
-        helper.assertTrue(report.energy() == 173.25 && report.capacity() == 1000 && report.integrity() == 80
+        helper.assertTrue(report.energy() == 173.25 && report.capacity() == 800 && report.integrity() == 80
                 && report.damaged() == 2 && report.modules() == 4, "Diagnostic must use instance charge and module health, not blueprint defaults");
         helper.assertTrue(before.equals(owned.savedState().tag()) && inventory.equals(actor.getInventory().save(new net.minecraft.nbt.ListTag())), "Inspection must preserve opaque data, charge, identity and inventory");
         helper.assertTrue(actor.startRiding(owned), "Owner must be able to occupy the vehicle");

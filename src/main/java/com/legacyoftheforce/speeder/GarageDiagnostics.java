@@ -35,8 +35,9 @@ public final class GarageDiagnostics {
                 || state.motion().energy() > validation.stats().capacity()) return Report.unavailable(Status.UNSUPPORTED);
         int integrity = state.health().stream().mapToInt(Integer::intValue).sum() / state.health().size();
         int damaged = (int)state.health().stream().filter(health -> health < 100).count();
+        var performance = SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow();
         return new Report(vehicle.getPassengers().isEmpty() ? Status.READY : Status.OCCUPIED, vehicle.getUUID(),
-                state.motion().energy(), validation.stats().capacity(), integrity, damaged, state.health().size());
+                state.motion().energy(), performance.stats().capacity(), integrity, damaged, state.health().size());
     }
     private GarageDiagnostics() {}
 }

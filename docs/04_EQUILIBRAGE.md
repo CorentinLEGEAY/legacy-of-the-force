@@ -64,7 +64,8 @@ Formule d'essai de coût pour **passer du niveau L au niveau L+1** :
 - `damage.minimumImpactSpeed=0.2` bloc/tick, `damage.healthLossPerImpactSpeed=100` : perte au-delà du seuil, plafonnée comme un coup, sur le châssis ; valeur0 du multiplicateur désactive ces dégâts d'impact.
 - `motion.pilotMass=2` : ajout à la masse de l'instance occupée. Le plan décrit toujours la masse des modules, pas celle d'un pilote présent.
 - `garage.healthPerRepairKit=25` : un module réparé par trousse (le plus abîmé, égalités dans l'ordre du plan), plafonné à100 ; pas de débit si tout est intact. Recette JSON de la trousse : fer2, cuivre1, redstone1. La batterie conserve sa charge restante ; sa réparation ne remplace pas une cellule.
-- `garage.minimumRechargeIntervalTicks=40` est désormais le délai commun recharge/réparation, conservant le nom de configuration existant. Recette et quantité restent dans les données content.
+- `garage.minimumRechargeIntervalTicks=40` est le délai commun recharge/réparation/peinture, conservant le nom de configuration existant. Recette et quantité restent dans les données content.
+- `garage.dyePerPaint=1` (borné1–64) : teinture de la couleur choisie, par zone d'une instance entière. Paiement réparti sur les piles de l'inventaire natif si nécessaire ; couleur déjà identique = aucun coût. Palette du brouillon gratuite, fabrication initiale facturée en modules uniquement. Les deux zones suivent les16 teintures vanilla ; RGB24bits sauvegardé, sans effet sur les performances. C'est un choix d'équilibrage initial non verrouillé.
 - Ces valeurs initiales ne sont pas des décisions verrouillées du concepteur. Vitesse, impact, coûts et lisibilité des dégâts restent à équilibrer en partie réelle. Recyclage, dégâts de feu/lave et PvP véhicule non définis dans cette tranche.
 
 ## Planètes — proposition

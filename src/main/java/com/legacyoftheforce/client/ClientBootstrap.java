@@ -21,6 +21,7 @@ public final class ClientBootstrap {
         var forceKeys = new ForceKeys();
         NeoForge.EVENT_BUS.addListener(new SpeederControls()::tick);
         NeoForge.EVENT_BUS.addListener(new SpeederHud()::render);
+        modBus.addListener(SpeederColors::register);
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) ->
                 event.registerEntityRenderer(com.legacyoftheforce.speeder.SpeederContent.VEHICLE.get(), SpeederRenderer::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->

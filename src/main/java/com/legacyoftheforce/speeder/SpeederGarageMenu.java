@@ -22,6 +22,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private final DataSlot diagnostic = DataSlot.standalone(), diagnosticStatus = DataSlot.standalone(), integrity = DataSlot.standalone(), damaged = DataSlot.standalone(), modules = DataSlot.standalone();
     private final DataSlot[] vehicleId = new DataSlot[8];
     private final ProjectedFloat instanceEnergy = new ProjectedFloat(), instanceCapacity = new ProjectedFloat();
+    private final DataSlot paintDye = DataSlot.standalone(), paintZone = DataSlot.standalone(), dyeCost = DataSlot.standalone();
+    private final ProjectedColor draftPrimary = new ProjectedColor(), draftSecondary = new ProjectedColor(), instancePrimary = new ProjectedColor(), instanceSecondary = new ProjectedColor();
     private final DataSlot[] cells = new DataSlot[45], owned = new DataSlot[4];
     private final DataSlot selected = DataSlot.standalone(), rotation = DataSlot.standalone(), status = DataSlot.standalone(), error = DataSlot.standalone();
     private final ProjectedFloat mass = new ProjectedFloat(), thrust = new ProjectedFloat(), lift = new ProjectedFloat(), capacity = new ProjectedFloat(), stability = new ProjectedFloat();
@@ -30,6 +32,12 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         private ProjectedFloat() { addDataSlot(high); addDataSlot(low); }
         private void set(double value) { int bits = Float.floatToIntBits((float) value); high.set((short) (bits >>> 16)); low.set((short) bits); }
         private float get() { return Float.intBitsToFloat((high.get() & 0xffff) << 16 | low.get() & 0xffff); }
+    }
+    private final class ProjectedColor {
+        private final DataSlot high = DataSlot.standalone(), low = DataSlot.standalone();
+        private ProjectedColor() { addDataSlot(high); addDataSlot(low); }
+        private void set(int value) { high.set(value >>> 16 & 255); low.set((short)value); }
+        private int get() { return (high.get() & 255) << 16 | low.get() & 0xffff; }
     }
     public SpeederGarageMenu(int id, Inventory inventory) { this(id, inventory, ContainerLevelAccess.NULL); }
     public SpeederGarageMenu(int id, Inventory inventory, ContainerLevelAccess access) {
@@ -44,6 +52,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         for (int i = 0; i < owned.length; i++) { owned[i] = DataSlot.standalone(); addDataSlot(owned[i]); }
         addDataSlot(selected); addDataSlot(rotation); addDataSlot(status); addDataSlot(error);
         for (var projection : List.of(diagnostic, diagnosticStatus, integrity, damaged, modules, rechargeStatus)) addDataSlot(projection);
+        addDataSlot(paintDye); addDataSlot(paintZone); addDataSlot(dyeCost);
         for (int i = 0; i < vehicleId.length; i++) { vehicleId[i] = DataSlot.standalone(); addDataSlot(vehicleId[i]); }
         status.set((readOnly ? Status.READ_ONLY : originalId == null ? Status.HOLD_BLUEPRINT : Status.EDITING).ordinal());
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
@@ -60,6 +69,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public int integrity() { return integrity.get(); }
     public int damaged() { return damaged.get(); }
     public int modules() { return modules.get(); }
+    public int primaryColor() { return diagnostic() ? instancePrimary.get() : draftPrimary.get(); }
+    public int secondaryColor() { return diagnostic() ? instanceSecondary.get() : draftSecondary.get(); }
+    public net.minecraft.world.item.DyeColor paintDye() { return net.minecraft.world.item.DyeColor.byId(Math.clamp(paintDye.get(), 0, 15)); }
+    public boolean primaryZone() { return paintZone.get() == 0; }
+    public int dyeCost() { return dyeCost.get(); }
     public SpeederRechargeService.Result rechargeStatus() { return SpeederRechargeService.Result.values()[Math.clamp(rechargeStatus.get(), 0, SpeederRechargeService.Result.values().length - 1)]; }
     public UUID inspectedVehicle() {
         long high = 0, low = 0;
@@ -74,12 +88,15 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public BlueprintValidator.Error error() { return BlueprintValidator.Error.values()[Math.clamp(error.get(), 0, BlueprintValidator.Error.values().length - 1)]; }
     @Override public void broadcastChanges() {
         if (!inventory.player.level().isClientSide()) {
+            dyeCost.set(SpeederConfig.PAINT_DYE_COST.get());
+            draftPrimary.set(draft.plan().map(SpeederBlueprint.Plan::primary).orElse(0)); draftSecondary.set(draft.plan().map(SpeederBlueprint.Plan::secondary).orElse(0));
             if (diagnostic() && inventory.player instanceof ServerPlayer actor && actor.server.overworld().getGameTime() >= nextInspection) {
                 var report = access.evaluate((level, pos) -> GarageDiagnostics.inspect(actor, pos, inspectedVehicle,
                         new com.legacyoftheforce.core.security.VanillaProtectedWorldService()), GarageDiagnostics.Report.unavailable(GarageDiagnostics.Status.DENIED));
                 if (inspectedVehicle == null && report.vehicle() != null) inspectedVehicle = report.vehicle();
                 diagnosticStatus.set(report.status().ordinal()); instanceEnergy.set(report.energy()); instanceCapacity.set(report.capacity());
                 integrity.set(report.integrity()); damaged.set(report.damaged()); modules.set(report.modules());
+                instancePrimary.set(report.primary()); instanceSecondary.set(report.secondary());
                 var id = report.vehicle() == null ? new UUID(0, 0) : report.vehicle();
                 for (int i = 0; i < 4; i++) { vehicleId[i].set((short)(id.getMostSignificantBits() >>> (48 - i * 16))); vehicleId[i + 4].set((short)(id.getLeastSignificantBits() >>> (48 - i * 16))); }
                 nextInspection = actor.server.overworld().getGameTime() + 10;
@@ -99,22 +116,33 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 61)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 65)) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 62 || button == 63) {
+            if (button == 62) paintDye.set((paintDye.get() + 1) % 16); else paintZone.set(primaryZone() ? 1 : 0);
+            nextAction = tick + 2; broadcastChanges(); return true;
+        }
         if (button == 59) {
             diagnostic.set(diagnostic() ? 0 : 1); inspectedVehicle = null; nextInspection = 0; nextAction = tick + 10; rechargeStatus.set(0);
             broadcastChanges(); return true;
         }
-        if (button == 60 || button == 61) {
+        if (button == 60 || button == 61 || button == 65) {
             if (!diagnostic() || inspectedVehicle == null) return false;
             var result = access.evaluate((level, pos) -> button == 60 ? SpeederAssemblyLifecycle.recharge(actor, pos, inspectedVehicle)
-                    : SpeederAssemblyLifecycle.repair(actor, pos, inspectedVehicle), SpeederRechargeService.Result.UNAVAILABLE);
+                    : button == 61 ? SpeederAssemblyLifecycle.repair(actor, pos, inspectedVehicle)
+                    : SpeederAssemblyLifecycle.paint(actor, pos, inspectedVehicle, primaryZone(), paintDye()), SpeederRechargeService.Result.UNAVAILABLE);
             rechargeStatus.set(result.ordinal()); nextAction = tick + 10; nextInspection = 0; broadcastChanges();
-            return result == SpeederRechargeService.Result.CHARGED || result == SpeederRechargeService.Result.REPAIRED;
+            return result == SpeederRechargeService.Result.CHARGED || result == SpeederRechargeService.Result.REPAIRED || result == SpeederRechargeService.Result.PAINTED;
         }
         if (diagnostic()) return false;
         if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }
+        if (button == 64) {
+            if (originalId == null) { status.set(Status.HOLD_BLUEPRINT.ordinal()); return false; }
+            var plan = draft.plan().orElseThrow(); int color = paintDye().getTextureDiffuseColor() & 0xffffff;
+            draft = draft.withColors(primaryZone() ? color : plan.primary(), primaryZone() ? plan.secondary() : color);
+            status.set(Status.EDITING.ordinal()); nextAction = tick + 2; broadcastChanges(); return true;
+        }
         if (button == 58) {
             if (assemblyAttemptClosed) return false;
             var held = actor.getMainHandItem(); var current = held.get(SpeederContent.BLUEPRINT.get());

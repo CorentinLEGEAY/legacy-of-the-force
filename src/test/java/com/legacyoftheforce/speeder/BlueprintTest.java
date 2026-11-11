@@ -28,6 +28,16 @@ class BlueprintTest {
         assertTrue(future.plan().isEmpty()); assertEquals(tag, future.tag());
         assertThrows(IllegalArgumentException.class, () -> future.withModules(List.of()));
     }
+    @Test void paletteCopyIsBoundedAndPreservesOpaqueLayoutAndIdentityData() {
+        var raw = starter().tag(); raw.putString("extension", "keep"); raw.getList("modules", net.minecraft.nbt.Tag.TAG_COMPOUND).getCompound(0).putString("moduleExtension", "keep");
+        var original = new SpeederBlueprint(raw); var colored = original.withColors(0xffffff, 0x000000);
+        var expected = raw.copy(); expected.putInt("primary", 0xffffff); expected.putInt("secondary", 0);
+        assertEquals(expected, colored.tag()); assertEquals(raw, original.tag()); assertEquals(original.plan().orElseThrow().modules(), colored.plan().orElseThrow().modules());
+        assertThrows(IllegalArgumentException.class, () -> original.withColors(-1, 0));
+        assertThrows(IllegalArgumentException.class, () -> original.withColors(0, 0x1000000));
+        raw.putInt("schemaVersion", 99); var future = new SpeederBlueprint(raw);
+        assertThrows(IllegalArgumentException.class, () -> future.withColors(0, 0)); assertEquals(raw, future.tag());
+    }
     @Test void fourConnectedFamiliesProduceBoundedStatsAndAnExactMaterialBill() {
         var result = BlueprintValidator.inspect(starter(), catalog(), LIMITS);
         assertTrue(result.valid()); assertEquals(8, result.stats().mass()); assertEquals(25, result.stats().thrust());

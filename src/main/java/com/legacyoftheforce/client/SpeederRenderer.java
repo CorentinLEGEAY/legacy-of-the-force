@@ -27,7 +27,7 @@ public final class SpeederRenderer extends EntityRenderer<SpeederEntity> {
                 int index = SpeederContent.index(part.kind()); if (index < 0) continue;
                 poses.pushPose(); poses.translate((part.at().x() - centerX) * .5, (part.at().y() - floor) * .5 + .25, (part.at().z() - centerZ) * .5);
                 poses.mulPose(Axis.YP.rotationDegrees(-90 * part.rotation())); poses.scale(.5f, .5f, .5f);
-                items.renderStatic(new ItemStack(SpeederContent.part(index)), ItemDisplayContext.NONE, light,
+                items.renderStatic(SpeederColors.module(index, plan.get().primary(), plan.get().secondary()), ItemDisplayContext.NONE, light,
                         entity.moduleHealth(module) < 100 ? OverlayTexture.pack(0f, true) : OverlayTexture.NO_OVERLAY, poses, buffers, entity.level(), entity.getId());
                 poses.popPose();
             }

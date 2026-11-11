@@ -52,4 +52,8 @@ public record SpeederBlueprint(CompoundTag tag) {
         }
         var updated = tag.copy(); updated.put("modules", list); return new SpeederBlueprint(updated);
     }
+    public SpeederBlueprint withColors(int primary, int secondary) {
+        if (plan().isEmpty() || primary < 0 || primary > 0xffffff || secondary < 0 || secondary > 0xffffff) throw new IllegalArgumentException("Unsupported palette");
+        var updated = tag.copy(); updated.putInt("primary", primary); updated.putInt("secondary", secondary); return new SpeederBlueprint(updated);
+    }
 }

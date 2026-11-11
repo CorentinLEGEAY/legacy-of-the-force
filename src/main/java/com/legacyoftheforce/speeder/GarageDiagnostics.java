@@ -10,8 +10,8 @@ import net.minecraft.world.phys.AABB;
 /** Read-only inspection of a loaded, owned instance. Selection never loads or creates an entity. */
 public final class GarageDiagnostics {
     public enum Status { NONE, READY, OCCUPIED, UNSUPPORTED, DENIED, LOST }
-    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules) {
-        static Report unavailable(Status status) { return new Report(status, null, 0, 0, 0, 0, 0); }
+    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules, int primary, int secondary) {
+        static Report unavailable(Status status) { return new Report(status, null, 0, 0, 0, 0, 0, 0, 0); }
     }
     public static Report inspect(ServerPlayer actor, BlockPos garage, UUID selected, ProtectedWorldService protection) {
         var level = actor.serverLevel();
@@ -37,7 +37,8 @@ public final class GarageDiagnostics {
         int damaged = (int)state.health().stream().filter(health -> health < 100).count();
         var performance = SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow();
         return new Report(vehicle.getPassengers().isEmpty() ? Status.READY : Status.OCCUPIED, vehicle.getUUID(),
-                state.motion().energy(), performance.stats().capacity(), integrity, damaged, state.health().size());
+                state.motion().energy(), performance.stats().capacity(), integrity, damaged, state.health().size(),
+                state.blueprint().plan().orElseThrow().primary(), state.blueprint().plan().orElseThrow().secondary());
     }
     private GarageDiagnostics() {}
 }

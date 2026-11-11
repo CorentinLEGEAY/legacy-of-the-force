@@ -52,4 +52,16 @@ class RechargeTransactionTest {
         assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.prepareRepair(view.owner(), view.operation(), view.before(), view.after(), damaged, List.of(100, 45, 99, 100)));
         var kind = repair.tag(); kind.putString("kind", "unknown"); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(kind).view());
     }
+    @Test void paintSchemaCanChangeOneColorOnlyAndKeepsPriorFormatsReadable() {
+        var legacy = record(); var view = legacy.view(); var design = view.vehicle().snapshot().orElseThrow().blueprint(); var old = design.plan().orElseThrow();
+        var target = design.withColors(0x123456, old.secondary());
+        var paint = RechargeTransaction.preparePaint(view.owner(), view.operation(), view.before(), view.after(), view.vehicle(), target);
+        assertTrue(paint.view().paint()); assertFalse(paint.view().repair()); assertEquals(target, paint.view().blueprint()); assertEquals(100, paint.view().charge());
+        assertEquals(view.health(), paint.view().health()); assertFalse(legacy.view().paint()); assertEquals(design, legacy.view().blueprint());
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.preparePaint(view.owner(), view.operation(), view.before(), view.after(), view.vehicle(), design));
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.preparePaint(view.owner(), view.operation(), view.before(), view.after(), view.vehicle(), design.withColors(0, 0)));
+        var altered = target.tag(); altered.putString("name", "not a paint operation");
+        assertThrows(IllegalArgumentException.class, () -> RechargeTransaction.preparePaint(view.owner(), view.operation(), view.before(), view.after(), view.vehicle(), new SpeederBlueprint(altered)));
+        var charge = paint.tag(); charge.putDouble("charge", 101); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(charge).view());
+    }
 }

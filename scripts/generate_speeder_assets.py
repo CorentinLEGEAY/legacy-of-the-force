@@ -11,16 +11,17 @@ def write(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 textures = {"iron": "minecraft:block/iron_block", "copper": "minecraft:block/copper_block",
-            "dark": "minecraft:block/black_concrete", "red": "minecraft:block/redstone_block", "blue": "minecraft:block/light_blue_concrete"}
+            "dark": "minecraft:block/black_concrete", "red": "minecraft:block/redstone_block", "blue": "minecraft:block/light_blue_concrete",
+            "paint": "minecraft:block/white_concrete"}
 
 def cuboid(start, end, material):
-    return {"from": start, "to": end, "faces": {face: {"texture": "#" + material, "uv": [0, 0, 16, 16]} for face in ["up", "down", "north", "south", "east", "west"]}}
+    return {"from": start, "to": end, "faces": {face: dict({"texture": "#" + material, "uv": [0, 0, 16, 16]}, **({"tintindex": 0} if material == "paint" else {})) for face in ["up", "down", "north", "south", "east", "west"]}}
 
 geometry = {
-    "chassis_light": [cuboid([1, 4, 1], [15, 8, 15], "iron"), cuboid([2, 8, 6], [14, 10, 10], "dark")],
-    "engine_standard": [cuboid([3, 3, 3], [13, 11, 13], "iron"), cuboid([2, 5, 2], [14, 9, 14], "copper"), cuboid([5, 5, 13], [11, 9, 16], "dark")],
-    "battery_small": [cuboid([4, 2, 4], [12, 12, 12], "dark"), cuboid([4, 12, 4], [12, 14, 12], "red"), cuboid([6, 14, 6], [10, 15, 10], "copper")],
-    "seat_pilot": [cuboid([3, 3, 3], [13, 7, 13], "dark"), cuboid([3, 7, 10], [13, 14, 13], "dark"), cuboid([6, 0, 6], [10, 3, 10], "iron")],
+    "chassis_light": [cuboid([1, 4, 1], [15, 8, 15], "paint"), cuboid([2, 8, 6], [14, 10, 10], "dark")],
+    "engine_standard": [cuboid([3, 3, 3], [13, 11, 13], "paint"), cuboid([2, 5, 2], [14, 9, 14], "copper"), cuboid([5, 5, 13], [11, 9, 16], "dark")],
+    "battery_small": [cuboid([4, 2, 4], [12, 12, 12], "paint"), cuboid([4, 12, 4], [12, 14, 12], "red"), cuboid([6, 14, 6], [10, 15, 10], "copper")],
+    "seat_pilot": [cuboid([3, 3, 3], [13, 7, 13], "paint"), cuboid([3, 7, 10], [13, 14, 13], "paint"), cuboid([6, 0, 6], [10, 3, 10], "iron")],
 }
 for name, elements in geometry.items():
     if name != "seat_pilot":

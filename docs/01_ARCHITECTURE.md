@@ -104,6 +104,10 @@ Le journal/reçu historiquement nommés `speeder_recharge` restent stables. Le s
 
 Le HUD/rendu reçoivent les HP en lecture seule via les données synchronisées de l'entité. Les modules abîmés utilisent une surimpression rouge ; ils restent visibles, y compris les pièces détruites de l'épave. Aucun module n'est créé ou supprimé par la seule représentation client. Validation visuelle et réseau prolongée restent ouvertes.
 
+Le schéma3 `kind=paint` du même journal ajoute une cible de plan dont **une seule** zone primaire/secondaire diffère. UUID/auteur/nom/grille/modules/extensions sont comparés exactement ; HP et énergie restent inchangés. Une teinture choisie parmi les16 couleurs vanilla est payée côté serveur, au tarif configurable `garage.dyePerPaint`. Le plan papier n'est pas modifié par une peinture d'instance ; sa palette se règle séparément dans le brouillon puis Enregistrer. La couleur du plan s'applique à la fabrication neuve, dont la facture reste celle des modules. Le repeint d'une instance utilise le paiement durable commun, sans journal parallèle. Les lecteurs1/2 restent pris en charge, sans réécriture de leurs formats.
+
+`SpeederColors` est exclusivement client : piles d'items temporaires munies du composant vanilla `DYED_COLOR`, faces `tintindex=0` sur les corps des modèles et gestionnaire de couleurs client. Châssis/siège utilisent la primaire, moteur/batterie la secondaire ; connecteurs et accents métalliques gardent leur texture. Ces piles ne sont jamais insérées dans l'inventaire. Le monde projette son propre plan de l'instance ; aucune valeur RGB client n'est acceptée comme état autoritaire. Le rendu est branché mais pas encore observé graphiquement.
+
 ### Évolution de schéma
 Chaque structure enregistrée inclut `schemaVersion`. Lire anciennes versions avec migrations idempotentes ; en cas de format inconnu, refuser l'action dangereuse et conserver les données originales. Jamais supprimer silencieusement un sabre ou véhicule.
 

@@ -11,6 +11,7 @@ public final class SpeederConfig {
     public static final ModConfigSpec.DoubleValue CELL_ENERGY;
     public static final ModConfigSpec.IntValue RECHARGE_INTERVAL;
     public static final ModConfigSpec.IntValue REPAIR_POINTS, DAMAGE_INTERVAL, MAX_HIT_DAMAGE;
+    public static final ModConfigSpec.IntValue PAINT_DYE_COST;
     public static final ModConfigSpec.DoubleValue HIT_DAMAGE_SCALE, COLLISION_THRESHOLD, COLLISION_DAMAGE_SCALE, PILOT_MASS, HIT_RANGE;
     public static final ModConfigSpec.DoubleValue FORWARD_SPEED, REVERSE_SPEED, ACCELERATION_SCALE, MAX_ACCELERATION,
             TURN_DEGREES, DRAG, BRAKING_DRAG, HOVER_HEIGHT, HOVER_GAIN, VERTICAL_DAMPING, VERTICAL_SPEED,
@@ -26,6 +27,7 @@ public final class SpeederConfig {
         CELL_ENERGY = builder.defineInRange("garage.energyPerCell", 250.0, 1.0, 1000000.0);
         RECHARGE_INTERVAL = builder.defineInRange("garage.minimumRechargeIntervalTicks", 40, 1, 1200);
         REPAIR_POINTS = builder.defineInRange("garage.healthPerRepairKit", 25, 1, 100);
+        PAINT_DYE_COST = builder.defineInRange("garage.dyePerPaint", 1, 1, 64);
         DAMAGE_INTERVAL = builder.defineInRange("damage.minimumIntervalTicks", 10, 1, 1200);
         MAX_HIT_DAMAGE = builder.defineInRange("damage.maximumModuleLossPerHit", 50, 1, 100);
         HIT_DAMAGE_SCALE = builder.defineInRange("damage.healthLossPerDamagePoint", 10.0, .1, 100.0);

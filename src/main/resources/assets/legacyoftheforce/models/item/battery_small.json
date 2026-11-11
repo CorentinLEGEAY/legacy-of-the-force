@@ -6,6 +6,7 @@
     "dark": "minecraft:block/black_concrete",
     "red": "minecraft:block/redstone_block",
     "blue": "minecraft:block/light_blue_concrete",
+    "paint": "minecraft:block/white_concrete",
     "particle": "minecraft:block/iron_block"
   },
   "elements": [
@@ -22,58 +23,64 @@
       ],
       "faces": {
         "up": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "down": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
-          "texture": "#dark",
+          "texture": "#paint",
           "uv": [
             0,
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },

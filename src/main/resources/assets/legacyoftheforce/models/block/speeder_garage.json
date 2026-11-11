@@ -6,6 +6,7 @@
     "dark": "minecraft:block/black_concrete",
     "red": "minecraft:block/redstone_block",
     "blue": "minecraft:block/light_blue_concrete",
+    "paint": "minecraft:block/white_concrete",
     "particle": "minecraft:block/iron_block"
   },
   "elements": [

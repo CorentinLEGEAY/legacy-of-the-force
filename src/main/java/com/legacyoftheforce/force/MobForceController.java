@@ -42,7 +42,7 @@ public final class MobForceController {
     }
 
     public ForceResult castAt(ServerPlayer actor, Mob target, ForceAction action) {
-        if (actor == null || target == null || action == null || !actor.serverLevel().getServer().isSameThread()
+        if (actor == null || target == null || (action != ForceAction.PUSH && action != ForceAction.PULL) || !actor.serverLevel().getServer().isSameThread()
                 || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator() || actor.level() != target.level()
                 || !target.isAlive() || target.isRemoved()) return ForceResult.no("invalid_target");
         if (target.getType().is(IMMUNE) || target.getType().is(BOSSES)) return ForceResult.no("resistant_target");

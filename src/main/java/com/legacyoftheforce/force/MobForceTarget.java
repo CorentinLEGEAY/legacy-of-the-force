@@ -19,7 +19,7 @@ public final class MobForceTarget implements ForceTargetAdapter {
     }
     @Override public double resistance() { return target.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE); }
     @Override public boolean canManipulate(ServerPlayer actor, ForceAction action) {
-        return target.isAlive() && !target.isNoAi() && !target.isPassenger() && !target.isVehicle() && actor.level() == target.level();
+        return (action == ForceAction.PUSH || action == ForceAction.PULL) && target.isAlive() && !target.isNoAi() && !target.isPassenger() && !target.isVehicle() && actor.level() == target.level();
     }
     @Override public void applyImpulse(Vec3 velocity) {
         target.setDeltaMovement(velocity); target.hasImpulse = true; target.hurtMarked = true;

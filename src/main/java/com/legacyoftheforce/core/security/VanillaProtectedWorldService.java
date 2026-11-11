@@ -22,14 +22,14 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
     }
 
     @Override public boolean mayMoveEntity(ServerPlayer actor, Entity target, BlockPos position) {
-        if (actor == null || !(target instanceof Mob mob) || position == null || !actor.serverLevel().getServer().isSameThread()
+        if (actor == null || target == null || (!(target instanceof Mob) && !(target instanceof com.legacyoftheforce.core.api.VehicleForceTargetProvider)) || position == null || !actor.serverLevel().getServer().isSameThread()
                 || actor.serverLevel() != target.level() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer()
-                || !mob.isAlive() || mob.isPassenger() || mob.isVehicle()) return false;
+                || !target.isAlive() || target.isPassenger() || target.isVehicle()) return false;
         var level = actor.serverLevel();
         if (!level.isInWorldBounds(position) || !level.hasChunkAt(position) || !level.getWorldBorder().isWithinBounds(position)
                 || level.getServer().isUnderSpawnProtection(level, position, actor)) return false;
-        if (mob instanceof TamableAnimal tame && tame.isTame() && !actor.getUUID().equals(tame.getOwnerUUID())) return false;
-        if (mob instanceof AbstractHorse horse && horse.isTamed() && !actor.getUUID().equals(horse.getOwnerUUID())) return false;
+        if (target instanceof TamableAnimal tame && tame.isTame() && !actor.getUUID().equals(tame.getOwnerUUID())) return false;
+        if (target instanceof AbstractHorse horse && horse.isTamed() && !actor.getUUID().equals(horse.getOwnerUUID())) return false;
         for (var policy : policies) {
             try { if (!policy.allowsEntity(actor, target, position)) return false; }
             catch (RuntimeException unavailableAdapter) { return false; }

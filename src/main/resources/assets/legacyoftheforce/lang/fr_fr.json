@@ -221,5 +221,11 @@
   "speeder.legacyoftheforce.recharge_not_wrecked": "Seule une épave peut être recyclée",
   "speeder.legacyoftheforce.recharge_inventory_full": "Libérez de la place pour toutes les matières",
   "speeder.legacyoftheforce.recharge_unsupported_storage": "Stockage ou butin inconnu ; épave conservée",
-  "speeder.legacyoftheforce.recharge_confirm_recycle": "Validez sous 5 secondes pour retirer cette épave"
+  "speeder.legacyoftheforce.recharge_confirm_recycle": "Validez sous 5 secondes pour retirer cette épave",
+  "force.legacyoftheforce.vehicle_stabilized": "Véhicule stabilisé",
+  "force.legacyoftheforce.vehicle_braked": "Véhicule ralenti",
+  "force.legacyoftheforce.no_vehicle_target": "Visez un speeder visible",
+  "force.legacyoftheforce.vehicle_unavailable": "Véhicule possédé, vide, en mouvement et autorisé requis",
+  "key.legacyoftheforce.force_stabilize": "Stabiliser un speeder inoccupé",
+  "key.legacyoftheforce.force_brake": "Ralentir un speeder inoccupé"
 }

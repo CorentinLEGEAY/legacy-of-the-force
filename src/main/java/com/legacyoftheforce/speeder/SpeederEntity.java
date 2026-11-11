@@ -2,6 +2,9 @@ package com.legacyoftheforce.speeder;
 
 import com.legacyoftheforce.core.api.ModificationKind;
 import com.legacyoftheforce.core.api.ProtectedWorldService;
+import com.legacyoftheforce.core.api.ForceAction;
+import com.legacyoftheforce.core.api.ForceTargetAdapter;
+import com.legacyoftheforce.core.api.VehicleForceTargetProvider;
 import com.legacyoftheforce.core.security.VanillaProtectedWorldService;
 import java.util.*;
 import net.minecraft.core.BlockPos;
@@ -19,7 +22,7 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.*;
 
 /** The pilot sends intentions; this entity never accepts a client-controlled vehicle position. */
-public final class SpeederEntity extends Entity {
+public final class SpeederEntity extends Entity implements VehicleForceTargetProvider {
     private static final EntityDataAccessor<CompoundTag> DESIGN = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.COMPOUND_TAG);
     private static final EntityDataAccessor<Float> CHARGE = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
@@ -59,6 +62,39 @@ public final class SpeederEntity extends Entity {
     public float charge() { return entityData.get(CHARGE); }
     public float speed() { return entityData.get(SPEED); }
     public VehicleState savedState() { return state; }
+    @Override public ForceTargetAdapter forceTarget(ProtectedWorldService policy) {
+        return new ForceTargetAdapter() {
+            @Override public UUID id() { return getUUID(); }
+            @Override public double effectiveMass() {
+                return state.snapshot().flatMap(s -> SpeederPerformance.inspect(s, SpeederCatalog.definitions()))
+                        .map(p -> p.stats().mass() + getPassengers().size() * SpeederConfig.PILOT_MASS.get()).orElse(Double.NaN);
+            }
+            @Override public double resistance() { return 0; }
+            @Override public boolean canManipulate(ServerPlayer actor, ForceAction action) {
+                if (actor == null || !actor.server.isSameThread() || !ownedBy(actor) || actor.isPassenger() || !getPassengers().isEmpty()
+                        || !(level() instanceof ServerLevel level) || level.getEntity(getUUID()) != SpeederEntity.this
+                        || !Double.isFinite(getDeltaMovement().lengthSqr()) || (action != ForceAction.STABILIZE && action != ForceAction.BRAKE)) return false;
+                var snapshot = state.snapshot().orElseThrow();
+                if (!BlueprintValidator.inspect(snapshot.blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()
+                        || !SpeederRetirement.supportedStorage(SpeederEntity.this)
+                        || SpeederPerformance.inspect(snapshot, SpeederCatalog.definitions()).orElseThrow().wrecked()
+                        || !loadedAndAllowed(getBoundingBox(), actor)) return false;
+                for (var pos : BlockPos.betweenClosedStream(getBoundingBox().deflate(.001)).toList())
+                    if (!policy.mayMoveEntity(actor, SpeederEntity.this, pos)) return false;
+                return Math.abs(action == ForceAction.STABILIZE ? snapshot.motion().verticalSpeed() : snapshot.motion().speed()) > .0001;
+            }
+            @Override public void dampMotion(ServerPlayer actor, ForceAction action, double retention) {
+                if (!Double.isFinite(retention) || retention < 0 || retention > 1 || !canManipulate(actor, action)) throw new IllegalArgumentException("Invalid vehicle damping");
+                var snapshot = state.snapshot().orElseThrow(); var motion = snapshot.motion(); var delta = getDeltaMovement();
+                boolean vertical = action == ForceAction.STABILIZE;
+                state = state.withMotion(new VehicleState.Pose(level().dimension().location(), getX(), getY(), getZ()),
+                        new SpeederMotion.State(vertical ? motion.speed() : motion.speed() * retention,
+                                vertical ? motion.verticalSpeed() * retention : motion.verticalSpeed(), motion.yaw(), motion.energy()));
+                setDeltaMovement(vertical ? new Vec3(delta.x, delta.y * retention, delta.z) : new Vec3(delta.x * retention, delta.y, delta.z * retention));
+                intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE; hasImpulse = true; project();
+            }
+        };
+    }
     public int moduleHealth(int index) { var values = entityData.get(HEALTH).getIntArray("values"); return index >= 0 && index < values.length ? values[index] : 100; }
     public int integrity() { var values = entityData.get(HEALTH).getIntArray("values"); return values.length == 0 ? 0 : Arrays.stream(values).sum() / values.length; }
     public int damagedModules() { return (int)Arrays.stream(entityData.get(HEALTH).getIntArray("values")).filter(hp -> hp < 100).count(); }

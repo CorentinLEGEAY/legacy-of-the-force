@@ -24,6 +24,8 @@ core (config, registres, API, réseau, permissions, événements, sauvegardes)
 Les flèches représentent l'usage **d'API publiques** ; n'autoriser aucun cycle d'import. Les intégrations transverses passent par un service/registre, événement ou contrat commun, pas des imports réciproques.
 
 ## Contrats métier à définir dans `core.api`
+
+P3-04 : les entités de véhicule publient `VehicleForceTargetProvider` qui fournit un `ForceTargetAdapter`. Le contrôleur Force ne dépend d'aucune classe interne speeder. Actions `STABILIZE`/`BRAKE` distinctes de PUSH/PULL ; l'adaptateur ne prend en charge que les opérations qu'il autorise via canManipulate. Les méthodes d'impulsion/amortissement non prises en charge échouent explicitement. Le module speeder décide de la mutation de sa vitesse autoritaire et valide de nouveau propriétaire, occupation, verrou, stockage et droits de l'enveloppe ; Force choisit la cible visible, vérifie niveau/masse/énergie et paie le pouvoir RPG partagé. Opération ponctuelle sans canal sauvegardé, ni déplacement arbitraire ni émission de dégâts. Cooldown `legacyoftheforce:vehicle_control` sauvegardé dans le profil RPG ; état d'instance schéma1 reste inchangé.
 Ce sont des **signatures conceptuelles**, pas des API NeoForge existantes. Codex doit les adapter en Java réel avec tests :
 
 ```java

@@ -221,5 +221,11 @@
   "speeder.legacyoftheforce.recharge_not_wrecked": "Only a wreck can be recycled",
   "speeder.legacyoftheforce.recharge_inventory_full": "Free inventory space for all returned materials",
   "speeder.legacyoftheforce.recharge_unsupported_storage": "Unknown storage or salvage rule; wreck preserved",
-  "speeder.legacyoftheforce.recharge_confirm_recycle": "Click Confirm within 5 seconds to retire this wreck"
+  "speeder.legacyoftheforce.recharge_confirm_recycle": "Click Confirm within 5 seconds to retire this wreck",
+  "force.legacyoftheforce.vehicle_stabilized": "Vehicle stabilized",
+  "force.legacyoftheforce.vehicle_braked": "Vehicle slowed",
+  "force.legacyoftheforce.no_vehicle_target": "Aim at a visible speeder",
+  "force.legacyoftheforce.vehicle_unavailable": "Vehicle must be yours, unoccupied, moving and permitted",
+  "key.legacyoftheforce.force_stabilize": "Stabilize unoccupied speeder",
+  "key.legacyoftheforce.force_brake": "Slow unoccupied speeder"
 }

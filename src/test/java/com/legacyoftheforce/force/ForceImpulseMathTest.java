@@ -21,6 +21,8 @@ class ForceImpulseMathTest {
         assertTrue(velocity.length() <= 1.250000001);
     }
     @Test void nonFiniteAndExtremeInputsAreRejected() {
+        for (var action : new ForceAction[]{ForceAction.STABILIZE, ForceAction.BRAKE})
+            assertThrows(IllegalArgumentException.class, () -> ForceImpulseMath.velocity(Vec3.ZERO, new Vec3(1, 0, 0), action, 1, 0, 1, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> ForceImpulseMath.velocity(Vec3.ZERO, new Vec3(Double.NaN, 0, 0), ForceAction.PUSH, 1, 0, 1, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> ForceImpulseMath.velocity(Vec3.ZERO, new Vec3(1, 0, 0), ForceAction.PUSH, Double.MIN_VALUE, 0, 1, 1, 0));
         assertThrows(IllegalArgumentException.class, () -> ForceImpulseMath.velocity(Vec3.ZERO, new Vec3(1, 0, 0), ForceAction.PUSH, 1, -1, 1, 1, 0));

@@ -4,6 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class ForceConfig {
     public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.IntValue VEHICLE_STABILIZE_LEVEL, VEHICLE_BRAKE_LEVEL, VEHICLE_COOLDOWN;
+    public static final ModConfigSpec.DoubleValue VEHICLE_MAX_MASS, VEHICLE_BASE_COST, VEHICLE_MASS_COST, VEHICLE_RETENTION;
     public static final ModConfigSpec.IntValue BLOCK_LEVEL, STONE_LEVEL, ACTION_INTERVAL, GLOBAL_ACTION_INTERVAL, JOURNAL_BUDGET;
     public static final ModConfigSpec.DoubleValue RANGE, HOLD_DISTANCE, MOVE_STEP, DROP_SNAP, BASE_COST, MASS_COST, HOLD_COST, LIGHT_MASS, STONE_MASS;
     public static final ModConfigSpec.IntValue PUSH_LEVEL, PULL_LEVEL, MOB_COOLDOWN, MOB_DURATION, MOB_BUDGET, MOB_PATH_CELLS;
@@ -11,6 +13,13 @@ public final class ForceConfig {
             MOB_COST_PER_MASS, MOB_VOLUME_UNIT, MOB_MIN_MASS, MOB_MAX_MASS, MOB_RESISTANCE_LIMIT;
     static {
         var builder = new ModConfigSpec.Builder();
+        VEHICLE_STABILIZE_LEVEL = builder.defineInRange("vehicle.stabilizeLevel", 25, 1, 100);
+        VEHICLE_BRAKE_LEVEL = builder.defineInRange("vehicle.brakeLevel", 45, 1, 100);
+        VEHICLE_COOLDOWN = builder.defineInRange("vehicle.cooldownTicks", 80, 20, 72000);
+        VEHICLE_MAX_MASS = builder.defineInRange("vehicle.maximumMass", 20.0, .1, 1000);
+        VEHICLE_BASE_COST = builder.defineInRange("vehicle.baseCost", 4.0, .1, 1000);
+        VEHICLE_MASS_COST = builder.defineInRange("vehicle.costPerMass", .5, .01, 100);
+        VEHICLE_RETENTION = builder.defineInRange("vehicle.retainedMotion", .25, .05, .95);
         BLOCK_LEVEL = builder.defineInRange("blockLevel", 15, 1, 100);
         STONE_LEVEL = builder.defineInRange("stoneLevel", 35, 1, 100);
         ACTION_INTERVAL = builder.defineInRange("actionIntervalTicks", 10, 1, 1200);

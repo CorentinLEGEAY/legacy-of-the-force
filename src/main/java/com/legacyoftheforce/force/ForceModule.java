@@ -30,10 +30,12 @@ public final class ForceModule {
     private final Map<UUID, Long> nextAction = new HashMap<>();
     private BlockMoveCoordinator coordinator;
     private final MobForceController mobs;
+    private final VehicleForceController vehicles;
     private long nextGlobalAction;
     public ForceModule(PlayerProgressService progress, ProtectedWorldService protection, TransactionAnchorAccess anchors, ChunkDurabilityBarrier barrier) {
         this.progress = progress; this.protection = protection; this.anchors = anchors; this.barrier = barrier;
         this.mobs = new MobForceController(progress, protection);
+        this.vehicles = new VehicleForceController(progress, protection);
     }
     @SubscribeEvent public void started(ServerStartedEvent event) {
         try {
@@ -75,7 +77,7 @@ public final class ForceModule {
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         var force = Commands.literal("force");
-        for (String action : new String[]{"grab", "drop", "toggle", "cancel", "recover", "push", "pull"}) {
+        for (String action : new String[]{"grab", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake"}) {
             var command = Commands.literal(action);
             if (action.equals("recover")) command.requires(source -> source.hasPermission(2));
             command.executes(context -> {
@@ -86,7 +88,7 @@ public final class ForceModule {
                     return recovered ? 1 : 0;
                 }
                 var player = context.getSource().getPlayerOrException();
-                if (coordinator == null && !action.equals("push") && !action.equals("pull")) return respond(player, ForceResult.no("recovery_pending"));
+                if (coordinator == null && !java.util.Set.of("push", "pull", "stabilize", "brake").contains(action)) return respond(player, ForceResult.no("recovery_pending"));
                 long tick = player.server.overworld().getGameTime();
                 if (!action.equals("cancel") && (tick < nextAction.getOrDefault(player.getUUID(), 0L) || tick < nextGlobalAction)) return respond(player, ForceResult.no("cooldown"));
                 nextAction.put(player.getUUID(), tick + ForceConfig.ACTION_INTERVAL.get());
@@ -97,6 +99,8 @@ public final class ForceModule {
                     case "cancel" -> coordinator.cancel(player.getUUID());
                     case "push", "pull" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
                             : mobs.cast(player, action.equals("push") ? ForceAction.PUSH : ForceAction.PULL);
+                    case "stabilize", "brake" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
+                            : vehicles.cast(player, action.equals("stabilize") ? ForceAction.STABILIZE : ForceAction.BRAKE);
                     case "recover" -> coordinator.recoverAll() ? ForceResult.yes("recovered") : ForceResult.no("recovery_pending");
                     default -> ForceResult.no("invalid_target");
                 };

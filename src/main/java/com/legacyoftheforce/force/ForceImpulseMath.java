@@ -7,7 +7,7 @@ public final class ForceImpulseMath {
     private ForceImpulseMath() {}
     public static Vec3 velocity(Vec3 current, Vec3 away, ForceAction action, double mass,
             double resistance, double speed, double maxSpeed, double lift) {
-        if (current == null || away == null || action == null || !Double.isFinite(current.lengthSqr())
+        if (current == null || away == null || (action != ForceAction.PUSH && action != ForceAction.PULL) || !Double.isFinite(current.lengthSqr())
                 || !Double.isFinite(away.lengthSqr()) || !Double.isFinite(mass) || mass < 0.0001 || mass > 1_000_000
                 || !Double.isFinite(resistance) || resistance < 0 || resistance > 1
                 || !Double.isFinite(speed) || speed <= 0 || speed > 16 || !Double.isFinite(maxSpeed) || maxSpeed <= 0 || maxSpeed > 16

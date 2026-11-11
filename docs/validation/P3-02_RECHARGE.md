@@ -30,6 +30,16 @@ Les dix erreurs injectées sont des simulations de coupure du flux Java sur le v
 
 ## Reprise manuelle reproductible restant à exécuter
 
+### Complément automatisé du 2026-11-11 à21:19:43
+
+`vanillaCraftedCellRechargesThroughTheGarageMenu` utilise les vrais menus vanilla et leurs clics serveur (pas de résultat de recette construit par le test). Inventaire initial : cuivre1/redstone4, aucune cellule. Clics PICKUP vers la grille3×3 : cuivre et seulement trois redstones ne donnent aucun résultat ; la quatrième redstone expose exactement une cellule. Clic QUICK_MOVE sur le vrai ResultSlot : ingrédients consommés, grille/résultat vides, une seule cellule dans l'inventaire. Rejeu du clic sur résultat vide : toujours une seule cellule.
+
+Fermeture du menu de craft, ouverture de `SpeederGarageMenu` sans plan, bouton59 sélectionnant le UUID existant, attente de11ticks puis bouton60 : résultat CHARGED, énergie100→350 et cellule1→0. Rejeu immédiat refusé. Journal de production du serveur GameTest relu DONE avec même UUID, inventaire natif joueur égal à l'après-image. Après sauvegarde d'une énergie dépensée7, nouvelle instance du service et reprise : énergie7 conservée, aucune cellule recréée.
+
+`./scripts/gradle.ps1 build runGameTestServer --console=plain` : 83 JUnit/61 GameTests requis réussis, BUILD SUCCESSFUL ; `.tools/test-speeder-recharge-crafting.log`. Aucune modification du code de production ni du JAR. Les APIs CraftingMenu/ResultSlot/CraftingInput ont été lues dans les sources NeoForge21.1.265 épinglées avant ce test. Cette preuve vérifie la recette et la logique des menus sur un vrai serveur Minecraft ; elle ne constitue pas une observation du rendu graphique, une reconnexion de client ou un redémarrage de processus.
+
+La tentative graphique précédente à21:17 a été arrêtée par détection d'Échap dès l'activation, sans nouveau clic dans Minecraft ; serveur arrêté/sauvegardé proprement à21:17:42. Pas de répétition automatique de cette boucle de contrôle graphique dans le complément ci-dessus.
+
 1. Relancer le dédié et reconnecter le client déjà ouvert ; un seul client graphique. ForceTesterOne est près du garage Nether `(1005,240,1065)`, emplacement sélectionné vide, papier du plan conservé en hotbar0. Son véhicule payé `32392c62-c238-4986-bfce-605b19b70ba3` conserve la charge873.7359999999953 au dernier diagnostic vérifié. Vérifier la valeur courante avant le test.
 2. Ajouter une table de craft dans un emplacement libre et fournir uniquement les matériaux de test (1 cuivre, 4 redstones). Fabriquer réellement la cellule avec la recette 3×3 et constater le résultat. Aucun matériau/cellule n'a encore été fourni pour ce test graphique.
 3. Garage → Diagnostic → vérifier le UUID/charge → Recharger. Attendre le résultat et contrôler le débit unique, la charge plafonnée1000 et le reçu recharge1 distinct du reçu assemblage5. Contrôler aussi le refus à batterie pleine.

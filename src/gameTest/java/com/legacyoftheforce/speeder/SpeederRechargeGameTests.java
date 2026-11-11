@@ -9,6 +9,7 @@ import net.minecraft.gametest.framework.*;
 import net.minecraft.nbt.*;
 import net.minecraft.server.level.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.neoforge.common.util.FakePlayer;
@@ -31,6 +32,46 @@ public final class SpeederRechargeGameTests {
         var directory = level.getServer().getWorldPath(LevelResource.ROOT).resolve("validation/recharge-" + actor.getUUID()); return new Setup(actor, garage, vehicle, directory);
     }
     private static SpeederRechargeService service(Setup setup) { return new SpeederRechargeService(setup.actor().server, setup.directory(), (a, l, p, k) -> true, ignored -> {}); }
+    @GameTest(template = "empty_large", timeoutTicks = 200)
+    public static void vanillaCraftedCellRechargesThroughTheGarageMenu(GameTestHelper helper) throws Exception {
+        var setup = setup(helper, 100, 0); var actor = setup.actor(); var vehicle = setup.vehicle();
+        var table = setup.garage().north(); helper.getLevel().setBlockAndUpdate(table, Blocks.CRAFTING_TABLE.defaultBlockState());
+        var crafting = new CraftingMenu(93, actor.getInventory(), ContainerLevelAccess.create(helper.getLevel(), table)); actor.containerMenu = crafting;
+        actor.getInventory().setItem(0, new ItemStack(Items.COPPER_INGOT)); actor.getInventory().setItem(1, new ItemStack(Items.REDSTONE, 4));
+        helper.assertTrue(crafting.stillValid(actor), "Real table must be accessible");
+        crafting.clicked(37, 0, ClickType.PICKUP, actor); crafting.clicked(1, 0, ClickType.PICKUP, actor);
+        crafting.clicked(38, 0, ClickType.PICKUP, actor);
+        for (int slot = 2; slot <= 4; slot++) crafting.clicked(slot, 1, ClickType.PICKUP, actor);
+        helper.assertTrue(crafting.getSlot(0).getItem().isEmpty(), "Copper and only three redstones must not create a cell");
+        crafting.clicked(5, 1, ClickType.PICKUP, actor);
+        helper.assertTrue(crafting.getCarried().isEmpty() && crafting.getSlot(0).getItem().is(SpeederContent.ENERGY_CELL.get())
+                && crafting.getSlot(0).getItem().getCount() == 1, "Loaded vanilla recipe must expose exactly one cell");
+        crafting.clicked(0, 0, ClickType.QUICK_MOVE, actor);
+        helper.assertTrue(actor.getInventory().countItem(SpeederContent.ENERGY_CELL.get()) == 1
+                && actor.getInventory().countItem(Items.COPPER_INGOT) == 0 && actor.getInventory().countItem(Items.REDSTONE) == 0, "Result-slot crafting must pay the five actual ingredients");
+        for (int slot = 0; slot <= 9; slot++) helper.assertTrue(crafting.getSlot(slot).getItem().isEmpty(), "Result and ingredient slots must be empty after taking the cell");
+        crafting.clicked(0, 0, ClickType.QUICK_MOVE, actor);
+        helper.assertTrue(actor.getInventory().countItem(SpeederContent.ENERGY_CELL.get()) == 1, "Replaying empty result cannot mint another cell");
+        crafting.removed(actor);
+        var garage = new SpeederGarageMenu(94, actor.getInventory(), ContainerLevelAccess.create(helper.getLevel(), setup.garage())); actor.containerMenu = garage;
+        helper.assertTrue(garage.clickMenuButton(actor, 59) && garage.inspectedVehicle().equals(vehicle.getUUID()), "Diagnostic must select the existing owned instance without a blueprint");
+        helper.runAfterDelay(11, () -> {
+            helper.assertTrue(garage.clickMenuButton(actor, 60) && garage.rechargeStatus() == SpeederRechargeService.Result.CHARGED, "Garage button must execute the production recharge lifecycle");
+            helper.assertTrue(vehicle.charge() == 350 && actor.getInventory().countItem(SpeederContent.ENERGY_CELL.get()) == 0, "Crafted cell must become charge exactly once");
+            helper.assertFalse(garage.clickMenuButton(actor, 60), "Immediate replay must refuse");
+            try {
+                var path = actor.server.getWorldPath(LevelResource.ROOT).resolve("data/legacyoftheforce/speeder_recharge/" + actor.getUUID() + ".nbt");
+                var record = new RechargeTransaction(AtomicNbtFile.read(path, 262144)).view();
+                helper.assertTrue(record.phase() == RechargeTransaction.Phase.DONE && record.vehicle().snapshot().orElseThrow().id().equals(vehicle.getUUID()), "Menu transaction must close against the same UUID in the real journal");
+                var file = new VerifiedPlayerSaveBarrier().read(actor);
+                helper.assertTrue(file.getList("Inventory", Tag.TAG_COMPOUND).equals(actor.getInventory().save(new ListTag())), "Paid inventory must be durable after the whole craft/menu path");
+                var raw = vehicle.savedState().tag(); raw.putDouble("energy", 7); vehicle.applyRechargeState(new VehicleState(raw)); new VerifiedEntitySaveBarrier().persist(vehicle);
+                new SpeederRechargeService(actor.server, path.getParent()).recover(actor);
+                helper.assertTrue(vehicle.charge() == 7 && actor.getInventory().countItem(SpeederContent.ENERGY_CELL.get()) == 0, "Closed crafted-cell recharge must not restore spent charge or a consumed cell");
+            } catch (java.io.IOException failure) { throw new RuntimeException(failure); }
+            helper.succeed();
+        });
+    }
     @GameTest(template = "empty_large", timeoutTicks = 200)
     public static void rechargePaysOncePreservesIdentityAndNeverRestoresAClosedCharge(GameTestHelper helper) throws Exception {
         var setup = setup(helper, 875, 2); var actor = setup.actor(); var vehicle = setup.vehicle(); var id = vehicle.getUUID(); var service = service(setup);

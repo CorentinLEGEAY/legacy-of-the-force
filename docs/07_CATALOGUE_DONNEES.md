@@ -77,6 +77,10 @@ Le partage d'un plan ne transfère **aucun matériau**, et l'atelier doit contr�
 
 Implémentation P3-01 : ce JSON illustre le contenu métier ; le composant ItemStack emploie une enveloppe NBT schéma 1. Les UUID sont des tableaux UUID NBT (`blueprintId`, `authorId`), `gridSize` et `at` des tableaux d'entiers, `modules` une liste de composés et les couleurs des entiers RGB bornés `primary`/`secondary` à la racine (normalisation binaire du champ `paint` illustré ci-dessus). `name` est borné à 40 caractères sans contrôle. Le plan ne contient ni charge restante, ni inventaire, ni UUID d'instance ; chaque véhicule P3-02 devra recevoir sa propre identité. Le prototype de l'éditeur utilise 5×3×3 et quatre IDs physiques ; les formats/classes non pris en charge restent intacts en lecture seule. Les données réelles de modules sont sous `data/legacyoftheforce/speeder_modules/` ; voir `validation/P3-01.md` pour les bornes et validations actuelles.
 
+## État d'instance de speeder (P3-02 en cours)
+
+`VehicleState`, enveloppe NBT schéma 1, distincte du composant de plan : `vehicleId` et `ownerId` UUID ; `blueprint` copie complète du design ; `moduleHealth` tableau d'entiers 0–100 dans le même ordre que les modules ; `dimension` ID ; `x/y/z`, `speed/verticalSpeed/yaw/energy` doubles finis et bornés ; `garaged` octet booléen strict. Budget 64 Kio ; pose horizontale ±30 millions de blocs, verticale ±2048 ; yaw [-180,180]. Les types absents ou incorrects sont refusés. Schéma futur conservé sans mutation ; ID de module inconnu conservé structurellement, sans autoriser sa simulation. Le plan reste partageable et ne reçoit jamais la charge ou l'identité de l'instance. Pas de cargo implémenté dans cette première enveloppe ; ne pas prétendre un inventaire de véhicule livré. Paiement, création d'entité et intégration aux sauvegardes du monde restent à faire.
+
 ## Définition de planète
 ```json
 {

@@ -23,6 +23,8 @@ geometry = {
     "seat_pilot": [cuboid([3, 3, 3], [13, 7, 13], "dark"), cuboid([3, 7, 10], [13, 14, 13], "dark"), cuboid([6, 0, 6], [10, 3, 10], "iron")],
 }
 for name, elements in geometry.items():
+    if name != "seat_pilot":
+        elements += [cuboid([0, 7, 7], [16, 9, 9], "iron"), cuboid([7, 0, 7], [9, 16, 9], "iron"), cuboid([7, 7, 0], [9, 9, 16], "iron")]
     write(ASSETS / f"models/item/{name}.json", {"parent": "minecraft:block/block", "textures": dict(textures, particle=textures["iron"]), "elements": elements})
 write(ASSETS / "models/block/speeder_garage.json", {"parent": "minecraft:block/block", "textures": dict(textures, particle=textures["iron"]),
       "elements": [cuboid([0, 0, 0], [16, 12, 16], "iron"), cuboid([0, 12, 0], [16, 16, 16], "dark"), cuboid([3, 15.9, 3], [13, 16, 13], "blue")]})
@@ -55,6 +57,10 @@ for name in ["mineable/pickaxe", "needs_stone_tool"]:
     if "legacyoftheforce:speeder_garage" not in tag["values"]: tag["values"].append("legacyoftheforce:speeder_garage")
     write(path, tag)
 english = {
+    "entity.legacyoftheforce.speeder": "Modular speeder",
+    "message.legacyoftheforce.speeder_unsupported": "Speeder unavailable: unsupported modules or data. Saved design preserved.",
+    "hud.legacyoftheforce.speeder": "Speeder %s blocks/s | Energy %s",
+    "hud.legacyoftheforce.speeder_controls": "%s/%s drive/brake | %s/%s steer | %s dismount",
     "block.legacyoftheforce.speeder_garage": "Speeder garage", "item.legacyoftheforce.speeder_garage": "Speeder garage",
     "item.legacyoftheforce.speeder_blueprint": "Speeder blueprint", "item.legacyoftheforce.chassis_light": "Light chassis",
     "item.legacyoftheforce.engine_standard": "Standard engine", "item.legacyoftheforce.battery_small": "Small battery", "item.legacyoftheforce.seat_pilot": "Pilot seat",
@@ -71,6 +77,10 @@ english = {
     "error_lift": "Not enough lift for the mass", "error_energy": "No usable battery capacity", "error_stability": "Insufficient stability",
 }
 french = {
+    "entity.legacyoftheforce.speeder": "Speeder modulaire",
+    "message.legacyoftheforce.speeder_unsupported": "Speeder indisponible : modules ou données non pris en charge. Plan sauvegardé conservé.",
+    "hud.legacyoftheforce.speeder": "Speeder %s blocs/s | Énergie %s",
+    "hud.legacyoftheforce.speeder_controls": "%s/%s accélérer/freiner | %s/%s tourner | %s descendre",
     "block.legacyoftheforce.speeder_garage": "Garage de speeders", "item.legacyoftheforce.speeder_garage": "Garage de speeders",
     "item.legacyoftheforce.speeder_blueprint": "Plan de speeder", "item.legacyoftheforce.chassis_light": "Châssis léger",
     "item.legacyoftheforce.engine_standard": "Moteur standard", "item.legacyoftheforce.battery_small": "Petite batterie", "item.legacyoftheforce.seat_pilot": "Siège pilote",

@@ -144,5 +144,9 @@
   "speeder.legacyoftheforce.error_too_heavy": "Vehicle is too heavy",
   "speeder.legacyoftheforce.error_lift": "Not enough lift for the mass",
   "speeder.legacyoftheforce.error_energy": "No usable battery capacity",
-  "speeder.legacyoftheforce.error_stability": "Insufficient stability"
+  "speeder.legacyoftheforce.error_stability": "Insufficient stability",
+  "entity.legacyoftheforce.speeder": "Modular speeder",
+  "message.legacyoftheforce.speeder_unsupported": "Speeder unavailable: unsupported modules or data. Saved design preserved.",
+  "hud.legacyoftheforce.speeder": "Speeder %s blocks/s | Energy %s",
+  "hud.legacyoftheforce.speeder_controls": "%s/%s drive/brake | %s/%s steer | %s dismount"
 }

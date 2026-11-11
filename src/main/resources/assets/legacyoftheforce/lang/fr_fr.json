@@ -144,5 +144,9 @@
   "speeder.legacyoftheforce.error_too_heavy": "Véhicule trop lourd",
   "speeder.legacyoftheforce.error_lift": "Portance insuffisante",
   "speeder.legacyoftheforce.error_energy": "Batterie sans capacité",
-  "speeder.legacyoftheforce.error_stability": "Stabilité insuffisante"
+  "speeder.legacyoftheforce.error_stability": "Stabilité insuffisante",
+  "entity.legacyoftheforce.speeder": "Speeder modulaire",
+  "message.legacyoftheforce.speeder_unsupported": "Speeder indisponible : modules ou données non pris en charge. Plan sauvegardé conservé.",
+  "hud.legacyoftheforce.speeder": "Speeder %s blocs/s | Énergie %s",
+  "hud.legacyoftheforce.speeder_controls": "%s/%s accélérer/freiner | %s/%s tourner | %s descendre"
 }

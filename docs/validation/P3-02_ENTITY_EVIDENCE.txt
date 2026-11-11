@@ -1,0 +1,27 @@
+P3-02 entite — preuves du 11 novembre 2026 (developpement, pas fabrication)
+Source final : .tools/test-speeder-entity-seat-final.log
+[19:26:11] All 49 required tests passed :)
+[19:26:12] BUILD SUCCESSFUL in 34s
+JUnit XML : 75 tests, 0 failures/errors.
+
+Source : .tools/speeder-entity-first-dedicated.log
+[19:10:05] DEVELOPMENT FIXTURE: vehicle spawned; assembly payment NOT tested. UUID c21122ca-b096-4f16-957a-bb5e4737a04d
+[19:10:13] x=0.5, y=101.99960817632248, z=3.5, energy=985.6959999999995
+[19:13:10] Toutes dimensions sauvegardees, arret normal.
+
+Source : .tools/speeder-entity-corrected-dedicated.log
+[19:16:22] ForceTesterOne rejoint le meme monde.
+[19:16:44] Meme UUID, blueprintId=[93578297,-1907470985,-1489935828,-1913422142], modules4, moduleHealth=[100,100,100,100], energy=672.4479999999876, pose=(0.5,100,3.5).
+[19:17:07] Apres touche locale Z : Pos=[0.5,102.00000265444224,3.844610742058]. HUD observe : 1.1 blocks/s.
+[19:17:18] Apres touche locale Q : vehicleState.yaw=-8.0.
+[19:18:08] save-all flush pendant conduite ; fichier joueur lu : RootVehicle while mounted=False.
+[19:18:22] Client ferme normalement en selle, logout ; fichier joueur : RootVehicle after logout=False.
+[19:18:22] No entity was found : chunk decharge, pas une preuve de perte.
+[19:18:40] Chargement cible du chunk [0,0] dans le Nether.
+[19:18:46] Meme UUID retrouve, yaw=-8, modules/HP/plan identiques, pose=(0.3557590299059503,100,3.5100863111903164), energy=484.1039999999807.
+[19:20:36] energy=484.1039999999807, identique a la lecture precedente.
+[19:20:36] Ticket force retire ; arret normal, toutes dimensions sauvegardees, BUILD SUCCESSFUL.
+
+Les controles natifs precedaient les deux derniers tests de cellule protegee/siège decentre ; ces corrections sont couvertes par la regression finale 49 GT.
+Fixture exclue du JAR : aucune classe ValidationCommands ni GameTests dans le JAR ; META-INF/accesstransformer.cfg present.
+Toujours non verifie : paiement d assemblage, panne multi-fichiers, parcours solo, deux interfaces stables, garage et recharge, phase complete.

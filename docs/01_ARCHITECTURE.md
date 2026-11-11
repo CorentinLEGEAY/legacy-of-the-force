@@ -87,6 +87,11 @@ Limiter taille, fréquence et nombre d'éléments de chaque paquet. Ne jamais pe
 | Factions/quêtes | profil/monde, selon propriété | UUID joueur, ID faction/quête |
 | Blocs en mouvement | transaction temporaire résolue avant suppression | ID transaction/monde/positions |
 
+### Véhicule en monde (P3-02, intégration en cours)
+L'entité de speeder et son enveloppe `VehicleState` restent dans le stockage des entités de sa dimension. Le speeder désactive le mécanisme vanilla `RootVehicle` qui déplace habituellement la sauvegarde d'une monture monoplace dans le fichier du joueur : le hook virtuel `hasExactlyOnePlayerPassenger` est volontairement faux pour cette politique de stockage, sans autoriser plusieurs sièges. La vraie garde de siège vérifie séparément propriétaire et passager unique. Le logout fait descendre le pilote. Ainsi un autosave du joueur ne conserve pas une deuxième copie mutable de son véhicule, et le départ du pilote ne supprime pas l'entité du monde. Les coordonnées vanilla de l'entité guident le chargement ; le checkpoint de pose de l'enveloppe est actualisé par le serveur après chaque déplacement.
+
+`VerifiedEntitySaveBarrier` utilise le gestionnaire vanilla, attend son `saveAll`/flush puis relit son `SimpleRegionStorage` pour vérifier exactement l'entité/UUID sérialisée, une seule fois dans le chunk. Trois champs restent final et deviennent accessibles par AT dans la version épinglée ; aucun writer parallèle de région ni remplacement du gestionnaire. C'est une barrière de transaction rare, pas une sauvegarde par tick ; son coût sur un serveur chargé reste à profiler. Cette primitive ne constitue pas encore une transaction d'assemblage complète : fichier joueur, paiement, publication et reprise doivent être coordonnés par un journal avant activation de la fabrication.
+
 ### Évolution de schéma
 Chaque structure enregistrée inclut `schemaVersion`. Lire anciennes versions avec migrations idempotentes ; en cas de format inconnu, refuser l'action dangereuse et conserver les données originales. Jamais supprimer silencieusement un sabre ou véhicule.
 

@@ -36,7 +36,10 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
             var name = i < 4 ? new ItemStack(SpeederContent.part(i)).getHoverName() : Component.translatable("speeder.legacyoftheforce.erase");
             addRenderableWidget(Button.builder(name, b -> click(50 + selected)).bounds(leftPos + 154, topPos + 20 + i * 18, 94, 16).build());
         }
-        addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.save"), b -> click(56)).bounds(leftPos + 172, topPos + 112, 76, 16).build());
+        addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.save_short"), b -> click(56)).bounds(leftPos + 154, topPos + 112, 44, 16)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.save"))).build());
+        addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.build"), b -> click(58)).bounds(leftPos + 200, topPos + 112, 48, 16)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.build_help"))).build());
     }
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
@@ -45,9 +48,9 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(font, title, 8, 7, 0xc9f5ff, false); graphics.drawString(font, "R" + menu.rotation(), 232, 7, 0xc9f5ff, false);
         var stats = Component.translatable("speeder.legacyoftheforce.stats", String.format(Locale.ROOT, "%.1f", menu.mass()), String.format(Locale.ROOT, "%.1f", menu.thrust()));
-        graphics.drawString(font, font.plainSubstrByWidth(stats.getString(), 160), 8, 106, 0xc9f5ff, false);
+        graphics.drawString(font, font.plainSubstrByWidth(stats.getString(), 140), 8, 106, 0xc9f5ff, false);
         String key = menu.status() != SpeederGarageMenu.Status.EDITING ? menu.status().name().toLowerCase(Locale.ROOT) : "error_" + menu.error().name().toLowerCase(Locale.ROOT);
-        graphics.drawString(font, font.plainSubstrByWidth(Component.translatable("speeder.legacyoftheforce." + key).getString(), 160), 8, 117, 0xffd085, false);
+        graphics.drawString(font, font.plainSubstrByWidth(Component.translatable("speeder.legacyoftheforce." + key).getString(), 140), 8, 117, 0xffd085, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xd5e9e9, false);
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

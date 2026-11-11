@@ -148,5 +148,19 @@
   "entity.legacyoftheforce.speeder": "Speeder modulaire",
   "message.legacyoftheforce.speeder_unsupported": "Speeder indisponible : modules ou données non pris en charge. Plan sauvegardé conservé.",
   "hud.legacyoftheforce.speeder": "Speeder %s blocs/s | Énergie %s",
-  "hud.legacyoftheforce.speeder_controls": "%s/%s accélérer/freiner | %s/%s tourner | %s descendre"
+  "hud.legacyoftheforce.speeder_controls": "%s/%s accélérer/freiner | %s/%s tourner | %s descendre",
+  "speeder.legacyoftheforce.save_short": "Enreg.",
+  "speeder.legacyoftheforce.build": "Créer",
+  "speeder.legacyoftheforce.build_help": "Enregistrer le plan avant de créer. Consomme les pièces une seule fois et place un véhicule près du garage. Rouvrir pour une autre fabrication.",
+  "speeder.legacyoftheforce.build_built": "Véhicule assemblé",
+  "speeder.legacyoftheforce.build_invalid": "Plan invalide",
+  "speeder.legacyoftheforce.build_save_first": "Enregistrer le plan",
+  "speeder.legacyoftheforce.build_clear_cursor": "Libérer le curseur",
+  "speeder.legacyoftheforce.build_missing": "Pièces manquantes",
+  "speeder.legacyoftheforce.build_space": "Dégager autour du garage",
+  "speeder.legacyoftheforce.build_permission": "Fabrication interdite",
+  "speeder.legacyoftheforce.build_busy": "Garage occupé : patienter",
+  "speeder.legacyoftheforce.build_unavailable": "Fabrication indisponible",
+  "speeder.legacyoftheforce.build_pending": "Reprise en attente",
+  "message.legacyoftheforce.assembly_pending": "Assemblage du speeder en attente de reprise du stockage. Reconnecter quand le stockage sera disponible ; aucun second paiement ne sera tenté."
 }

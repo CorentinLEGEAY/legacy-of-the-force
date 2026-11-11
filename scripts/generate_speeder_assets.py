@@ -57,6 +57,11 @@ for name in ["mineable/pickaxe", "needs_stone_tool"]:
     if "legacyoftheforce:speeder_garage" not in tag["values"]: tag["values"].append("legacyoftheforce:speeder_garage")
     write(path, tag)
 english = {
+    "save_short": "Save", "build": "Build", "build_help": "Save the design first. Build consumes real parts once and places one vehicle near the garage. Reopen for another build.",
+    "build_built": "Vehicle assembled", "build_invalid": "Invalid design", "build_save_first": "Save design first", "build_clear_cursor": "Put carried item away",
+    "build_missing": "Missing real parts", "build_space": "Clear space around garage", "build_permission": "Assembly not permitted", "build_busy": "Garage busy: please wait",
+    "build_unavailable": "Assembly unavailable", "build_pending": "Assembly recovery pending",
+    "message.legacyoftheforce.assembly_pending": "Speeder assembly is waiting for storage recovery. Reconnect when storage is available; no second payment will be attempted.",
     "entity.legacyoftheforce.speeder": "Modular speeder",
     "message.legacyoftheforce.speeder_unsupported": "Speeder unavailable: unsupported modules or data. Saved design preserved.",
     "hud.legacyoftheforce.speeder": "Speeder %s blocks/s | Energy %s",
@@ -77,6 +82,11 @@ english = {
     "error_lift": "Not enough lift for the mass", "error_energy": "No usable battery capacity", "error_stability": "Insufficient stability",
 }
 french = {
+    "save_short": "Enreg.", "build": "Créer", "build_help": "Enregistrer le plan avant de créer. Consomme les pièces une seule fois et place un véhicule près du garage. Rouvrir pour une autre fabrication.",
+    "build_built": "Véhicule assemblé", "build_invalid": "Plan invalide", "build_save_first": "Enregistrer le plan", "build_clear_cursor": "Libérer le curseur",
+    "build_missing": "Pièces manquantes", "build_space": "Dégager autour du garage", "build_permission": "Fabrication interdite", "build_busy": "Garage occupé : patienter",
+    "build_unavailable": "Fabrication indisponible", "build_pending": "Reprise en attente",
+    "message.legacyoftheforce.assembly_pending": "Assemblage du speeder en attente de reprise du stockage. Reconnecter quand le stockage sera disponible ; aucun second paiement ne sera tenté.",
     "entity.legacyoftheforce.speeder": "Speeder modulaire",
     "message.legacyoftheforce.speeder_unsupported": "Speeder indisponible : modules ou données non pris en charge. Plan sauvegardé conservé.",
     "hud.legacyoftheforce.speeder": "Speeder %s blocs/s | Énergie %s",

@@ -22,6 +22,9 @@ public final class SpeederContent {
     private static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(Registries.ENTITY_TYPE, LegacyOfTheForce.MOD_ID);
+    private static final DeferredRegister<net.neoforged.neoforge.attachment.AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.ATTACHMENT_TYPES, LegacyOfTheForce.MOD_ID);
+    public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<AssemblyReceipt>> ASSEMBLY_RECEIPT = ATTACHMENTS.register("speeder_assembly_receipt", () ->
+            net.neoforged.neoforge.attachment.AttachmentType.builder(AssemblyReceipt::empty).serialize(AssemblyReceipt.CODEC).copyOnDeath().build());
     public static final Supplier<EntityType<SpeederEntity>> VEHICLE = ENTITIES.register("speeder", () ->
             EntityType.Builder.<SpeederEntity>of(SpeederEntity::new, MobCategory.MISC).sized(1.5f, 1)
                     .clientTrackingRange(8).updateInterval(2).noSummon().build("legacyoftheforce:speeder"));
@@ -43,7 +46,7 @@ public final class SpeederContent {
                 new SpeederBlueprint.PlacedModule(id("battery_small"), new SpeederBlueprint.Cell(3, 1, 1), 0),
                 new SpeederBlueprint.PlacedModule(id("seat_pilot"), new SpeederBlueprint.Cell(2, 2, 1), 0));
     }
-    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); ENTITIES.register(bus); }
+    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); ENTITIES.register(bus); ATTACHMENTS.register(bus); }
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(CreativeModeTabs.INGREDIENTS)) for (int i = 0; i < PART_NAMES.size(); i++) event.accept(part(i));
         if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(GARAGE_ITEM.get());

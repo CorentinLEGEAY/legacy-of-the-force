@@ -70,9 +70,14 @@ public final class SpeederEntity extends Entity {
     }
     private Optional<VehicleState.Snapshot> supported() {
         var snapshot = state.snapshot();
-        if (snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
+        if (state.tag().contains("assemblyId") || snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
                 || !snapshot.get().pose().dimension().equals(level().dimension().location())) return Optional.empty();
         return snapshot;
+    }
+    void activateAssembly(UUID operation) {
+        var raw = state.tag();
+        if (!raw.hasUUID("assemblyId") || !operation.equals(raw.getUUID("assemblyId"))) throw new IllegalStateException("Assembly activation mismatch");
+        raw.remove("assemblyId"); state = new VehicleState(raw); project();
     }
     private boolean owner(ServerPlayer actor) {
         return supported().map(snapshot -> snapshot.owner().equals(actor.getUUID())).orElse(false)

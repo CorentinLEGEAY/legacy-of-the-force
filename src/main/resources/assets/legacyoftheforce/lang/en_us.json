@@ -148,5 +148,19 @@
   "entity.legacyoftheforce.speeder": "Modular speeder",
   "message.legacyoftheforce.speeder_unsupported": "Speeder unavailable: unsupported modules or data. Saved design preserved.",
   "hud.legacyoftheforce.speeder": "Speeder %s blocks/s | Energy %s",
-  "hud.legacyoftheforce.speeder_controls": "%s/%s drive/brake | %s/%s steer | %s dismount"
+  "hud.legacyoftheforce.speeder_controls": "%s/%s drive/brake | %s/%s steer | %s dismount",
+  "speeder.legacyoftheforce.save_short": "Save",
+  "speeder.legacyoftheforce.build": "Build",
+  "speeder.legacyoftheforce.build_help": "Save the design first. Build consumes real parts once and places one vehicle near the garage. Reopen for another build.",
+  "speeder.legacyoftheforce.build_built": "Vehicle assembled",
+  "speeder.legacyoftheforce.build_invalid": "Invalid design",
+  "speeder.legacyoftheforce.build_save_first": "Save design first",
+  "speeder.legacyoftheforce.build_clear_cursor": "Put carried item away",
+  "speeder.legacyoftheforce.build_missing": "Missing real parts",
+  "speeder.legacyoftheforce.build_space": "Clear space around garage",
+  "speeder.legacyoftheforce.build_permission": "Assembly not permitted",
+  "speeder.legacyoftheforce.build_busy": "Garage busy: please wait",
+  "speeder.legacyoftheforce.build_unavailable": "Assembly unavailable",
+  "speeder.legacyoftheforce.build_pending": "Assembly recovery pending",
+  "message.legacyoftheforce.assembly_pending": "Speeder assembly is waiting for storage recovery. Reconnect when storage is available; no second payment will be attempted."
 }

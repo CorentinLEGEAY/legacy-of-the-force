@@ -7,13 +7,15 @@ import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 
 public final class SpeederGarageMenu extends AbstractContainerMenu {
-    public enum Status { EDITING, SAVED, HOLD_BLUEPRINT, READ_ONLY, CHANGED, TOO_FAR, COOLDOWN }
+    public enum Status { EDITING, SAVED, HOLD_BLUEPRINT, READ_ONLY, CHANGED, TOO_FAR, COOLDOWN,
+        BUILD_BUILT, BUILD_INVALID, BUILD_SAVE_FIRST, BUILD_CLEAR_CURSOR, BUILD_MISSING, BUILD_SPACE, BUILD_PERMISSION, BUILD_BUSY, BUILD_UNAVAILABLE, BUILD_PENDING }
     private final Inventory inventory;
     private final ContainerLevelAccess access;
     private SpeederBlueprint draft;
     private final UUID originalId;
     private final boolean readOnly;
     private long nextAction;
+    private boolean assemblyAttemptClosed;
     private final DataSlot[] cells = new DataSlot[45], owned = new DataSlot[4];
     private final DataSlot selected = DataSlot.standalone(), rotation = DataSlot.standalone(), status = DataSlot.standalone(), error = DataSlot.standalone();
     private final ProjectedFloat mass = new ProjectedFloat(), thrust = new ProjectedFloat(), lift = new ProjectedFloat(), capacity = new ProjectedFloat(), stability = new ProjectedFloat();
@@ -57,7 +59,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
                 if (at.x() >= 0 && at.x() < 5 && at.y() >= 0 && at.y() < 3 && at.z() >= 0 && at.z() < 3 && kind >= 0)
                     cells[index].set(kind + 1 | module.rotation() << 3);
             }));
-            for (int part = 0; part < 4; part++) { int count = 0; for (int slot = 0; slot < 36; slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
+            for (int part = 0; part < 4; part++) { int count = 0; for (int slot = 0; slot < inventory.getContainerSize(); slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
             var result = BlueprintValidator.inspect(draft, SpeederCatalog.definitions(), SpeederConfig.limits()); error.set(result.error().ordinal());
             mass.set(result.stats().mass()); thrust.set(result.stats().thrust()); lift.set(result.stats().lift()); capacity.set(result.stats().capacity()); stability.set(result.stats().stability());
         }
@@ -67,9 +69,18 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
         if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 57)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 58)) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if (button == 58) {
+            if (assemblyAttemptClosed) return false;
+            var held = actor.getMainHandItem(); var current = held.get(SpeederContent.BLUEPRINT.get());
+            if (originalId == null || current == null || current.plan().isEmpty() || !originalId.equals(current.plan().get().id())) { status.set(Status.CHANGED.ordinal()); return false; }
+            var result = access.evaluate((level, pos) -> SpeederAssemblyLifecycle.build(actor, pos, draft), SpeederAssemblyService.Result.UNAVAILABLE);
+            assemblyAttemptClosed = result == SpeederAssemblyService.Result.BUILT || result == SpeederAssemblyService.Result.PENDING;
+            status.set(Status.valueOf("BUILD_" + result.name()).ordinal()); nextAction = tick + 10; broadcastChanges();
+            return result == SpeederAssemblyService.Result.BUILT;
+        }
         if (button == 56) {
             var held = actor.getMainHandItem(); var current = held.get(SpeederContent.BLUEPRINT.get());
             if (!held.is(SpeederContent.BLUEPRINT_ITEM.get()) || held.getCount() != 1 || originalId == null) { status.set(Status.HOLD_BLUEPRINT.ordinal()); return false; }

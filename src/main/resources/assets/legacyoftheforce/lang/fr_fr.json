@@ -27,5 +27,13 @@
   "key.categories.legacyoftheforce": "Legacy of the Force",
   "key.legacyoftheforce.block_toggle": "Saisir / déposer le bloc",
   "key.legacyoftheforce.block_cancel": "Restituer le bloc maintenu",
-  "block.legacyoftheforce.transaction_anchor": "Source réservée par la Force"
+  "block.legacyoftheforce.transaction_anchor": "Source réservée par la Force",
+  "force.legacyoftheforce.no_mob_target": "Aucune créature visible ciblée.",
+  "force.legacyoftheforce.resistant_target": "Cette cible résiste à la télékinésie.",
+  "force.legacyoftheforce.mob_pushed": "Poussée de Force appliquée.",
+  "force.legacyoftheforce.mob_pulled": "Attraction de Force appliquée.",
+  "force.legacyoftheforce.incompatible_target": "Données de cible incompatibles préservées : contactez un opérateur.",
+  "force.legacyoftheforce.progress_unavailable": "Profil de Force indisponible ou incompatible.",
+  "key.legacyoftheforce.force_push": "Poussée de Force (créature)",
+  "key.legacyoftheforce.force_pull": "Attraction de Force (créature)"
 }

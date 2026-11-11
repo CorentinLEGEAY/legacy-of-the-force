@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.registration.NetworkRegistry;
 
 public final class ProgressEvents {
     public void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -38,6 +39,9 @@ public final class ProgressEvents {
     }
 
     public static void sync(ServerPlayer player) {
+        // Simulated server players have no negotiated client channel. Never emit an illegal payload.
+        if (player.connection == null || !player.connection.getConnection().isConnected()
+                || !NetworkRegistry.hasChannel(player.connection, ProgressSnapshotPayload.TYPE.id())) return;
         PacketDistributor.sendToPlayer(player, new ProgressSnapshotPayload(
                 player.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot()));
     }

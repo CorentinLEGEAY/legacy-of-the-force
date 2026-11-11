@@ -27,5 +27,13 @@
   "key.categories.legacyoftheforce": "Legacy of the Force",
   "key.legacyoftheforce.block_toggle": "Grab / deposit block",
   "key.legacyoftheforce.block_cancel": "Restore held block",
-  "block.legacyoftheforce.transaction_anchor": "Reserved Force source"
+  "block.legacyoftheforce.transaction_anchor": "Reserved Force source",
+  "force.legacyoftheforce.no_mob_target": "No visible mob targeted.",
+  "force.legacyoftheforce.resistant_target": "This target resists telekinesis.",
+  "force.legacyoftheforce.mob_pushed": "Force push applied.",
+  "force.legacyoftheforce.mob_pulled": "Force pull applied.",
+  "force.legacyoftheforce.incompatible_target": "Incompatible target data preserved; contact an operator.",
+  "force.legacyoftheforce.progress_unavailable": "Force profile unavailable or incompatible.",
+  "key.legacyoftheforce.force_push": "Force push (mob)",
+  "key.legacyoftheforce.force_pull": "Force pull (mob)"
 }

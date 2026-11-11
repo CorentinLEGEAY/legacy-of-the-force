@@ -68,7 +68,8 @@ public final class BlockMoveCoordinator {
         if (original.hasBlockEntity() || !original.getFluidState().isEmpty() || (!original.is(LIGHT) && !original.is(STONE))) return ForceResult.no("invalid_target");
         var snapshot = progress.get(actor.getUUID());
         int required = original.is(STONE) ? Math.max(ForceConfig.BLOCK_LEVEL.get(), ForceConfig.STONE_LEVEL.get()) : ForceConfig.BLOCK_LEVEL.get();
-        if (snapshot.isEmpty() || snapshot.get().unavailable() || snapshot.get().level() < required) return ForceResult.no("level_required");
+        if (snapshot.isEmpty() || snapshot.get().unavailable()) return ForceResult.no("progress_unavailable");
+        if (snapshot.get().level() < required) return ForceResult.no("level_required");
         if (sessions.values().stream().filter(s -> s.record.dimension().equals(level.dimension())).count() >= ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
         double mass = original.is(STONE) ? ForceConfig.STONE_MASS.get() : ForceConfig.LIGHT_MASS.get();
         double cost = ForceConfig.BASE_COST.get() + mass * ForceConfig.MASS_COST.get();

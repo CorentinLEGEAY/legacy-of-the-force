@@ -2,6 +2,8 @@ package com.legacyoftheforce.rpg;
 
 import com.legacyoftheforce.LegacyOfTheForce;
 import com.legacyoftheforce.core.api.MobKillCredited;
+import com.legacyoftheforce.core.api.ForceImpulseCommitted;
+import com.legacyoftheforce.core.api.ForceImpulseInterrupted;
 import com.legacyoftheforce.core.api.RewardCategory;
 import com.legacyoftheforce.core.config.ServerConfig;
 import net.minecraft.core.registries.Registries;
@@ -11,6 +13,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -30,19 +34,45 @@ public final class CombatRewards {
 
     @SubscribeEvent
     public void onDamage(LivingDamageEvent.Post event) {
-        if (!(event.getEntity() instanceof Mob victim) || !(event.getSource().getEntity() instanceof ServerPlayer actor)
-                || actor.isFakePlayer() || !Float.isFinite(event.getNewDamage())
-                || event.getNewDamage() < ServerConfig.MIN_CREDIT_DAMAGE.get()) return;
-        victim.getData(ProgressAttachments.KILL_CREDIT).record(actor.getUUID(), actor.server.overworld().getGameTime());
+        if (!(event.getEntity() instanceof Mob victim) || victim.level().isClientSide()
+                || !Float.isFinite(event.getNewDamage()) || event.getNewDamage() < ServerConfig.MIN_CREDIT_DAMAGE.get()) return;
+        var credit = victim.getData(ProgressAttachments.KILL_CREDIT);
+        if (event.getSource().getEntity() instanceof ServerPlayer actor && !actor.isFakePlayer()) {
+            credit.record(actor.getUUID(), actor.server.overworld().getGameTime());
+        } else if (!event.getSource().is(DamageTypes.FALL)) credit.clearForce();
+    }
+
+    @SubscribeEvent public void onForceImpulse(ForceImpulseCommitted event) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null || !server.isSameThread() || event.tick() != server.overworld().getGameTime()) return;
+        var level = server.getLevel(event.dimension());
+        if (level != null && level.getEntity(event.targetId()) instanceof Mob victim && victim.isAlive()) {
+            victim.getData(ProgressAttachments.KILL_CREDIT).recordForce(event.actorId(), event.tick(), event.origin());
+        }
+    }
+    @SubscribeEvent public void onForceInterrupted(ForceImpulseInterrupted event) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null || !server.isSameThread()) return;
+        var level = server.getLevel(event.dimension());
+        if (level != null && level.getEntity(event.targetId()) instanceof Mob victim && victim.hasData(ProgressAttachments.KILL_CREDIT)) {
+            victim.getData(ProgressAttachments.KILL_CREDIT).clearForce();
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Mob victim) || !(event.getSource().getEntity() instanceof ServerPlayer actor)
-                || actor.isFakePlayer() || actor.serverLevel() != victim.level() || !actor.isAlive()
-                || victim.getType().is(EXCLUDED) || victim.getType().is(BOSS)) return;
-        long tick = actor.server.overworld().getGameTime();
+        if (!(event.getEntity() instanceof Mob victim) || victim.level().isClientSide() || victim.getType().is(EXCLUDED) || victim.getType().is(BOSS)) return;
+        var actor = event.getSource().getEntity() instanceof ServerPlayer direct ? direct : null;
         var credit = victim.getData(ProgressAttachments.KILL_CREDIT);
+        if (actor == null && event.getSource().is(DamageTypes.FALL)) {
+            var server = victim.getServer();
+            if (server == null) return;
+            var responsible = credit.forceActor(server.overworld().getGameTime(), ServerConfig.FORCE_CREDIT_WINDOW_TICKS.get(),
+                    victim.position(), ServerConfig.FORCE_CREDIT_MIN_DISTANCE.get());
+            if (responsible != null) actor = server.getPlayerList().getPlayer(responsible);
+        }
+        if (actor == null || actor.isFakePlayer() || actor.serverLevel() != victim.level() || !actor.isAlive()) return;
+        long tick = actor.server.overworld().getGameTime();
         if (!credit.eligible(actor.getUUID(), tick, ServerConfig.CREDIT_WINDOW_TICKS.get())) return;
         var category = category(victim);
         if (category == null) return;

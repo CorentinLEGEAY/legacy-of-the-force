@@ -22,6 +22,8 @@ public final class ServerConfig {
     public static final ModConfigSpec.IntValue FARM_THRESHOLD;
     public static final ModConfigSpec.DoubleValue FARM_XP_MULTIPLIER;
     public static final ModConfigSpec.IntValue FARM_CELL_SIZE;
+    public static final ModConfigSpec.IntValue FORCE_CREDIT_WINDOW_TICKS;
+    public static final ModConfigSpec.DoubleValue FORCE_CREDIT_MIN_DISTANCE;
     static {
         var builder = new ModConfigSpec.Builder();
         REQUEST_INTERVAL_TICKS = builder.comment("Minimum interval between diagnostic requests.")
@@ -43,6 +45,8 @@ public final class ServerConfig {
         FARM_THRESHOLD = builder.defineInRange("rpg.farm.killsPerCell", 20, 1, 128);
         FARM_XP_MULTIPLIER = builder.defineInRange("rpg.farm.xpMultiplier", 0.25, 0.0, 1.0);
         FARM_CELL_SIZE = builder.defineInRange("rpg.farm.cellSizeBlocks", 32, 8, 128);
+        FORCE_CREDIT_WINDOW_TICKS = builder.defineInRange("rpg.forceCreditWindowTicks", 40, 1, 200);
+        FORCE_CREDIT_MIN_DISTANCE = builder.defineInRange("rpg.forceCreditMinDistance", 0.5, 0.1, 10.0);
         SPEC = builder.build();
     }
     private ServerConfig() {}

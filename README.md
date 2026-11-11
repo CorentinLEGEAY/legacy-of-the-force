@@ -61,7 +61,7 @@ Les chiffres, noms de capacités avancées, modèles 3D, comportements complexes
 
 ## Développement exécutable (mise à jour du 11 novembre 2026)
 
-Le dépôt contient désormais un socle NeoForge et la première tranche RPG ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement sans pouvoirs, sabres, speeders ni planètes à ce stade.
+Le dépôt contient un socle NeoForge, la progression RPG et la Force minimale ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement ; sabres, speeders, planètes et boss restent à implémenter.
 
 Prérequis : JDK 21 x64, Git. Le wrapper télécharge Gradle et les dépendances NeoForge 21.1.265. Aucun Gradle global nécessaire.
 
@@ -79,3 +79,5 @@ Profil : `/lotf profile`. Test administrateur : `/lotf debug spend_energy 50`. D
 
 
 La télékinésie minimale de blocs est désormais jouable : niveau 15 pour terre/planches/laine, 35 pour pierre. V saisit/dépose, G restitue ; touches reconfigurables. Voir `docs/validation/P1-04.md` pour les règles, les preuves et les limites. Les autres systèmes de la V1.0 restent à développer.
+
+R pousse un mob dès le niveau 5 ; H l'attire dès le niveau 15. Viser une cible à moins de 6 blocs, sans mur. Énergie, masse, résistance, permissions et cooldown partagé sont calculés côté serveur. Les joueurs, boss, montures occupées, animaux d'autrui et mobs désactivés par `NoAI` sont refusés. Touches reconfigurables ; commandes équivalentes : `/lotf force push` et `/lotf force pull`. Voir `docs/validation/P1-05.md`.

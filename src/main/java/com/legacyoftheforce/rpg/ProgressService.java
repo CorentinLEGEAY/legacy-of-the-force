@@ -10,6 +10,17 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ProgressService implements PlayerProgressService {
+    @Override public boolean powerReady(UUID playerId, String powerId) {
+        var player = onlinePlayer(playerId);
+        return player != null && player.getData(ProgressAttachments.PLAYER_PROGRESS).powerReady(powerId, player.server.overworld().getGameTime());
+    }
+    @Override public boolean tryStartPower(UUID playerId, String powerId, double energy, int cooldownTicks) {
+        var player = onlinePlayer(playerId);
+        if (player == null || !player.isAlive()) return false;
+        boolean accepted = player.getData(ProgressAttachments.PLAYER_PROGRESS).tryStartPower(powerId, player.server.overworld().getGameTime(), energy, cooldownTicks);
+        if (accepted) ProgressEvents.sync(player);
+        return accepted;
+    }
     @Override public void setChanneling(UUID playerId, boolean channeling) {
         var player = onlinePlayer(playerId);
         if (player != null) player.getData(ProgressAttachments.PLAYER_PROGRESS).setChanneling(channeling);

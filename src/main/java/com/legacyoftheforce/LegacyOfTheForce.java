@@ -14,6 +14,7 @@ import com.legacyoftheforce.core.operation.VerifiedChunkSaveBarrier;
 import com.legacyoftheforce.core.security.VanillaProtectedWorldService;
 import com.legacyoftheforce.force.ForceConfig;
 import com.legacyoftheforce.force.ForceModule;
+import com.legacyoftheforce.force.ForceAttachments;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -34,6 +35,7 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.register(new ForceModule(new ProgressService(), new VanillaProtectedWorldService(),
                 new WorldTransactionAnchors(), new VerifiedChunkSaveBarrier()));
         ProgressAttachments.TYPES.register(modBus);
+        ForceAttachments.TYPES.register(modBus);
         var progressEvents = new ProgressEvents();
         NeoForge.EVENT_BUS.addListener(new ProgressCommands()::register);
         NeoForge.EVENT_BUS.register(new CombatRewards());

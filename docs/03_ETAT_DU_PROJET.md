@@ -17,7 +17,9 @@
 | P0-03 | VALIDÉ (socle de tests) | 3 tests JUnit anti-rejeu/taux/bornes ; script smoke dédié, arrêt propre et redémarrage du même monde | Pas de tests de gameplay tant que systèmes absents |
 | P1-01 | Implémenté, validation partielle | Profil, NBT, HUD et énergie vérifiés sur dédié, mort, dimension, redémarrage | Solo et deux clients stables ouverts |
 | P1-02 / P1-03 | Implémentés, validation partielle | 19 JUnit + 4 GameTests : attribution, XP, alignement, anti-farm, cooldown | Solo, clients stables et crash disque ouverts |
-| P1-04 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée |
+| P1-04 | Implémenté, validation partielle | Bloc réel, journal durable, 12 GameTests cumulés, essai V et crash HELD réel | Voir rapport P1-04 ; solo et validations transverses ouverts |
+| P1-05 | Implémenté, validation partielle | R/H sur dédié et solo ; 33 JUnit et 19 GameTests cumulés | Deux clients prolongés, claims tiers et cycle de vie réseau à compléter |
+| P2 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée globalement |
 
 ## Mini-plans et fichiers
 - P0 : `build.gradle`, `gradle.properties`, wrapper, métadonnées, `LegacyOfTheForce`, `core/{config,network,security,api}`, `client/ClientBootstrap`, `scripts/`, tests et procédures sous `docs/validation`.
@@ -41,7 +43,7 @@
 ## Reprise
 1. `./scripts/gradle.ps1 build --console=plain`
 2. `./scripts/smoke-server.ps1`
-3. P1-01, puis validation réseau transverse de P0/P1 ; ne pas déclarer P0 entièrement validée avant celle-ci.
+3. Fermer les validations transverses P0/P1 détaillées dans les dernières entrées et `docs/validation/P1-05.md`, puis P2-01. Ne pas déclarer une phase entièrement validée avant ses preuves.
 
 ## Avancement P1-01 — 2026-11-11
 - Commit P0 : `a340dac`.
@@ -77,3 +79,12 @@
 - Rapport détaillé et périmètre exact : `docs/validation/P1-04.md`, extraits `P1-04_EVIDENCE.txt`. Test réel HELD avant les derniers durcissements, tests automatiques après ceux-ci ; aucun résultat inventé pour le binaire final ou d'autres phases de crash.
 - P1-04 implémenté mais validation totale encore ouverte (solo, deux clients stables, vrais claims, unload/cross-chunk). P1 n'est donc pas encore validée globalement. Aucun ticket P2–P7 commencé.
 - Prochaine tranche admissible : P1-05 poussée/attraction de mobs, via contrat de progression/énergie et permissions, sans import des internes RPG. Ensuite régression P1 et fermeture des validations ouvertes avant P2.
+
+## P1-05 — impulsions jouables (2026-11-11)
+- Mini-plan réalisé : `force/MobForceController`, adaptateur et état versionné, mathématique bornée ; API de permission entités et événements partagés ; `rpg/PowerCooldowns` et crédit causal de chute ; touches R/H et ressources FR/EN. Référence : `modules/force/SPEC.md` FORCE-06, architecture et exigences de sécurité P1.
+- Poussée niveau 5, attraction 15 : ciblage serveur, masse/résistance/coût/cooldown partagés, budget et permissions revalidées ; anti-perma-stun et arrêt du contrôle au rechargement. Joueurs, NoAI, boss et cibles protégées refusés. Pas de nouveaux dégâts directs inventés : chute Vanilla attribuée via RPG dans une fenêtre courte.
+- Preuves finales : **33 JUnit, 19 GameTests requis**, build réussi ; smoke dédié PASS ; JAR sans tests. R/H vérifiés sur dédié avant dernier durcissement et **solo sur binaire final** : recul/attraction réels, HUD/énergie et profil conservé. Rapport et commandes : `docs/validation/P1-05.md`.
+- Corrections issues des essais : snapshot émis uniquement sur canal négocié ; fixture de mock conservant la connexion officielle ; contact au sol ne neutralisant pas l'impulsion horizontale ; refus sans coût des mobs NoAI. Un test sur sol déjà stabilisé complète celui de chute naturelle.
+- Nouveau test deux clients : connexions simultanées et captures obtenues ; premier client arrêté pendant activation, code natif Windows -1073740791. La copie d'exécutable Java pour le second n'a pas suffi. Ne pas déclarer ce parcours validé ; ne pas boucler sur la même hypothèse. Demande de pare-feu traitée par l'utilisateur, aucun réglage de sécurité automatisé.
+- Le test solo utilise une copie isolée du monde dédié. Première préparation manuelle de la copie refusée EOF ; restauration Vanilla de sa sauvegarde précédente réussie. Monde dédié original intact ; incident et périmètre documentés.
+- **EN COURS**, P0/P1 partiellement validées ; P2–P7 absentes. Prochaine tâche : validations transverses de P1 (solo bloc, deux clients, cycle de vie/unload/cross-chunk, sauvegardes RPG et adaptateurs de claims) ; ensuite P2-01. Commandes de reprise : `./scripts/gradle.ps1 build runGameTestServer --console=plain`, `./scripts/smoke-server.ps1`.

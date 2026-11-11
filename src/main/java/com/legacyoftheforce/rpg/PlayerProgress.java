@@ -24,6 +24,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     private boolean channeling;
     private CompoundTag retained = new CompoundTag();
     private RewardHistory history = new RewardHistory();
+    private PowerCooldowns powerCooldowns = new PowerCooldowns();
 
     public PlayerProgressSnapshot snapshot() {
         return new PlayerProgressSnapshot(level, xpInLevel, totalXpEarned, skillPoints,
@@ -31,6 +32,14 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
     }
     public boolean isChanneling() { return channeling; }
     public void setChanneling(boolean value) { channeling = !unavailable && value; }
+    public boolean powerReady(String id, long tick) { return !unavailable && powerCooldowns.ready(id, tick); }
+    public boolean tryStartPower(String id, long tick, double amount, int cooldownTicks) {
+        if (unavailable || !powerCooldowns.ready(id, tick) || !powerCooldowns.canTrack(id)
+                || cooldownTicks < 1 || cooldownTicks > 72000 || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;
+        forceEnergy -= amount;
+        powerCooldowns.arm(id, tick, cooldownTicks);
+        return true;
+    }
 
     public boolean trySpendEnergy(double amount) {
         if (unavailable || !Double.isFinite(amount) || amount <= 0 || amount > forceEnergy) return false;
@@ -124,6 +133,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
         tag.putDouble("forceEnergy", forceEnergy);
         tag.putDouble("maxForceEnergy", maxForceEnergy);
         history.write(tag);
+        tag.put("powerCooldowns", powerCooldowns.write());
         return tag;
     }
 
@@ -149,6 +159,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
                     tag.contains("forceEnergy") ? tag.getDouble("forceEnergy") : loadedCapacity,
                     loadedCapacity, false);
             var loadedHistory = RewardHistory.read(tag);
+            var loadedCooldowns = PowerCooldowns.read(tag);
             level = loaded.level();
             xpInLevel = loaded.xpInLevel();
             totalXpEarned = loaded.totalXpEarned();
@@ -157,6 +168,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
             forceEnergy = loaded.forceEnergy();
             maxForceEnergy = loaded.maxForceEnergy();
             history = loadedHistory;
+            powerCooldowns = loadedCooldowns;
             unavailable = false;
         } catch (IllegalArgumentException invalid) {
             freeze(version);

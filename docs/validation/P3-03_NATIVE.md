@@ -33,4 +33,16 @@ Reprise23:30 : perte de focus et visée décalée par souris capturée ont empê
 
 ## Limites
 
+## Complément après libération des commandes, 23:34–23:41
+
+Client et serveur relancés, connexion23:34:36. Touche temporaire K pour Utiliser : vraie ouverture du garage, puis Diagnostic, puis bouton Recharger. La cellule supplémentaire de fixture est consommée, énergie0→250, reçu5/DONE ; seuls le papier et les données précédentes restent. Le texte hexadécimal noir sur blanc et les chiffres1/2 noirs sur blanc/orange sont **observés et lisibles**.
+
+Montage normal via K, HUD et vues F5 avant/arrière ; nouvelle entrée Z, vitesse0,024555 et déplacement jusqu'àz1068,192962580781. Fermeture normale23:36:31. Lecture MCA/player/journal : un UUID, énergie **114,30000000000766**, HP100 partout, deux couleurs conservées, reçu5/DONE, inventaire égal à l'image créditée/débitée et aucun RootVehicle. Snapshot `.tools/speeder-native-positive-before-entity.json`, journal `.tools/speeder-native-positive-before-server.log`.
+
+Redémarrage et connexion23:37:58, lecture serveur23:38:10 : **exactement114,30000000000766**, même identité/HP/palette, aucun retour à250 ou1000. Cette observation valide la conservation d'une énergie positive dépensée après arrêt normal. Nouvelle montée ensuite pour diagnostic du siège ; la charge est à nouveau épuisée pendant l'inspection, sans dégradation des HP. F3 clienty242,01420 et lecture serveur du pilotey242,01429493078757 contre véhiculey241,99960743078756 : positions cohérentes avec le nouvel ancrage. Les vues de face/arrière ne suffisent pas à lever le doute de contact visuel coussin/bassin ; **contrôle latéral du siège encore ouvert**, sans nouveau changement de géométrie au jugé.
+
+Dernière fermeture normale client23:41:14 et serveur23:41:15. Utiliser remis au clic droit dans le seul profil isolé, après sortie du client. Vision nocturne réintroduite pour cette inspection ; tentative de retrait après déconnexion refusée « No entity was found » : **retirer l'effet à la prochaine connexion**, sans modifier directement la sauvegarde. Aucun client ni dédié de test laissé actif. Traces `.tools/speeder-native-free-controls-client.log`, `.tools/speeder-native-positive-reload-{client,server}.log`. Aucun kill brutal ni validation à deux clients dans ce complément.
+
+## Limites restantes
+
 Ce parcours n'est ni du solo ni deux clients simultanés. Mort, unload, protections tierces, charge réseau et vrais kills Java pendant réparation/peinture restent ouverts. Aucun succès de ces cas déduit d'une fermeture normale ou des Error injectées des GameTests. Recyclage, blindages/modules supplémentaires et les autres systèmes de la V1.0 restent à développer ; P3 et V1.0 EN COURS.

@@ -1,0 +1,21 @@
+{
+  "result": {
+    "id": "legacyoftheforce:pommel_basic",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "II",
+    "CC"
+  ],
+  "type": "minecraft:crafting_shaped"
+}

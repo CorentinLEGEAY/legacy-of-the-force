@@ -1,0 +1,58 @@
+{
+  "gui_light": "front",
+  "elements": [
+    {
+      "from": [
+        5,
+        3,
+        5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "up": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        }
+      },
+      "to": [
+        11,
+        13,
+        11
+      ]
+    }
+  ],
+  "textures": {
+    "red": "minecraft:block/redstone_block",
+    "copper": "minecraft:block/copper_block",
+    "metal": "minecraft:block/iron_block",
+    "particle": "minecraft:block/iron_block",
+    "dark": "minecraft:block/black_concrete"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    }
+  }
+}

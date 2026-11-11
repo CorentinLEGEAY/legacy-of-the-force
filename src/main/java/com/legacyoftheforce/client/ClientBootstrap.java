@@ -20,6 +20,15 @@ public final class ClientBootstrap {
         NeoForge.EVENT_BUS.addListener(new DiagnosticCommands()::register);
         var forceKeys = new ForceKeys();
         modBus.addListener(forceKeys::register);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
+                event.register(com.legacyoftheforce.lightsaber.SaberContent.MENU.get(), SaberWorkshopScreen::new));
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) -> event.enqueueWork(() ->
+                net.minecraft.client.renderer.item.ItemProperties.register(com.legacyoftheforce.lightsaber.SaberContent.SABER.get(),
+                        com.legacyoftheforce.lightsaber.SaberContent.id("emitter"), (stack, level, entity, seed) -> {
+                            var data = stack.get(com.legacyoftheforce.lightsaber.SaberContent.ASSEMBLY.get());
+                            return data != null && data.parts().map(parts -> parts.get(com.legacyoftheforce.lightsaber.SaberSlot.EMITTER)
+                                    .equals(com.legacyoftheforce.lightsaber.SaberContent.id("emitter_claw"))).orElse(false) ? 1 : 0;
+                        })));
         NeoForge.EVENT_BUS.addListener(forceKeys::tick);
     }
 }

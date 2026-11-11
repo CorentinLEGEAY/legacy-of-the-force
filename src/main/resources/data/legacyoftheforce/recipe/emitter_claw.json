@@ -1,0 +1,25 @@
+{
+  "result": {
+    "id": "legacyoftheforce:emitter_claw",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "I I",
+    " G ",
+    " R "
+  ],
+  "type": "minecraft:crafting_shaped"
+}

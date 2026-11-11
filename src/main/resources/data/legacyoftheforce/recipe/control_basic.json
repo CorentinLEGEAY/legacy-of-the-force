@@ -1,0 +1,21 @@
+{
+  "result": {
+    "id": "legacyoftheforce:control_basic",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "B": {
+      "item": "minecraft:stone_button"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "B",
+    "R"
+  ],
+  "type": "minecraft:crafting_shaped"
+}

@@ -1,0 +1,20 @@
+{
+  "result": {
+    "id": "legacyoftheforce:circuit_basic",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    }
+  },
+  "pattern": [
+    "CRC"
+  ],
+  "type": "minecraft:crafting_shaped"
+}

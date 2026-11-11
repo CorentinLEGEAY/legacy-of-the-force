@@ -1,0 +1,28 @@
+{
+  "result": {
+    "id": "legacyoftheforce:saber_workshop",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "T": {
+      "item": "minecraft:crafting_table"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "III",
+    "CTC",
+    " R "
+  ],
+  "type": "minecraft:crafting_shaped"
+}

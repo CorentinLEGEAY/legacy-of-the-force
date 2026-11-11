@@ -1,0 +1,11 @@
+{
+  "mount": "standard",
+  "schemaVersion": 1,
+  "types": [
+    "single"
+  ],
+  "length": 2,
+  "radius": 2,
+  "stability": 0.0,
+  "slot": "pommel"
+}

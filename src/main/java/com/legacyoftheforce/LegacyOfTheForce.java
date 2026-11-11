@@ -9,6 +9,9 @@ import com.legacyoftheforce.rpg.ProgressCommands;
 import com.legacyoftheforce.rpg.CombatRewards;
 import com.legacyoftheforce.rpg.ProgressService;
 import com.legacyoftheforce.rpg.RewardLifecycle;
+import com.legacyoftheforce.lightsaber.SaberContent;
+import com.legacyoftheforce.lightsaber.SaberCatalog;
+import com.legacyoftheforce.lightsaber.SaberConfig;
 import com.legacyoftheforce.content.TransactionContent;
 import com.legacyoftheforce.content.WorldTransactionAnchors;
 import com.legacyoftheforce.core.operation.VerifiedChunkSaveBarrier;
@@ -32,6 +35,10 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         container.registerConfig(ModConfig.Type.SERVER, ForceConfig.SPEC, "legacyoftheforce-force.toml");
         TransactionContent.register(modBus);
+        SaberContent.register(modBus);
+        modBus.addListener(SaberContent::creative);
+        container.registerConfig(ModConfig.Type.SERVER, SaberConfig.SPEC, "legacyoftheforce-saber.toml");
+        NeoForge.EVENT_BUS.addListener(SaberCatalog::register);
         NeoForge.EVENT_BUS.register(new TransactionContent());
         NeoForge.EVENT_BUS.register(new ForceModule(new ProgressService(), new VanillaProtectedWorldService(),
                 new WorldTransactionAnchors(), new VerifiedChunkSaveBarrier()));

@@ -1,0 +1,21 @@
+{
+  "result": {
+    "id": "legacyoftheforce:grip_basic",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "pattern": [
+    "LIL",
+    "LIL"
+  ],
+  "type": "minecraft:crafting_shaped"
+}

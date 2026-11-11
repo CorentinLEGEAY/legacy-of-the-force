@@ -1,0 +1,25 @@
+{
+  "result": {
+    "id": "legacyoftheforce:emitter_basic",
+    "count": 1
+  },
+  "group": "legacyoftheforce_saber",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    " I ",
+    "ICI",
+    " R "
+  ],
+  "type": "minecraft:crafting_shaped"
+}

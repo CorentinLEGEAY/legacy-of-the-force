@@ -61,7 +61,7 @@ Les chiffres, noms de capacités avancées, modèles 3D, comportements complexes
 
 ## Développement exécutable (mise à jour du 11 novembre 2026)
 
-Le dépôt contient un socle NeoForge, la progression RPG et la Force minimale ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement ; sabres, speeders, planètes et boss restent à implémenter.
+Le dépôt contient un socle NeoForge, la progression RPG, la Force minimale et l'atelier d'assemblage des premières poignées de sabre ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement ; cristaux/lames/combat au sabre, speeders, planètes et boss restent à implémenter.
 
 Prérequis : JDK 21 x64, Git. Le wrapper télécharge Gradle et les dépendances NeoForge 21.1.265. Aucun Gradle global nécessaire.
 
@@ -83,3 +83,5 @@ Les récompenses RPG disposent d'un journal de reprise et de reçus durables sou
 La télékinésie minimale de blocs est désormais jouable : niveau 15 pour terre/planches/laine, 35 pour pierre. V saisit/dépose, G restitue ; touches reconfigurables. Voir `docs/validation/P1-04.md` pour les règles, les preuves et les limites. Les autres systèmes de la V1.0 restent à développer.
 
 R pousse un mob dès le niveau 5 ; H l'attire dès le niveau 15. Viser une cible à moins de 6 blocs, sans mur. Énergie, masse, résistance, permissions et cooldown partagé sont calculés côté serveur. Les joueurs, boss, montures occupées, animaux d'autrui et mobs désactivés par `NoAI` sont refusés. Touches reconfigurables ; commandes équivalentes : `/lotf force push` et `/lotf force pull`. Voir `docs/validation/P1-05.md`.
+
+Atelier de sabres : fabriquer le bloc et ses pièces via les recettes vanilla débloquées avec du fer, puis ouvrir l'atelier. Conserver dans l'inventaire principal un émetteur, un col, une poignée, un interrupteur, un circuit et un pommeau. Choisir l'émetteur et cliquer « Assembler » ; le serveur consomme une pièce de chaque famille et livre une poignée avec UUID et données persistantes. Deux modèles d'émetteur sont disponibles. **La lame est inactive tant que P2-02 n'est pas implémenté.** Détails et limites : `docs/validation/P2-01.md`.

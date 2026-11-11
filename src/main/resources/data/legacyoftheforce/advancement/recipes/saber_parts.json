@@ -1,0 +1,28 @@
+{
+  "rewards": {
+    "recipes": [
+      "legacyoftheforce:neck_basic",
+      "legacyoftheforce:saber_workshop",
+      "legacyoftheforce:emitter_claw",
+      "legacyoftheforce:control_basic",
+      "legacyoftheforce:emitter_basic",
+      "legacyoftheforce:grip_basic",
+      "legacyoftheforce:pommel_basic",
+      "legacyoftheforce:circuit_basic"
+    ]
+  },
+  "criteria": {
+    "has_iron": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:iron_ingot"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  }
+}

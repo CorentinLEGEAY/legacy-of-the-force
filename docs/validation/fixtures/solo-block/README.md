@@ -12,3 +12,7 @@ Ce datapack de test ne s'exécute pas automatiquement. **L'utiliser seulement da
 8. Visée conservée sur la terre déposée : V puis G. Exécuter `verify` : mêmes succès après restitution.
 
 Les fonctions de préparation ne déplacent aucun bloc par la Force à la place du joueur. Les saisies/dépôts/annulations sont déclenchés par les touches réelles. Elles isolent le terrain, positionnent la caméra et lisent le résultat serveur.
+
+## Atelier P2-01
+
+Avec le binaire contenant P2-01, `/function lotf_validation:saber_setup` appelle la même préparation jetable puis place un atelier et donne deux pièces de chaque type, dont les deux émetteurs. Ouvrir l'atelier par clic droit ; assembler la variante standard puis choisir Griffes et assembler. Les pièces communes passent de 2 à 0, les deux émetteurs de 2 à 1, et deux poignées sont livrées. Une demande supplémentaire doit afficher le manque de pièces. Ne pas rejouer la préparation pour vérifier la persistance : sauvegarder/quitter, recharger, comparer `/data get entity @s Inventory`. Voir `P2-01.md` pour le périmètre exact.

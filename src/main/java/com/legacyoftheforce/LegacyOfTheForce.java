@@ -6,6 +6,7 @@ import com.legacyoftheforce.core.network.ModNetwork;
 import com.legacyoftheforce.rpg.ProgressAttachments;
 import com.legacyoftheforce.rpg.ProgressEvents;
 import com.legacyoftheforce.rpg.ProgressCommands;
+import com.legacyoftheforce.rpg.CombatRewards;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -23,6 +24,7 @@ public final class LegacyOfTheForce {
         ProgressAttachments.TYPES.register(modBus);
         var progressEvents = new ProgressEvents();
         NeoForge.EVENT_BUS.addListener(new ProgressCommands()::register);
+        NeoForge.EVENT_BUS.register(new CombatRewards());
         NeoForge.EVENT_BUS.addListener(progressEvents::onLogin);
         NeoForge.EVENT_BUS.addListener(progressEvents::onRespawn);
         NeoForge.EVENT_BUS.addListener(progressEvents::onDimension);

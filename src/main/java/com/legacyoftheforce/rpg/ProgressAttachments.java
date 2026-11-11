@@ -11,5 +11,7 @@ public final class ProgressAttachments {
             NeoForgeRegistries.ATTACHMENT_TYPES, LegacyOfTheForce.MOD_ID);
     public static final Supplier<AttachmentType<PlayerProgress>> PLAYER_PROGRESS = TYPES.register(
             "player_progress", () -> AttachmentType.serializable(PlayerProgress::new).copyOnDeath().build());
+    public static final Supplier<AttachmentType<KillCredit>> KILL_CREDIT = TYPES.register(
+            "kill_credit", () -> AttachmentType.serializable(KillCredit::new).build());
     private ProgressAttachments() {}
 }

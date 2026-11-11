@@ -39,7 +39,7 @@ class PlayerProgressTest {
         var restored = new PlayerProgress();
         restored.deserializeNBT(null, original.serializeNBT(null));
         assertEquals(original.snapshot(), restored.snapshot());
-        assertEquals(tag, restored.serializeNBT(null));
+        for (String key : tag.getAllKeys()) assertEquals(tag.get(key), restored.serializeNBT(null).get(key));
         restored.resetEnergyAfterDeath(1);
         assertEquals(37, restored.snapshot().level());
         assertEquals(-342, restored.snapshot().alignmentTenths());

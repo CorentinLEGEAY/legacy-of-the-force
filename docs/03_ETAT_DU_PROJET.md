@@ -15,8 +15,9 @@
 | P0-01 | VALIDÉ (amorçage) | `build` réussi ; JAR 0.1.0-dev ; client observé au menu et mod à l'état loaded ; serveur Done, stop et sauvegarde | Aucun gameplay encore implémenté |
 | P0-02 | Implémenté, validation réseau partielle | Packages, configurations serveur/client séparées, événement métier immuable, protocole 1, intention diagnostic bornée, contrôle OP/anti-rejeu/taux et nettoyage connexion | Paquets malveillants et protocole à deux clients à tester en situation ; contrats métiers ajoutés au fil des tickets |
 | P0-03 | VALIDÉ (socle de tests) | 3 tests JUnit anti-rejeu/taux/bornes ; script smoke dédié, arrêt propre et redémarrage du même monde | Pas de tests de gameplay tant que systèmes absents |
-| P1-01 | Prochain développement | Profil versionné, persistance, énergie, synchronisation et HUD | À faire |
-| P1-02 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée |
+| P1-01 | Implémenté, validation partielle | Profil, NBT, HUD et énergie vérifiés sur dédié, mort, dimension, redémarrage | Solo et deux clients stables ouverts |
+| P1-02 / P1-03 | Implémentés, validation partielle | 19 JUnit + 4 GameTests : attribution, XP, alignement, anti-farm, cooldown | Solo, clients stables et crash disque ouverts |
+| P1-04 à P7 | À faire | Voir roadmap officielle | Aucune phase gameplay validée |
 
 ## Mini-plans et fichiers
 - P0 : `build.gradle`, `gradle.properties`, wrapper, métadonnées, `LegacyOfTheForce`, `core/{config,network,security,api}`, `client/ClientBootstrap`, `scripts/`, tests et procédures sous `docs/validation`.
@@ -50,3 +51,13 @@
 - Push GitHub demandé par l'utilisateur tenté : en attente d'authentification Git Credential Manager. Le distant reste vide au dernier contrôle. Demande d'intervention envoyée ; le travail local continue.
 - P0 demeure partiellement validée pour le réseau ; aucune phase P1–P7 validée globalement.
 - Prochaine tranche développable : P1-02 (XP, attribution, anti-farm), puis P1-03 (alignement), tout en gardant les validations transverses ouvertes. Aucun saut vers P2–P7.
+
+
+## Avancement P1-02 / P1-03 — 2026-11-11
+- Commit P1-01 : `d7a322b`.
+- XP et alignement réellement attribués sur événements serveur, pas par un paquet client. Cas mob volontaire, passif, élite, mort automatique et deux attaquants couverts par quatre GameTests Minecraft.
+- Régression complète : `build runGameTestServer` réussit, 19 JUnit et 4 GameTests requis réussis. Rapport `docs/validation/P1-02-03.md`.
+- Bornes niveau/alignement, éligibilité de pouvoirs, historique borné, anti-farm et cooldown boss sauvegardés ; JAR inspecté sans classes de tests.
+- Limite de robustesse : atomicité des deux sauvegardes joueur/mob lors d'un arrêt brutal non prouvée. À traiter avant validation de phase/release ; historique borné ne suffit pas seul à garantir déduplication infinie.
+- Prochain ticket : **P1-04**. Avant implémentation, définir un transfert de bloc avec marqueurs de transaction et barrières de sauvegarde : un simple SavedData séparé du chunk ne prouve pas l'absence de duplication après crash. Préserver coffres/claims/spawn ; interface de permission refusant par défaut les cas inconnus.
+- Push GitHub toujours en attente d'authentification au dernier contrôle ; utilisateur a indiqué connecter Git. Aucun push déclaré réussi.

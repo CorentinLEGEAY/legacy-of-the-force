@@ -1,0 +1,17 @@
+Extraits du serveur de test local, 11 novembre 2026.
+P1_LOGOUT_HELD à 15:03:56 est la saisie précédant la mort effective de 15:04:07.
+Les contrôles prématurés non probants sont exclus ; voir le rapport P1-04.
+
+[11nov.2026 15:03:03.494] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DIMENSION_HELD
+[11nov.2026 15:03:03.516] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DIMENSION_RESTORED
+[11nov.2026 15:03:03.517] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DIMENSION_NO_DISPLAY
+[11nov.2026 15:03:56.915] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Force level 100 | XP 0 | Energy 100.0/100.0 | Alignment 0.0
+[11nov.2026 15:03:56.942] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_LOGOUT_HELD
+[11nov.2026 15:04:07.631] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo was killed
+[11nov.2026 15:04:07.637] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_REAL_DEATH_RESTORED
+[11nov.2026 15:04:07.637] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_REAL_DEATH_NO_DISPLAY
+[11nov.2026 15:04:33.156] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: Force level 100 | XP 0 | Energy 100.0/100.0 | Alignment 0.0
+[11nov.2026 15:04:33.191] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DISCONNECT_HELD
+[11nov.2026 15:04:33.298] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: ForceTesterTwo left the game
+[11nov.2026 15:05:33.542] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DISCONNECT_RESTART_DIRT
+[11nov.2026 15:05:33.544] [Server thread/INFO] [net.minecraft.server.MinecraftServer/]: [Not Secure] [Server] P1_DISCONNECT_RESTART_NO_DISPLAY

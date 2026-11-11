@@ -95,3 +95,10 @@
 - Mini-plan réalisé : `BlockMoveGameTests.java` et gabarit `empty_cross_chunk.nbt` ; dépôt sur une vraie frontière de chunk, transfert inverse interrompu après sauvegarde des deux chunks et double récupération idempotente. Preuves dans `docs/validation/P1-04.md`.
 - Dernière régression : build réussi, **33 JUnit et 20 GameTests requis réussis**, à 14:59:12. Pas de modification du code de production depuis le binaire P1-05 vérifié en solo.
 - Limites restantes et prochaine tâche inchangées : réseau prolongé, bloc solo, unload naturel et robustesse des récompenses aux crashes avant validation globale de P1. Ne pas présenter les injections contrôlées comme un arrêt brutal du processus.
+
+## P1-04 — cycle de vie dédié final (2026-11-11, 15:05)
+- Test inter-chunks publié : `2f5299a`. Aucun changement du code de production depuis P1-05.
+- Dernier binaire, vrai client ForceTesterTwo : saisie validée par raycast serveur, puis changement de dimension → source restaurée/projection supprimée ; nouvelle saisie et mort effective → même résultat ; réapparition → niveau/XP/alignement conservés.
+- Nouvelle saisie et déconnexion réelle : session libérée, journal vide. Arrêt puis redémarrage dédié, chargement du chunk source : terre présente, aucune ancre ni projection. Ticket de forceload de test retiré, dédié et client arrêtés proprement.
+- Rapport et extraits : `docs/validation/P1-04.md`, `docs/validation/P1_LIFECYCLE_EVIDENCE.txt`. Les premiers contrôles trop précoces (mort pendant transfert et condition immédiate après kick) sont explicitement écartés ; seules les preuves effectives sont retenues.
+- Prochaine priorité : rendre l'attribution RPG robuste entre la sauvegarde joueur et celle du mob lors d'un crash, puis valider le bloc en solo et le réseau prolongé. Une simple marque « déjà payé » et un ledger joueur borné ne prouvent pas l'atomicité entre deux fichiers. Reprendre par lecture de `rpg/CombatRewards`, `KillCredit`, `PlayerProgress`, `core/operation/DurableOperationStore` et des exigences RPG ; mini-plan et tests d'interruption avant modification. Les autres limites P1 restent tracées ; P2–P7 non commencées.

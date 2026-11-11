@@ -8,6 +8,8 @@ public final class SpeederConfig {
     public static final ModConfigSpec.DoubleValue INITIAL_CHARGE;
     public static final ModConfigSpec.IntValue BUILD_INTERVAL;
     public static final ModConfigSpec.DoubleValue GARAGE_RADIUS;
+    public static final ModConfigSpec.DoubleValue CELL_ENERGY;
+    public static final ModConfigSpec.IntValue RECHARGE_INTERVAL;
     public static final ModConfigSpec.DoubleValue FORWARD_SPEED, REVERSE_SPEED, ACCELERATION_SCALE, MAX_ACCELERATION,
             TURN_DEGREES, DRAG, BRAKING_DRAG, HOVER_HEIGHT, HOVER_GAIN, VERTICAL_DAMPING, VERTICAL_SPEED,
             GRAVITY, IDLE_ENERGY, THRUST_ENERGY, STEERING_ENERGY, MASS_ENERGY;
@@ -19,6 +21,8 @@ public final class SpeederConfig {
         INITIAL_CHARGE = builder.defineInRange("assembly.initialChargeFraction", 1.0, 0.0, 1.0);
         BUILD_INTERVAL = builder.defineInRange("assembly.minimumServerIntervalTicks", 40, 1, 1200);
         GARAGE_RADIUS = builder.defineInRange("garage.serviceRadiusBlocks", 6.0, 2.0, 8.0);
+        CELL_ENERGY = builder.defineInRange("garage.energyPerCell", 250.0, 1.0, 1000000.0);
+        RECHARGE_INTERVAL = builder.defineInRange("garage.minimumRechargeIntervalTicks", 40, 1, 1200);
         var motion = SpeederMotion.Settings.defaults();
         builder.comment("Server simulation per tick. Reverse speed and braking drag are capped by forward speed and rolling drag.").push("motion");
         FORWARD_SPEED = builder.defineInRange("forwardBlocksPerTick", motion.forwardSpeed(), .01, 1);

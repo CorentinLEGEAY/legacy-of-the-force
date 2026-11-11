@@ -70,7 +70,7 @@ public final class SpeederEntity extends Entity {
     }
     private Optional<VehicleState.Snapshot> supported() {
         var snapshot = state.snapshot();
-        if (state.tag().contains("assemblyId") || snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
+        if (state.tag().contains("assemblyId") || state.tag().contains("rechargeId") || snapshot.isEmpty() || !snapshot.get().id().equals(getUUID()) || snapshot.get().garaged()
                 || !snapshot.get().pose().dimension().equals(level().dimension().location())) return Optional.empty();
         return snapshot;
     }
@@ -78,6 +78,10 @@ public final class SpeederEntity extends Entity {
         var raw = state.tag();
         if (!raw.hasUUID("assemblyId") || !operation.equals(raw.getUUID("assemblyId"))) throw new IllegalStateException("Assembly activation mismatch");
         raw.remove("assemblyId"); state = new VehicleState(raw); project();
+    }
+    void applyRechargeState(VehicleState updated) {
+        if (level().isClientSide || !updated.snapshot().orElseThrow().id().equals(getUUID())) throw new IllegalArgumentException("Invalid recharge state");
+        state = updated; intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE; project();
     }
     private boolean owner(ServerPlayer actor) {
         return supported().map(snapshot -> snapshot.owner().equals(actor.getUUID())).orElse(false)

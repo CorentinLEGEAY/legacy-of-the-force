@@ -31,7 +31,7 @@ public final class GarageDiagnostics {
         var state = vehicle.savedState().snapshot().orElseThrow();
         var validation = BlueprintValidator.inspect(state.blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits());
         if (!state.id().equals(vehicle.getUUID()) || !state.pose().dimension().equals(level.dimension().location())
-                || vehicle.savedState().tag().contains("assemblyId") || state.garaged() || !validation.valid()
+                || vehicle.savedState().tag().contains("assemblyId") || vehicle.savedState().tag().contains("rechargeId") || state.garaged() || !validation.valid()
                 || state.motion().energy() > validation.stats().capacity()) return Report.unavailable(Status.UNSUPPORTED);
         int integrity = state.health().stream().mapToInt(Integer::intValue).sum() / state.health().size();
         int damaged = (int)state.health().stream().filter(health -> health < 100).count();

@@ -25,6 +25,9 @@ public final class SpeederContent {
     private static final DeferredRegister<net.neoforged.neoforge.attachment.AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.ATTACHMENT_TYPES, LegacyOfTheForce.MOD_ID);
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<AssemblyReceipt>> ASSEMBLY_RECEIPT = ATTACHMENTS.register("speeder_assembly_receipt", () ->
             net.neoforged.neoforge.attachment.AttachmentType.builder(AssemblyReceipt::empty).serialize(AssemblyReceipt.CODEC).copyOnDeath().build());
+    public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<AssemblyReceipt>> RECHARGE_RECEIPT = ATTACHMENTS.register("speeder_recharge_receipt", () ->
+            net.neoforged.neoforge.attachment.AttachmentType.builder(AssemblyReceipt::empty).serialize(AssemblyReceipt.CODEC).copyOnDeath().build());
+    public static final Supplier<Item> ENERGY_CELL = ITEMS.register("speeder_energy_cell", () -> new Item(new Item.Properties()));
     public static final Supplier<EntityType<SpeederEntity>> VEHICLE = ENTITIES.register("speeder", () ->
             EntityType.Builder.<SpeederEntity>of(SpeederEntity::new, MobCategory.MISC).sized(1.5f, 1)
                     .clientTrackingRange(8).updateInterval(2).noSummon().build("legacyoftheforce:speeder"));
@@ -48,6 +51,7 @@ public final class SpeederContent {
     }
     public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); ENTITIES.register(bus); ATTACHMENTS.register(bus); }
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey().equals(CreativeModeTabs.INGREDIENTS)) event.accept(ENERGY_CELL.get());
         if (event.getTabKey().equals(CreativeModeTabs.INGREDIENTS)) for (int i = 0; i < PART_NAMES.size(); i++) event.accept(part(i));
         if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(GARAGE_ITEM.get());
         if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(BLUEPRINT_ITEM.get());

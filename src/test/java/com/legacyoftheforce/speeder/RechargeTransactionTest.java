@@ -1,0 +1,44 @@
+package com.legacyoftheforce.speeder;
+
+import java.util.*;
+import net.minecraft.nbt.*;
+import net.minecraft.resources.ResourceLocation;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class RechargeTransactionTest {
+    private static RechargeTransaction record() {
+        UUID owner = UUID.randomUUID(), operation = UUID.randomUUID(); var receipt = AssemblyReceipt.empty();
+        var item = new CompoundTag(); item.putByte("Slot", (byte)150); item.putString("id", "legacyoftheforce:speeder_energy_cell"); item.putInt("count", 1);
+        var inventory = new ListTag(); inventory.add(item);
+        var before = new CompoundTag(); before.put("Inventory", inventory); before.put("receipt", receipt.tag());
+        var after = new CompoundTag(); after.put("Inventory", new ListTag()); after.put("receipt", receipt.next(operation).tag());
+        var design = SpeederBlueprint.blank(UUID.randomUUID(), owner).withModules(SpeederContent.starterModules());
+        var vehicle = VehicleState.create(UUID.randomUUID(), owner, design, new VehicleState.Pose(ResourceLocation.parse("minecraft:overworld"), 0, 70, 0), 100);
+        return RechargeTransaction.prepare(owner, operation, before, after, vehicle, 350);
+    }
+    @Test void untrustedRecordMustKeepIdentityReceiptAndARealDebit() {
+        var record = record();
+        var wrongOwner = record.tag(); wrongOwner.putUUID("owner", UUID.randomUUID()); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(wrongOwner).view());
+        var unchanged = record.tag(); unchanged.getCompound("after").put("Inventory", unchanged.getCompound("before").get("Inventory").copy());
+        assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(unchanged).view());
+        var receipt = record.tag(); receipt.getCompound("after").put("receipt", AssemblyReceipt.empty().tag()); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(receipt).view());
+        var pending = record.tag(); pending.getCompound("vehicle").putUUID("assemblyId", UUID.randomUUID()); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(pending).view());
+    }
+    @Test void chargeAndSchemasAreStrictlyBoundedAndUnknownDataIsRetained() {
+        for (double charge : new double[]{Double.NaN, Double.POSITIVE_INFINITY, -1, 0, 100, 1_000_000_001}) {
+            var tag = record().tag(); tag.putDouble("charge", charge); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(tag).view());
+        }
+        var future = record().tag(); future.putInt("schemaVersion", 99); future.putString("extension", "keep");
+        var value = new RechargeTransaction(future); assertThrows(IllegalArgumentException.class, value::view); assertEquals(future, value.tag());
+        var wrongType = record().tag(); wrongType.putFloat("charge", 350); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(wrongType).view());
+        var oversized = record().tag(); oversized.putString("extension", "x".repeat(262144)); assertThrows(IllegalArgumentException.class, () -> new RechargeTransaction(oversized).view());
+    }
+    @Test void closedRecordCannotBeReopenedAndOpaqueDataSurvivesTransitions() {
+        var tag = record().tag(); tag.putString("extension", "keep"); var initial = new RechargeTransaction(tag); var before = initial.tag();
+        var done = initial.phase(RechargeTransaction.Phase.PAID).phase(RechargeTransaction.Phase.APPLIED).phase(RechargeTransaction.Phase.DONE);
+        assertEquals("keep", done.tag().getString("extension")); assertEquals(before, initial.tag());
+        assertThrows(IllegalArgumentException.class, () -> done.phase(RechargeTransaction.Phase.PREPARED));
+        assertThrows(IllegalArgumentException.class, () -> initial.phase(RechargeTransaction.Phase.DONE));
+    }
+}

@@ -34,7 +34,7 @@ record AssemblyTransaction(CompoundTag tag) {
                 || before.get("Inventory").equals(after.get("Inventory"))) throw new IllegalArgumentException("Inconsistent assembly proof");
         return new View(owner, operation, Phase.valueOf(tag.getString("phase")), before, after, vehicle);
     }
-    private static void validateImage(CompoundTag image) {
+    static void validateImage(CompoundTag image) {
         if (image.sizeInBytes() > 67584 || !image.contains("Inventory", Tag.TAG_LIST) || !image.contains("receipt", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Invalid payment image");
         var inventory = (ListTag)image.get("Inventory");
         if (inventory.size() > 41 || !inventory.isEmpty() && inventory.getElementType() != Tag.TAG_COMPOUND) throw new IllegalArgumentException("Inventory budget exceeded");

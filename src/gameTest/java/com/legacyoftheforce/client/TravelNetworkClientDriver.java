@@ -22,6 +22,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 public final class TravelNetworkClientDriver {
     private static String stage = "START", lastScreen = ""; private static long ticks, after; private static boolean connected, backedUp; private static final long STARTED = System.nanoTime();
     private static final ListTag STEPS = new ListTag();
+    private static long previousClientPid;
+    private static java.util.UUID resumeOwner;
     private static void require(boolean value, String message) { if (!value) throw new IllegalStateException(message); }
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
         if (Boolean.getBoolean("lotf.validation.soloOwnerSave")) {
@@ -43,6 +45,13 @@ public final class TravelNetworkClientDriver {
         if (!Boolean.getBoolean("lotf.validation.travelNetwork")) return; var mc = Minecraft.getInstance(); ticks++;
         if (stage.equals("FAILED") || stage.equals("PASS")) { if (mc.getConnection() == null || Boolean.getBoolean("lotf.validation.travelSolo")) mc.stop(); return; }
         try {
+            if (Boolean.getBoolean("lotf.validation.travelResume") && stage.equals("START")) {
+                var resume = AtomicNbtFile.read(mc.gameDirectory.toPath().resolve("validation/travel-network-resume.nbt"), 65536);
+                require(resume.getInt("schemaVersion") == 1 && resume.getString("name").equals("ForceTesterOne"), "Known disconnected client prefix required");
+                STEPS.addAll(resume.getList("steps", Tag.TAG_COMPOUND)); require(STEPS.size() == 3, "Three verified prefix stages required");
+                ticks = STEPS.getCompound(2).getLong("tick") + 1; previousClientPid = resume.getLong("clientPid"); stage = "ILUM";
+                resumeOwner = resume.getUUID("owner");
+            }
             require(System.nanoTime() - STARTED < 240_000_000_000L, "Native network client timed out in " + stage);
             var screen = mc.screen == null ? "none" : mc.screen.getClass().getSimpleName();
             if (!screen.equals(lastScreen)) { lastScreen = screen; LegacyOfTheForce.LOGGER.info("TRAVEL_NETWORK_CLIENT_SCREEN stage={} screen={} title={}", stage, screen, mc.screen == null ? "" : mc.screen.getTitle().getString()); }
@@ -56,6 +65,7 @@ public final class TravelNetworkClientDriver {
             }
             if (connected && mc.getConnection() == null) throw new IllegalStateException("Connection closed before client proof in " + stage);
             if (mc.player != null && mc.getConnection() != null) connected = true;
+            if (mc.player != null && resumeOwner != null) require(mc.player.getUUID().equals(resumeOwner), "Reconnected native identity must match the saved prefix");
             if (mc.player == null || mc.level == null || mc.gameMode == null || !(mc.player.containerMenu instanceof GalacticTerminalMenu menu)) return;
             if (stage.equals("START")) {
                 require(!menu.known() && menu.atHome(), "Fresh synchronized home menu expected"); inventory(mc, 1, 2, 1); capture(mc, menu, "initial");
@@ -72,7 +82,14 @@ public final class TravelNetworkClientDriver {
                 inventory(mc, 0, 2, 1); require(menu.cost() == 2, "Projected first departure must cost two cells"); capture(mc, menu, "discovery_ack");
                 stage = "OUTBOUND_WAIT"; after = ticks + 100; return;
             }
-            if (stage.equals("OUTBOUND_WAIT") && ticks >= after) { click(mc, menu, 0); click(mc, menu, 0); stage = "ILUM"; return; }
+            if (stage.equals("OUTBOUND_WAIT") && ticks >= after) {
+                if (Boolean.getBoolean("lotf.validation.travelDrop") && mc.player.getGameProfile().getName().equals("ForceTesterOne")) {
+                    var resume = new CompoundTag(); resume.putInt("schemaVersion", 1); resume.putString("name", "ForceTesterOne");
+                    resume.putUUID("owner", mc.player.getUUID()); resume.putLong("clientPid", ProcessHandle.current().pid()); resume.put("steps", STEPS.copy());
+                    AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/travel-network-resume.nbt"), resume, 65536);
+                }
+                click(mc, menu, 0); click(mc, menu, 0); stage = "ILUM"; return;
+            }
             if (stage.equals("ILUM") && mc.level.dimension().equals(PlanetContent.ILUM) && menu.atIlum() && menu.credit()) {
                 if (!Boolean.getBoolean("lotf.validation.travelSolo") && mc.level.players().size() < 2) return;
                 inventory(mc, 0, 0, 0); capture(mc, menu, "arrival_ack"); stage = "RETURN_WAIT"; after = ticks + 40; return;
@@ -105,6 +122,7 @@ public final class TravelNetworkClientDriver {
         var directory = mc.gameDirectory.toPath().toAbsolutePath().normalize(); require(directory.getFileName().toString().startsWith("run-travel-client-"), "Isolated native client profile required");
         var proof = new CompoundTag(); proof.putInt("schemaVersion", 1); proof.putBoolean("passed", passed); proof.putString("stage", stage); proof.putString("failure", failure); proof.put("steps", STEPS.copy());
         proof.putLong("clientPid", ProcessHandle.current().pid());
+        if (previousClientPid != 0) proof.putLong("previousClientPid", previousClientPid);
         if (mc.player != null) { proof.putUUID("owner", mc.player.getUUID()); proof.putString("name", mc.player.getGameProfile().getName()); }
         AtomicNbtFile.write(directory.resolve("validation/travel-network-client.nbt"), proof, 65536);
     }

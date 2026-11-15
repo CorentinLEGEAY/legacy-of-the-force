@@ -13,6 +13,16 @@ import net.minecraft.world.phys.AABB;
 
 /** Bounded loaded-chunk search. Never replaces a block or generates a free terminal/platform. */
 final class SafeArrival {
+    static boolean occupied(ServerPlayer actor) {
+        var dimensions = actor.getDimensions(net.minecraft.world.entity.Pose.STANDING);
+        double half = dimensions.width() / 2.0;
+        var box = new AABB(actor.getX() - half, actor.getY(), actor.getZ() - half, actor.getX() + half, actor.getY() + dimensions.height(), actor.getZ() + half);
+        return occupied(actor, actor.serverLevel(), box);
+    }
+    private static boolean occupied(ServerPlayer actor, ServerLevel level, AABB box) {
+        return !level.getEntities(actor, box, entity -> entity.isAlive() && !entity.isSpectator()
+                && (entity instanceof net.minecraft.world.entity.LivingEntity || entity.canBeCollidedWith())).isEmpty();
+    }
     static Optional<TravelPoint> find(ServerPlayer actor, TravelPoint anchor, boolean surface, ProtectedWorldService protection) {
         var level = actor.server.getLevel(ResourceKey.create(Registries.DIMENSION, anchor.dimension())); if (level == null) return Optional.empty();
         int radius = TravelConfig.SEARCH_RADIUS.get(); int cx = net.minecraft.util.Mth.floor(anchor.x()), cz = net.minecraft.util.Mth.floor(anchor.z());
@@ -45,8 +55,7 @@ final class SafeArrival {
                     || state.is(Blocks.CAMPFIRE) || state.is(Blocks.SOUL_CAMPFIRE) || state.is(Blocks.POWDER_SNOW) || state.is(Blocks.SWEET_BERRY_BUSH)
                     || state.is(Blocks.WITHER_ROSE) || state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL)) return false;
         }
-        if (!level.getEntities(actor, box, entity -> entity.isAlive() && !entity.isSpectator()
-                && (entity instanceof net.minecraft.world.entity.LivingEntity || entity.canBeCollidedWith())).isEmpty()) return false;
+        if (occupied(actor, level, box)) return false;
         return level.noCollision(actor, box) && level.getBlockCollisions(actor, box.move(0, -.05, 0)).iterator().hasNext();
     }
     static boolean inside(TravelPoint point, TravelPoint anchor) {

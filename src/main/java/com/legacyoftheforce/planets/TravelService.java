@@ -83,6 +83,23 @@ public final class TravelService {
             return Result.PENDING;
         }
     }
+    public void recoverLogin(ServerPlayer actor) throws IOException {
+        recover(actor);
+        var record = read(actor.getUUID());
+        if (record.isEmpty() || record.get().view().phase() != Phase.DONE || record.get().view().kind() == Kind.DISCOVER
+                || actor.isPassenger() || actor.isVehicle()) return;
+        var current = TravelPoint.at(actor);
+        // A disconnected traveller can finish before logout, then another arrival can take that space.
+        // Only resolve occupancy near the last destination; never replay the old receipt's pose/items.
+        if (!inside(current, record.get().view()) || !SafeArrival.occupied(actor)) return;
+        var image = snapshot(actor);
+        var destination = SafeArrival.find(actor, current, false, protection).orElseThrow(() -> new IOException("Rejoin arrival is occupied and no permitted site is available"));
+        TravelLifecycle.permit(actor, () -> actor.teleportTo(actor.serverLevel(), destination.x(), destination.y(), destination.z(), destination.yaw(), destination.pitch()));
+        actor.setDeltaMovement(Vec3.ZERO); actor.fallDistance = 0;
+        if (!SafeArrival.safe(actor, actor.serverLevel(), TravelPoint.at(actor), protection)) throw new IOException("Rejoin arrival remains unsafe");
+        persist(actor, image);
+        LegacyOfTheForce.LOGGER.info("Relocated occupied travel rejoin locally without payment");
+    }
     public void recover(ServerPlayer actor) throws IOException {
         if (actor.server != server || !server.isSameThread() || actor.isFakePlayer()) throw new IOException("Invalid travel recovery context");
         var loaded = read(actor.getUUID()); var live = snapshot(actor); var state = new TravelState(live.getCompound("atlas")).view().orElseThrow();

@@ -22,7 +22,7 @@ public final class TravelLifecycle {
     @SubscribeEvent public void stop(ServerStoppedEvent event) { SERVICES.remove(event.getServer()); PERMITS.remove(event.getServer()); }
     @SubscribeEvent public void login(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer actor) || !SERVICES.containsKey(actor.server)) return;
-        try { SERVICES.get(actor.server).recover(actor); }
+        try { SERVICES.get(actor.server).recoverLogin(actor); }
         catch (Exception unresolved) { LegacyOfTheForce.LOGGER.error("Travel login recovery retained: {}", unresolved.getMessage()); actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("travel.legacyoftheforce.pending")); }
     }
     @SubscribeEvent public void portal(EntityTravelToDimensionEvent event) {

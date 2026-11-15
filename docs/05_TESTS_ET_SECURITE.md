@@ -29,6 +29,7 @@ Tester le gameplay **sur un serveur dédié**, même si le développement se dé
 - Modules ou plan falsifiés par paquet → refus.
 ### Planètes/boss/quests
 - Voyage aller/retour avec inventaire intact et sans doubles transferts.
+- Fermer une vraie socket pendant PAID/TELEPORTED/ACTIVE_DURABLE à l'aller, reconnecter la même identité pendant que son pair reste connecté ; paiement unique, inventaires natifs/atlas/reçus et retour corrects. Si le pair occupe sa place, relocaliser localement sans restaurer l'ancien inventaire, conserver regard/bookmark et refuser sans mutation s'il n'existe aucun site autorisé. Ne pas rembobiner une exploration ultérieure. Preuves et portée : validation/P4-02_DISCONNECT.md.
 - Une structure ne se génère pas dans une zone déjà construite par le joueur.
 - Boss non dupliqué par rechargement de chunk ; récompense une fois par victoire éligible.
 - Victoire partagée : seules les personnes ayant participé selon les règles obtiennent récompenses.

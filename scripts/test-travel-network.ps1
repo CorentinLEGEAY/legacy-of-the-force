@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'net1', [switch]$PrepareOnly)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'net1', [switch]$PrepareOnly, [ValidateSet('None','PAID','TELEPORTED','ACTIVE_DURABLE')][string]$DropCheckpoint = 'None')
 $ErrorActionPreference = 'Stop'
 $repoPath = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $worldPath = Join-Path $repoPath "run-travel-network-$Run/world"
@@ -29,6 +29,7 @@ if ($PrepareOnly) { Write-Output 'PREPARED: native launch metadata and pinned cl
 $started = Get-Date
 $info = [Diagnostics.ProcessStartInfo]::new(); $info.FileName = (Get-Process -Id $PID).Path
 $info.ArgumentList.Add('-NoProfile'); $info.ArgumentList.Add('-File'); $info.ArgumentList.Add((Join-Path $PSScriptRoot 'run-travel-network-server.ps1')); $info.ArgumentList.Add('-Run'); $info.ArgumentList.Add($Run)
+$info.ArgumentList.Add('-DropCheckpoint'); $info.ArgumentList.Add($DropCheckpoint)
 $info.WorkingDirectory = $repoPath; $info.UseShellExecute = $false; $info.CreateNoWindow = $true
 $info.RedirectStandardInput = $true; $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
 $server = [Diagnostics.Process]::new(); $server.StartInfo = $info; $server.Start() | Out-Null
@@ -42,6 +43,8 @@ function Server-Text {
 $passed = $false
 $observedAt = $null
 $clientResults = [Collections.Generic.List[object]]::new()
+$cutClient = $null
+$initialClients = [Collections.Generic.List[object]]::new()
 try {
     $deadline = (Get-Date).AddSeconds(120)
     while (-not $server.HasExited -and (Get-Date) -lt $deadline -and (Server-Text) -notmatch 'Done \([0-9.,]+s\)!') { Start-Sleep -Milliseconds 250 }
@@ -67,6 +70,7 @@ enableVsync:false
         $arguments = [Collections.Generic.List[string]]::new(); foreach ($arg in $launch.arguments) { $arguments.Add([string]$arg) }
         $mainIndex = $arguments.IndexOf('net.neoforged.devlaunch.Main'); if ($mainIndex -lt 0) { throw 'Unexpected native launcher main class.' }
         $arguments.Insert($mainIndex, '-Xms256M'); $arguments.Insert($mainIndex, '-Xmx1536M'); $arguments.Insert($mainIndex, '-Dlotf.validation.travelNetwork=true')
+        if ($DropCheckpoint -ne 'None') { $arguments.Insert($mainIndex, '-Dlotf.validation.travelDrop=true') }
         $arguments[$arguments.Count - 1] = '@' + $programFile.Replace('\', '\\')
         $clientInfo = [Diagnostics.ProcessStartInfo]::new(); $clientInfo.FileName = Join-Path $repoPath ".tools/java-client-$suffix/bin/java.exe"
         if (-not (Test-Path -LiteralPath $clientInfo.FileName)) { throw "Missing existing isolated Java runtime: $($clientInfo.FileName)" }
@@ -75,11 +79,29 @@ enableVsync:false
         foreach ($entry in $launch.environment.PSObject.Properties) { $clientInfo.Environment[$entry.Name] = [string]$entry.Value }
         $client = [Diagnostics.Process]::new(); $client.StartInfo = $clientInfo; $client.Start() | Out-Null
         $clients.Add(@{Process=$client;Out=$client.StandardOutput.ReadToEndAsync();Err=$client.StandardError.ReadToEndAsync();Profile=$profile;Name=$name})
+        $initialClients.Add(@{name=$name;pid=$client.Id})
         Write-Output "STARTED: $name PID=$($client.Id)"
     }
     $deadline = (Get-Date).AddSeconds(240)
     while ((Get-Date) -lt $deadline -and -not $server.HasExited) {
         $text = Server-Text
+        if ($DropCheckpoint -ne 'None' -and $null -eq $cutClient -and (Test-Path -LiteralPath (Join-Path $worldPath 'validation/disconnect-paused.nbt'))) {
+            $item = $clients[0]; $old = $item.Process; $restartInfo = $old.StartInfo
+            $old.Kill(); if (-not $old.WaitForExit(5000)) { throw 'Owned client did not terminate.' }
+            $cutClient = @{name=$item.Name;pid=$old.Id;exitCode=$old.ExitCode;checkpoint=$DropCheckpoint}
+            ($item.Out.GetAwaiter().GetResult() + $item.Err.GetAwaiter().GetResult()) | Set-Content -LiteralPath (Join-Path $repoPath ".tools/travel-network-$Run-disconnected-console.log")
+            Copy-Item -LiteralPath (Join-Path $item.Profile 'logs/latest.log') -Destination (Join-Path $repoPath ".tools/travel-network-$Run-disconnected-client.log")
+            'Client terminated without logout' | Set-Content -LiteralPath (Join-Path $worldPath 'validation/disconnect-release')
+            # Wait for native logout removal before reusing its identity; the second client stays live.
+            $rejoinDeadline = (Get-Date).AddSeconds(20)
+            while ((Get-Date) -lt $rejoinDeadline -and (Server-Text) -notmatch 'ForceTesterOne left the game') { Start-Sleep -Milliseconds 100 }
+            if ((Server-Text) -notmatch 'ForceTesterOne left the game') { throw 'Server did not process actual disconnected player removal.' }
+            $restartInfo.ArgumentList.Insert($restartInfo.ArgumentList.IndexOf('net.neoforged.devlaunch.Main'), '-Dlotf.validation.travelResume=true')
+            $replacement = [Diagnostics.Process]::new(); $replacement.StartInfo = $restartInfo; $replacement.Start() | Out-Null
+            $item.Process = $replacement; $item.Out = $replacement.StandardOutput.ReadToEndAsync(); $item.Err = $replacement.StandardError.ReadToEndAsync()
+            $old.Dispose()
+            Write-Output "RECONNECTED: $($item.Name) native PID=$($replacement.Id), cut PID=$($cutClient.pid)"
+        }
         if ($text -match 'TRAVEL_NETWORK_SERVER_FAILED') { throw 'Server network assertion failed.' }
         foreach ($item in $clients) { if ($item.Process.HasExited) { throw "Native client exited early: $($item.Name), exit=$($item.Process.ExitCode)" } }
         $complete = @($clients | Where-Object { Test-Path -LiteralPath (Join-Path $_.Profile 'validation/travel-network-client.nbt') }).Count
@@ -104,6 +126,6 @@ enableVsync:false
         Write-Output "CLOSED: $($item.Name) exit=$($item.Process.ExitCode)"; $item.Process.Dispose()
     }
 }
-@{run=$Run;observedProofs=$passed;serverExitCode=$serverExit;clients=$clientResults.ToArray();finishedUtc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $repoPath ".tools/travel-network-$Run-result.json")
+@{run=$Run;observedProofs=$passed;serverExitCode=$serverExit;clients=$clientResults.ToArray();initialClients=$initialClients.ToArray();cutClient=$cutClient;finishedUtc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $repoPath ".tools/travel-network-$Run-result.json")
 if ($serverExit -ne 0 -or (Server-Text) -notmatch 'All dimensions are saved' -or @($clientResults | Where-Object exitCode -ne 0).Count -gt 0) { throw 'Server or native clients did not close cleanly.' }
 

@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'net1')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'net1', [ValidateSet('None','PAID','TELEPORTED','ACTIVE_DURABLE')][string]$DropCheckpoint = 'None')
 $ErrorActionPreference = 'Stop'
 $repoPath = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $runPath = Join-Path $repoPath "run-travel-network-$Run"
@@ -29,6 +29,7 @@ gradle.projectsEvaluated {
     rootProject.neoForge.runs.named('server') {
         gameDirectory = rootProject.file('run-travel-network-$Run')
         systemProperty 'lotf.validation.travelNetwork', 'true'
+        systemProperty 'lotf.validation.travelDisconnect', '$DropCheckpoint'
     }
 }
 "@ | Set-Content -LiteralPath $initPath -Encoding ascii

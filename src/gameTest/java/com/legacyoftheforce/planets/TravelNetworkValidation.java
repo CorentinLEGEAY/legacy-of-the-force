@@ -29,7 +29,7 @@ public final class TravelNetworkValidation {
     private static final Map<MinecraftServer, Session> SESSIONS = new IdentityHashMap<>();
     private static final class Track {
         final String name; final BlockPos terminal; ServerPlayer actor; TravelPoint home;
-        CompoundTag arrival; String endpoint;
+        CompoundTag arrival; String endpoint; boolean rejoined;
         Track(String name, int x) { this.name = name; terminal = new BlockPos(x, 240, 600); }
     }
     private static final class Session {
@@ -61,7 +61,18 @@ public final class TravelNetworkValidation {
                 for (var track : session.tracks) initialize(track);
                 session.stage = "OUTBOUND"; LegacyOfTheForce.LOGGER.info("TRAVEL_NETWORK_PAIRED clients={}", session.tracks.size()); return;
             }
-            for (var track : session.tracks) require(server.getPlayerList().getPlayer(track.actor.getUUID()) == track.actor && track.actor.connection.isAcceptingMessages(), "Native test client disconnected early: " + track.name);
+            for (var track : session.tracks) {
+                if (!System.getProperty("lotf.validation.travelDisconnect", "None").equals("None") && session.stage.equals("OUTBOUND") && track.name.equals("ForceTesterOne")) {
+                    var current = server.getPlayerList().getPlayer(track.actor.getUUID());
+                    if (current == null || !current.connection.isAcceptingMessages()) return;
+                    if (current != track.actor) {
+                        require(Files.isRegularFile(session.root.resolve("validation/disconnect-closed.nbt")), "Reconnect must follow observed socket closure");
+                        track.actor = current; track.endpoint = current.connection.getConnection().getRemoteAddress().toString(); track.rejoined = true;
+                        LegacyOfTheForce.LOGGER.info("TRAVEL_DISCONNECT_REJOINED");
+                    } else if (!track.rejoined && Files.isRegularFile(session.root.resolve("validation/disconnect-closed.nbt"))) return;
+                }
+                require(server.getPlayerList().getPlayer(track.actor.getUUID()) == track.actor && track.actor.connection.isAcceptingMessages(), "Native test client disconnected early: " + track.name);
+            }
             if (session.stage.equals("OUTBOUND")) {
                 for (var track : session.tracks) {
                     var atlas = track.actor.getData(PlanetContent.ATLAS.get()).view().orElseThrow();

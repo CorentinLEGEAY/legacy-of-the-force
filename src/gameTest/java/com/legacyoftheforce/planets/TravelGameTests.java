@@ -34,6 +34,79 @@ public final class TravelGameTests {
     private static TravelService service(Setup setup) { return new TravelService(setup.actor().server, setup.directory(), (a, l, p, k) -> true); }
     private static final class Interrupted extends Error {}
 
+    private static Setup returnedFixture(GameTestHelper helper) throws Exception {
+        var setup = setup(helper); var actor = setup.actor(); var home = TravelPoint.at(actor);
+        var cookie = net.minecraft.server.network.CommonListenerCookie.createInitial(actor.getGameProfile(), false);
+        var connection = new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);
+        new io.netty.channel.embedded.EmbeddedChannel(connection);
+        new net.minecraft.server.network.ServerGamePacketListenerImpl(actor.server, connection, actor, cookie);
+        var previous = TravelState.empty().prepare(UUID.randomUUID(), TravelTransaction.Kind.DISCOVER, home, 0).activate()
+                .prepare(UUID.randomUUID(), TravelTransaction.Kind.OUTBOUND, home, 0).activate();
+        var source = new TravelPoint(PlanetContent.ILUM.location(), .5, 63, .5, 0, 0); var operation = UUID.randomUUID();
+        var before = new CompoundTag(); before.put("Inventory", actor.getInventory().save(new ListTag())); before.put("atlas", previous.tag());
+        var after = before.copy(); after.put("atlas", previous.prepare(operation, TravelTransaction.Kind.RETURN, source, 0).tag());
+        var record = TravelTransaction.prepare(actor.getUUID(), operation, TravelTransaction.Kind.RETURN, before, after, source, home, home, 0)
+                .phase(TravelTransaction.Phase.PAID).phase(TravelTransaction.Phase.ARRIVED).phase(TravelTransaction.Phase.DONE);
+        actor.setData(PlanetContent.ATLAS.get(), new TravelState(record.activeImage().getCompound("atlas")));
+        actor.getInventory().setItem(8, new ItemStack(Items.DIAMOND, 7)); actor.setYRot(17);
+        new VerifiedPlayerSaveBarrier().persist(actor);
+        AtomicNbtFile.write(setup.directory().resolve(actor.getUUID() + ".nbt"), record.tag(), 262144);
+        return setup;
+    }
+    private static ProtectedWorldService arrivals(boolean allowed) {
+        return new ProtectedWorldService() {
+            @Override public boolean mayModify(ServerPlayer actor, ServerLevel level, BlockPos pos, ModificationKind kind) { return true; }
+            @Override public boolean mayArrive(ServerPlayer actor, ServerLevel level, BlockPos pos) { return allowed; }
+        };
+    }
+    @GameTest(template = "empty_large", timeoutTicks = 200)
+    public static void occupiedClosedTravelRejoinMovesLocallyWithoutReplayingInventoryOrHome(GameTestHelper helper) throws Exception {
+        var setup = returnedFixture(helper); var actor = setup.actor(); var before = TravelPoint.at(actor);
+        var atlas = actor.getData(PlanetContent.ATLAS.get()); var inventory = actor.getInventory().save(new ListTag());
+        var journal = AtomicNbtFile.read(setup.directory().resolve(actor.getUUID() + ".nbt"), 262144);
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, 5.5f, 1, 3.5f);
+        helper.assertTrue(SafeArrival.occupied(actor), "Fixture must actually overlap");
+        var service = new TravelService(actor.server, setup.directory(), arrivals(true)); service.recoverLogin(actor); service.recoverLogin(actor);
+        helper.assertFalse(TravelPoint.at(actor).position().equals(before.position()), "Occupied native rejoin must move");
+        helper.assertTrue(SafeArrival.safe(actor, actor.serverLevel(), TravelPoint.at(actor), arrivals(true)), "Selected local site must be safe");
+        helper.assertTrue(actor.getData(PlanetContent.ATLAS.get()).equals(atlas) && actor.getInventory().save(new ListTag()).equals(inventory), "Later gains and bookmark must survive");
+        helper.assertTrue(actor.getYRot() == 17 && AtomicNbtFile.read(setup.directory().resolve(actor.getUUID() + ".nbt"), 262144).equals(journal), "Closed receipt and later look must stay unchanged");
+        cow.discard(); helper.succeed();
+    }
+    @GameTest(template = "empty_large", timeoutTicks = 200)
+    public static void occupiedRejoinWithNoPermittedSitePreservesNativeSaveAndClosedReceipt(GameTestHelper helper) throws Exception {
+        var setup = returnedFixture(helper); var actor = setup.actor(); var before = TravelPoint.at(actor);
+        var nativeBefore = new VerifiedPlayerSaveBarrier().read(actor); var atlas = actor.getData(PlanetContent.ATLAS.get());
+        var path = setup.directory().resolve(actor.getUUID() + ".nbt"); var journal = AtomicNbtFile.read(path, 262144);
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, 5.5f, 1, 3.5f);
+        try { new TravelService(actor.server, setup.directory(), arrivals(false)).recoverLogin(actor); helper.fail("No site must refuse login recovery"); }
+        catch (java.io.IOException expected) {
+            helper.assertTrue(TravelPoint.at(actor).equals(before) && new VerifiedPlayerSaveBarrier().read(actor).equals(nativeBefore)
+                    && actor.getData(PlanetContent.ATLAS.get()).equals(atlas) && AtomicNbtFile.read(path, 262144).equals(journal), "Refusal must preserve live/native/receipt images");
+        }
+        cow.discard(); helper.succeed();
+    }
+    @GameTest(template = "empty_large", timeoutTicks = 200)
+    public static void closedRejoinDoesNotRewindLaterJourneyOrUnoccupiedPose(GameTestHelper helper) throws Exception {
+        var setup = returnedFixture(helper); var actor = setup.actor(); var barrier = new VerifiedPlayerSaveBarrier();
+        var nativeBefore = barrier.read(actor); var point = TravelPoint.at(actor); var service = new TravelService(actor.server, setup.directory(), arrivals(true));
+        service.recoverLogin(actor);
+        helper.assertTrue(TravelPoint.at(actor).equals(point) && barrier.read(actor).equals(nativeBefore), "Unoccupied rejoin must not save or move");
+        actor.setPos(actor.getX() + 100, actor.getY(), actor.getZ()); var distantPoint = TravelPoint.at(actor);
+        var chunk = new net.minecraft.world.level.ChunkPos(actor.blockPosition());
+        actor.serverLevel().getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, chunk, 2, actor.getId()); actor.serverLevel().getChunk(chunk.x, chunk.z);
+        // Entity queries only include visible chunks. Add the occupant at its final loaded position.
+        helper.runAfterDelay(2, () -> {
+            var cow = EntityType.COW.create(helper.getLevel()); cow.setNoAi(true); cow.setPos(actor.position()); helper.getLevel().addFreshEntity(cow);
+            try {
+                helper.assertTrue(SafeArrival.occupied(actor), "Distant fixture must overlap too"); service.recoverLogin(actor);
+                helper.assertTrue(TravelPoint.at(actor).equals(distantPoint) && barrier.read(actor).equals(nativeBefore), "An old journey must not relocate later exploration");
+                helper.succeed();
+            } catch (java.io.IOException failure) { helper.fail("Unexpected distant rejoin failure: " + failure); }
+            finally { cow.discard(); actor.serverLevel().getChunkSource().removeRegionTicket(TicketType.POST_TELEPORT, chunk, 2, actor.getId()); }
+        });
+    }
+
     @GameTest(template = "empty_large", timeoutTicks = 200)
     public static void everyDiscoveryCheckpointRecoversWithoutDuplicateOrUnpaidUnlock(GameTestHelper helper) throws Exception {
         for (var checkpoint : TravelService.Checkpoint.values()) {

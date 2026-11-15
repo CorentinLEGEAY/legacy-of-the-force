@@ -76,4 +76,12 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
         }
         return true;
     }
+    @Override public boolean mayUseContainer(ServerPlayer actor, ServerLevel level, BlockPos position) {
+        if(actor==null || level==null || position==null || !level.getServer().isSameThread() || actor.serverLevel()!=level || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator()
+                || !level.hasChunkAt(position) || !level.isInWorldBounds(position) || !level.getWorldBorder().isWithinBounds(position) || !actor.canInteractWithBlock(position,0)
+                || level.getServer().isUnderSpawnProtection(level,position,actor) || !level.mayInteract(actor,position)) return false;
+        for(var policy:com.legacyoftheforce.core.api.WorldProtectionHooks.policies()) try { if(!policy.allowsContainer(actor,level,position)) return false; } catch(RuntimeException unavailable) { return false; }
+        for(var policy:policies) try { if(!policy.allowsContainer(actor,level,position)) return false; } catch(RuntimeException unavailable) { return false; }
+        return true;
+    }
 }

@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'boss1')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'boss1',[switch]$OnlyLoot)
 $ErrorActionPreference = 'Stop'
 $repoPath = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)); $runPath = Join-Path $repoPath "run-boss-$Run"
 if (Test-Path -LiteralPath (Join-Path $runPath 'world')) { throw 'Use a new isolated run; preserve previous worlds.' }
@@ -21,12 +21,12 @@ function Wait-Marker([string]$Pattern,[int]$Seconds) {
 }
 try {
     Wait-Marker 'Done \([0-9.,]+s\)!' 120
-    foreach ($kind in @('guardian','frost_lord')) {
+    foreach ($kind in $(if($OnlyLoot) { @() } else { @('guardian','frost_lord') })) {
         $runner.StandardInput.WriteLine("execute in minecraft:overworld positioned 100 100 100 run test run bosses.ilum_$kind");$runner.StandardInput.Flush()
         Wait-Marker ("BOSS_GAME_TEST_PASS kind="+$kind.ToUpperInvariant()) 100
         Write-Output "PASS: actual dedicated $kind battle"
     }
-    foreach ($scenario in @('safety','cooldown')) {
+    foreach ($scenario in $(if($OnlyLoot) { @('loot') } else { @('safety','cooldown','loot') })) {
         $runner.StandardInput.WriteLine("execute in minecraft:overworld positioned 100 100 100 run test run bosses.$scenario");$runner.StandardInput.Flush()
         Wait-Marker ("BOSS_GAME_TEST_PASS kind="+$scenario.ToUpperInvariant()) 100
         Write-Output "PASS: actual dedicated $scenario scenario"

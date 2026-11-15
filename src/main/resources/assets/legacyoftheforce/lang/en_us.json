@@ -263,7 +263,7 @@
   "block.legacyoftheforce.jedi_trial_altar": "Jedi trial altar",
   "block.legacyoftheforce.sith_trial_altar": "Sith trial altar",
   "item.legacyoftheforce.ilum_boss_relic": "Ilum frost relic",
-  "container.legacyoftheforce.boss_loot": "Victors’ spoils",
+  "container.legacyoftheforce.boss_loot": "Shared loot · click",
   "entity.legacyoftheforce.ilum_guardian": "Crystal Guardian",
   "entity.legacyoftheforce.ilum_frost_lord": "Frost Lord",
   "entity.legacyoftheforce.arena_ice": "Arena ice",
@@ -284,5 +284,9 @@
   "boss.legacyoftheforce.attack.dash": "Charge — dodge the marked point",
   "boss.legacyoftheforce.attack.pull": "Pull — use cover",
   "boss.legacyoftheforce.attack.shards": "Volley — push the ice or dodge",
-  "boss.legacyoftheforce.attack.nova": "Frost wave — retreat or take cover"
+  "boss.legacyoftheforce.attack.nova": "Frost wave — retreat or take cover",
+  "boss.legacyoftheforce.clear_cursor": "Clear the cursor before collecting loot.",
+  "boss.legacyoftheforce.inventory_full": "Make room for all the shared loot first.",
+  "boss.legacyoftheforce.collected": "Shared loot collected into your inventory.",
+  "boss.legacyoftheforce.loot_pending": "Loot recovery pending: data retained. Contact the administrator."
 }

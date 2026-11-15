@@ -15,12 +15,19 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class BossAltarEntity extends BlockEntity implements WorldlyContainer, MenuProvider {
     private NonNullList<ItemStack> items = NonNullList.withSize(9, ItemStack.EMPTY);
     private UUID lootVictory;
+    private UUID pendingClaim, lastClaim;
     private CompoundTag unsupported;
     public BossAltarEntity(BlockPos pos, BlockState state) { super(BossContent.ALTAR_ENTITY.get(), pos, state); }
     public boolean supported() { return unsupported == null; }
     public UUID lootVictory() { return lootVictory; }
+    public UUID pendingClaim() { return pendingClaim; }
+    public UUID lastClaim() { return lastClaim; }
+    ListTag lootItems() { var tag=new CompoundTag();ContainerHelper.saveAllItems(tag,items,level.registryAccess());return tag.getList("Items",Tag.TAG_COMPOUND).copy(); }
+    void lockClaim(UUID operation) { if(!supported() || operation==null || pendingClaim!=null) throw new IllegalStateException("Altar already locked");pendingClaim=operation;setChanged(); }
+    void completeClaim(UUID operation) { if(!supported() || !operation.equals(pendingClaim)) throw new IllegalStateException("Altar lock mismatch");items=NonNullList.withSize(9,ItemStack.EMPTY);lastClaim=operation;setChanged(); }
+    void unlockClaim(UUID operation) { if(!supported() || !operation.equals(pendingClaim)) throw new IllegalStateException("Altar unlock mismatch");pendingClaim=null;setChanged(); }
     public void publish(UUID event, boolean reward) {
-        if (!supported() || !isEmpty() || event == null) throw new IllegalStateException("Altar cannot replace existing inventory");
+        if (!supported() || !isEmpty() || pendingClaim!=null || event == null) throw new IllegalStateException("Altar cannot replace existing inventory");
         if (reward) items.set(0, new ItemStack(BossContent.RELIC.get()));
         var cells = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:speeder_energy_cell"));
         if (reward) items.set(1, new ItemStack(cells, 4)); lootVictory = event; setChanged();
@@ -29,11 +36,14 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
         super.saveAdditional(tag, provider);
         if (unsupported != null) { tag.merge(unsupported.copy()); return; }
         tag.putInt("lotfSchemaVersion", 1); ContainerHelper.saveAllItems(tag, items, provider); if (lootVictory != null) tag.putUUID("lootVictory", lootVictory);
+        if(pendingClaim!=null) tag.putUUID("pendingClaim",pendingClaim);if(lastClaim!=null) tag.putUUID("lastClaim",lastClaim);
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         if (tag.contains("lotfSchemaVersion") && (!tag.contains("lotfSchemaVersion", Tag.TAG_INT) || tag.getInt("lotfSchemaVersion") != 1)) { unsupported = tag.copy(); return; }
         items = NonNullList.withSize(9, ItemStack.EMPTY); ContainerHelper.loadAllItems(tag, items, provider); lootVictory = tag.hasUUID("lootVictory") ? tag.getUUID("lootVictory") : null;
+        pendingClaim=tag.hasUUID("pendingClaim") ? tag.getUUID("pendingClaim") : null;lastClaim=tag.hasUUID("lastClaim") ? tag.getUUID("lastClaim") : null;
+        if(tag.contains("pendingClaim") && !tag.hasUUID("pendingClaim") || tag.contains("lastClaim") && !tag.hasUUID("lastClaim") || tag.contains("lootVictory") && !tag.hasUUID("lootVictory")) unsupported=tag.copy();
     }
     @Override public int getContainerSize() { return 9; }
     @Override public boolean isEmpty() { return items.stream().allMatch(ItemStack::isEmpty); }
@@ -49,5 +59,5 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
     @Override public boolean canPlaceItemThroughFace(int slot, ItemStack item, Direction face) { return false; }
     @Override public boolean canTakeItemThroughFace(int slot, ItemStack item, Direction face) { return false; }
     @Override public Component getDisplayName() { return Component.translatable("container.legacyoftheforce.boss_loot"); }
-    @Override public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) { return new ChestMenu(MenuType.GENERIC_9x1, id, inventory, this, 1); }
+    @Override public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) { return new BossLootMenu(id, inventory, this); }
 }

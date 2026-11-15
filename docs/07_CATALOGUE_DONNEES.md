@@ -115,6 +115,9 @@ P4-01 Ilum : `dimension/ilum.json`, `dimension_type/ilum.json`, biome `worldgen/
 ```
 
 ## Validation des schémas
+### Collecte du butin P4-03
+Attachment joueur `legacyoftheforce:boss_loot_receipt`, schéma1 : revision long≥0, UUID operation obligatoire après révision0, extensions conservées ; même agrégat natif que l'inventaire, copie à la mort. Journal `data/legacyoftheforce/bosses/loot/<owner>.nbt` schéma1≤262144octets : owner/operation/victory UUID, dimension Ilum, altar long, phase PREPARED/DELIVERED/DONE/ABORTED, images before/after (Inventory natif + receipt), loot de neuf emplacements maximum. Delta exact contrôlé avec composants opaques, aucune modification d'armure/main secondaire. Format futur refusé/conservé. Autel schéma1 étendu par UUID optionnels pendingClaim/lastClaim ; ancien format sans ces champs toujours lisible. Journal, reçu joueur et régions font partie de la même sauvegarde du monde ; ne pas restaurer un seul de ces fichiers isolément. Protocole/preuves : validation/P4-03_LOOT.md.
+
 ### Boss Ilum P4-03 — formats implémentés
 IDs réels : entités `ilum_guardian`, `ilum_frost_lord`, `arena_ice` ; autels blocs/items `jedi_trial_altar`, `sith_trial_altar` ; objet `ilum_boss_relic`. Les exemples de boss ci-dessus sont des propositions de catalogue, pas les IDs enregistrés de cette tranche.
 

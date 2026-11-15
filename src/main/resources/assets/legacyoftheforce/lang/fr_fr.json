@@ -263,7 +263,7 @@
   "block.legacyoftheforce.jedi_trial_altar": "Socle de l’épreuve Jedi",
   "block.legacyoftheforce.sith_trial_altar": "Socle de l’épreuve Sith",
   "item.legacyoftheforce.ilum_boss_relic": "Relique du givre d’Ilum",
-  "container.legacyoftheforce.boss_loot": "Butin des vainqueurs",
+  "container.legacyoftheforce.boss_loot": "Butin partagé · clic",
   "entity.legacyoftheforce.ilum_guardian": "Gardien des Cristaux",
   "entity.legacyoftheforce.ilum_frost_lord": "Seigneur du Givre",
   "entity.legacyoftheforce.arena_ice": "Glace d’arène",
@@ -284,5 +284,9 @@
   "boss.legacyoftheforce.attack.dash": "Charge — esquivez le point visé",
   "boss.legacyoftheforce.attack.pull": "Attraction — utilisez un abri",
   "boss.legacyoftheforce.attack.shards": "Salve — repoussez la glace ou esquivez",
-  "boss.legacyoftheforce.attack.nova": "Onde glacée — éloignez-vous ou abritez-vous"
+  "boss.legacyoftheforce.attack.nova": "Onde glacée — éloignez-vous ou abritez-vous",
+  "boss.legacyoftheforce.clear_cursor": "Libérez le curseur avant de récupérer le butin.",
+  "boss.legacyoftheforce.inventory_full": "Il faut assez de place pour tout le butin partagé.",
+  "boss.legacyoftheforce.collected": "Butin partagé récupéré dans votre inventaire.",
+  "boss.legacyoftheforce.loot_pending": "Reprise du butin en attente : données conservées. Contactez l'administrateur."
 }

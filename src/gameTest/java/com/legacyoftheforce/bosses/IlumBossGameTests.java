@@ -85,6 +85,7 @@ public final class IlumBossGameTests {
             try { battle(helper, kind); } catch (Exception failure) { throw new RuntimeException(failure); }
         })).toList());
         tests.add(new TestFunction("boss_dedicated","bosses.safety","legacyoftheforce:empty",500,0L,true,helper -> { try { safety(helper); } catch (Exception failure) { throw new RuntimeException(failure); } }));
+        tests.add(new TestFunction("boss_dedicated","bosses.loot","legacyoftheforce:empty",1200,0L,true,helper -> { try { lootRecovery(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.cooldown","legacyoftheforce:empty",900,0L,true,helper -> {
             try {
                 var previous = AtomicNbtFile.read(helper.getLevel().getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-guardian.nbt"),262144);
@@ -96,6 +97,89 @@ public final class IlumBossGameTests {
 
     private static void battle(GameTestHelper helper, BossKind kind) throws Exception {
         battle(helper,kind,fixture(helper,kind,2,List.of(),true),true);
+    }
+    private static final class LootCrash extends Error {}
+    private static net.minecraft.nbt.CompoundTag nativeAltar(ServerLevel level,BlockPos pos) throws Exception {
+        var chunk=level.getChunkSource().chunkMap.read(new net.minecraft.world.level.ChunkPos(pos)).join().orElseThrow();
+        return chunk.getList("block_entities",net.minecraft.nbt.Tag.TAG_COMPOUND).stream().map(t->(net.minecraft.nbt.CompoundTag)t)
+                .filter(t->t.getInt("x")==pos.getX() && t.getInt("y")==pos.getY() && t.getInt("z")==pos.getZ()).findFirst().orElseThrow().copy();
+    }
+    private static void lootRecovery(GameTestHelper helper) throws Exception {
+        var fixture=fixture(helper,BossKind.GUARDIAN,2);var actor=fixture.players.getFirst();var peer=fixture.players.get(1);var tile=(BossAltarEntity)fixture.level.getBlockEntity(fixture.altar);
+        var root=actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/loot");var proofs=new net.minecraft.nbt.ListTag();
+        try {
+            for(var checkpoint:BossLootService.Checkpoint.values()) {
+                actor.getInventory().clearContent();actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,7));actor.setData(BossContent.LOOT_RECEIPT.get(),BossLootReceipt.empty());
+                tile.clearContent();tile.publish(UUID.randomUUID(),true);new VerifiedChunkSaveBarrier().persist(fixture.level,Set.of(fixture.altar));new VerifiedPlayerSaveBarrier().persist(actor);
+                var path=root.resolve(checkpoint.name());var service=new BossLootService(actor.server,path,(a,t)->true,hit->{ if(hit==checkpoint) throw new LootCrash(); });
+                boolean interrupted=false;try { service.collect(actor,tile); } catch(LootCrash crash) { interrupted=true; }
+                helper.assertTrue(interrupted,"Every loot checkpoint must actually interrupt: "+checkpoint);
+                if(tile.pendingClaim()!=null) {
+                    helper.assertFalse(new BossLootService(actor.server,root.resolve("peer"),(a,t)->true,ignored->{}).collect(peer,tile),"A second player cannot collect the locked shared loot");
+                    helper.assertTrue(peer.getInventory().isEmpty(),"Blocked peer gains no items");
+                }
+                var nativePlayer=new VerifiedPlayerSaveBarrier().read(actor);
+                var nativeAltar=nativeAltar(fixture.level,fixture.altar);
+                // Discard unsaved memory; recover from the independently read native player/chunk images.
+                actor.getInventory().load(nativePlayer.getList("Inventory",net.minecraft.nbt.Tag.TAG_COMPOUND));
+                var attachments=nativePlayer.getCompound(net.neoforged.neoforge.attachment.AttachmentHolder.ATTACHMENTS_NBT_KEY);
+                actor.setData(BossContent.LOOT_RECEIPT.get(),new BossLootReceipt(attachments.contains("legacyoftheforce:boss_loot_receipt") ? attachments.getCompound("legacyoftheforce:boss_loot_receipt") : BossLootReceipt.empty().tag()));
+                tile.loadWithComponents(nativeAltar,fixture.level.registryAccess());
+                var recovered=new BossLootService(actor.server,path,(a,t)->true,ignored->{});recovered.recover(actor);recovered.recover(actor);
+                boolean delivered=checkpoint.ordinal()>=BossLootService.Checkpoint.PLAYER_DURABLE.ordinal();
+                helper.assertTrue(actor.getInventory().countItem(net.minecraft.world.item.Items.DIAMOND)==7,"Existing native items preserved");
+                helper.assertTrue(actor.getInventory().countItem(BossContent.RELIC.get())==(delivered ? 1 : 0),"Exactly one or zero delivered relic");
+                helper.assertTrue(actor.getInventory().countItem(com.legacyoftheforce.speeder.SpeederContent.ENERGY_CELL.get())==(delivered ? 4 : 0),"Exact shared cell count");
+                helper.assertTrue(tile.pendingClaim()==null && tile.isEmpty()==delivered,"Source retained when unpaid, emptied when delivered; unlocked after recovery");
+                var journal=AtomicNbtFile.read(path.resolve(actor.getUUID()+".nbt"),262144);
+                helper.assertTrue(journal.getString("phase").equals(delivered ? "DONE" : "ABORTED"),"Recovered journal is closed");
+                actor.getInventory().setItem(8,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.EMERALD,3));new VerifiedPlayerSaveBarrier().persist(actor);recovered.recover(actor);
+                helper.assertTrue(actor.getInventory().countItem(net.minecraft.world.item.Items.EMERALD)==3,"Closed receipt must not rewind later inventory changes");
+                var proof=new net.minecraft.nbt.CompoundTag();proof.putString("checkpoint",checkpoint.name());proof.putBoolean("delivered",delivered);proof.put("crashPlayer",nativePlayer);proof.put("crashAltar",nativeAltar);proof.put("journal",journal);
+                proof.put("recoveredPlayer",new VerifiedPlayerSaveBarrier().read(actor));proof.put("recoveredAltar",nativeAltar(fixture.level,fixture.altar));proofs.add(proof);
+            }
+            // A crash before a durable lock must not prevent an eligible peer from collecting first.
+            actor.getInventory().clearContent();actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,7));actor.setData(BossContent.LOOT_RECEIPT.get(),BossLootReceipt.empty());
+            tile.publish(UUID.randomUUID(),true);new VerifiedChunkSaveBarrier().persist(fixture.level,Set.of(fixture.altar));
+            try { new BossLootService(actor.server,root.resolve("contender-owner"),(a,t)->true,hit->{ if(hit==BossLootService.Checkpoint.PREPARED) throw new LootCrash(); }).collect(actor,tile); } catch(LootCrash crash) { }
+            helper.assertTrue(tile.pendingClaim()==null,"Pre-lock interruption leaves no native source lock");
+            helper.assertTrue(new BossLootService(actor.server,root.resolve("contender-peer"),(a,t)->true,ignored->{}).collect(peer,tile),"Eligible peer can collect before the original owner recovers");
+            new BossLootService(actor.server,root.resolve("contender-owner"),(a,t)->true,ignored->{}).recover(actor);
+            helper.assertTrue(actor.getInventory().countItem(BossContent.RELIC.get())==0 && peer.getInventory().countItem(BossContent.RELIC.get())==1 && tile.isEmpty(),"Owner recovery cannot rewind or refill peer's collection");
+            var concurrency=new net.minecraft.nbt.CompoundTag();concurrency.put("owner",new VerifiedPlayerSaveBarrier().read(actor));concurrency.put("peer",new VerifiedPlayerSaveBarrier().read(peer));concurrency.put("altar",nativeAltar(fixture.level,fixture.altar));
+            concurrency.put("ownerJournal",AtomicNbtFile.read(root.resolve("contender-owner/"+actor.getUUID()+".nbt"),262144));concurrency.put("peerJournal",AtomicNbtFile.read(root.resolve("contender-peer/"+peer.getUUID()+".nbt"),262144));
+            // Refusals occur before preparing any journal or changing the source.
+            tile.publish(UUID.randomUUID(),true);actor.getInventory().clearContent();actor.setData(BossContent.LOOT_RECEIPT.get(),BossLootReceipt.empty());
+            var rejected=new BossLootService(actor.server,root.resolve("rejected"),(a,t)->true,ignored->{});var source=tile.lootItems();
+            for(int slot=0;slot<36;slot++) actor.getInventory().setItem(slot,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COBBLESTONE,64));
+            helper.assertFalse(rejected.collect(actor,tile),"Full inventory refuses whole collection");helper.assertTrue(source.equals(tile.lootItems()),"Full inventory preserves shared source");
+            actor.getInventory().clearContent();actor.containerMenu.setCarried(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND));
+            helper.assertFalse(rejected.collect(actor,tile),"Occupied cursor refuses collection");actor.containerMenu.setCarried(net.minecraft.world.item.ItemStack.EMPTY);
+            helper.assertFalse(rejected.collect(actor,tile),"Immediate retry after changing inventory is rate limited before another disk transaction");
+            helper.assertFalse(new BossLootService(actor.server,root.resolve("denied"),(a,t)->false,ignored->{}).collect(actor,tile),"Permission refusal cannot collect");
+            helper.assertTrue(source.equals(tile.lootItems()) && actor.getInventory().isEmpty(),"Refusals leave both aggregates intact");
+            var permission=new VanillaProtectedWorldService();helper.assertTrue(permission.mayUseContainer(actor,fixture.level,fixture.altar),"Vanilla container access is available in fixture");
+            permission.registerPolicy((a,l,p,k)->true);helper.assertFalse(permission.mayUseContainer(actor,fixture.level,fixture.altar),"Unimplemented container claim contract fails closed");
+            var explicit=new VanillaProtectedWorldService();explicit.registerPolicy(new ProtectionPolicy() {
+                public boolean allows(ServerPlayer a,ServerLevel l,BlockPos p,ModificationKind k) { return false; }
+                public boolean allowsContainer(ServerPlayer a,ServerLevel l,BlockPos p) { return true; }
+            });helper.assertTrue(explicit.mayUseContainer(actor,fixture.level,fixture.altar),"Container permission is distinct from block editing");
+            var throwing=new VanillaProtectedWorldService();throwing.registerPolicy(new ProtectionPolicy() {
+                public boolean allows(ServerPlayer a,ServerLevel l,BlockPos p,ModificationKind k) { return true; }
+                public boolean allowsContainer(ServerPlayer a,ServerLevel l,BlockPos p) { throw new IllegalStateException("Unavailable fixture claim"); }
+            });helper.assertFalse(throwing.mayUseContainer(actor,fixture.level,fixture.altar),"Unavailable container claim fails closed");
+            var future=AtomicNbtFile.read(root.resolve("UNLOCK_DURABLE/"+actor.getUUID()+".nbt"),262144);future.putInt("schemaVersion",99);
+            var futurePath=root.resolve("future/"+actor.getUUID()+".nbt");AtomicNbtFile.write(futurePath,future,262144);
+            boolean retained=false;try { new BossLootService(actor.server,root.resolve("future"),(a,t)->true,ignored->{}).recover(actor); } catch(java.io.IOException unsupported) { retained=true; }
+            helper.assertTrue(retained && AtomicNbtFile.read(futurePath,262144).equals(future),"Unknown journal is refused and preserved byte-for-byte in NBT");
+            var futureTile=tile.saveWithFullMetadata(fixture.level.registryAccess());futureTile.putInt("lotfSchemaVersion",99);futureTile.putString("futurePayload","retain-me");tile.loadWithComponents(futureTile,fixture.level.registryAccess());
+            var breakFuture=new net.neoforged.neoforge.event.level.BlockEvent.BreakEvent(fixture.level,fixture.altar,fixture.level.getBlockState(fixture.altar),actor);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(breakFuture);
+            helper.assertTrue(!tile.supported() && breakFuture.isCanceled() && tile.saveWithFullMetadata(fixture.level.registryAccess()).getString("futurePayload").equals("retain-me"),"Future altar is inert, protected and preserved");
+            var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.put("checkpoints",proofs);proof.putBoolean("refusals",true);
+            proof.put("concurrency",concurrency);
+            AtomicNbtFile.write(root.resolve("proof.nbt"),proof,2097152);helper.getLevel().getServer().sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=LOOT checkpoints="+proofs.size()));helper.succeed();
+        } finally { cleanup(fixture); }
     }
     private static void safety(GameTestHelper helper) throws Exception {
         var fixture = fixture(helper,BossKind.GUARDIAN,1); var actor = fixture.players.getFirst(); var service = BossArenaService.forServer(actor.server);
@@ -213,7 +297,10 @@ public final class IlumBossGameTests {
                     helper.assertTrue(tile.getSlotsForFace(Direction.DOWN).length == 0, "Hoppers must not export the reward");
                     if (rewardExpected) {
                         helper.assertTrue(tile.getItem(0).is(BossContent.RELIC.get()) && tile.getItem(1).getCount() == 4,"Eligible shared loot must exist");
-                        first.openMenu(tile); first.containerMenu.clicked(0,0,ClickType.QUICK_MOVE,first); first.containerMenu.clicked(1,0,ClickType.QUICK_MOVE,first); first.closeContainer();
+                        first.openMenu(tile);var inventory=first.getInventory().save(new net.minecraft.nbt.ListTag());var source=tile.lootItems();
+                        for(var invalid:List.of(ClickType.SWAP,ClickType.THROW,ClickType.QUICK_CRAFT,ClickType.PICKUP_ALL,ClickType.CLONE)) first.containerMenu.clicked(0,0,invalid,first);
+                        helper.assertTrue(source.equals(tile.lootItems()) && inventory.equals(first.getInventory().save(new net.minecraft.nbt.ListTag())),"Non-collection click modes cannot alter either inventory");
+                        first.containerMenu.clicked(0,0,ClickType.QUICK_MOVE,first);first.containerMenu.clicked(1,0,ClickType.QUICK_MOVE,first);first.closeContainer();
                     } else helper.assertFalse(service.canOpen(first,fixture.altar),"Cooldown victory must not grant major loot access");
                     helper.assertTrue(first.getInventory().countItem(BossContent.RELIC.get()) == initialRelics[0] + (rewardExpected ? 1 : 0) && tile.isEmpty(), "Only eligible shared reward may be transferred");
                     helper.assertFalse(service.challenge(first,fixture.altar,kind), "Arena cooldown must prevent an immediate duplicate boss");

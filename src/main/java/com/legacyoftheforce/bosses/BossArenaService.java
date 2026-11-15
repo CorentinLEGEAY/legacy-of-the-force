@@ -74,9 +74,10 @@ public final class BossArenaService {
     private long now() { return server.overworld().getGameTime(); }
     private void feedback(ServerPlayer actor, String key) { actor.displayClientMessage(Component.translatable("boss.legacyoftheforce." + key), false); }
     public boolean canOpen(ServerPlayer actor, BlockPos pos) {
-        if (!ready || actor.server != server || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || !actor.canInteractWithBlock(pos, 0)) return false;
+        if (!ready || actor.server != server || !server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || !actor.canInteractWithBlock(pos, 0)) return false;
         var kind = actor.level().getBlockState(pos).is(BossContent.JEDI_ALTAR.get()) ? BossKind.GUARDIAN : actor.level().getBlockState(pos).is(BossContent.SITH_ALTAR.get()) ? BossKind.FROST_LORD : null;
         if (kind == null) return false;
+        if(!(actor.level().getBlockEntity(pos) instanceof BossAltarEntity tile) || !tile.supported() || tile.pendingClaim()!=null || !new VanillaProtectedWorldService().mayUseContainer(actor,actor.serverLevel(),pos)) return false;
         var tag = arenas.get(arenaId(actor.serverLevel(), pos, kind));
         if (tag == null) {
             if (!(actor.level().getBlockState(pos).getBlock() instanceof BossAltarBlock)) return false;
@@ -103,7 +104,7 @@ public final class BossArenaService {
                 feedback(actor, "active"); return false;
             }
             if (!record.getString("state").equals("COOLDOWN") || now() < record.getLong("readyAt")) { feedback(actor, "cooldown"); return false; }
-            if (!altar.isEmpty()) { feedback(actor, "collect_first"); return false; }
+            if (!altar.isEmpty() || altar.pendingClaim()!=null) { feedback(actor, "collect_first"); return false; }
             if (victories.list().size() >= 128 || !new VanillaProtectedWorldService().mayModify(actor, actor.serverLevel(), pos, ModificationKind.MOVE_THROUGH)) return false;
             var center = pos.north(3);
             for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++) {
@@ -153,7 +154,7 @@ public final class BossArenaService {
     }
     public boolean protectedAt(ServerLevel level, BlockPos pos) {
         if (!server.isSameThread()) return true;
-        if (level.getBlockEntity(pos) instanceof BossAltarEntity tile && !tile.isEmpty()) return true;
+        if (level.getBlockEntity(pos) instanceof BossAltarEntity tile && (!tile.supported() || !tile.isEmpty() || tile.pendingClaim()!=null)) return true;
         for (var tag : arenas.values()) {
             if (!tag.getString("dimension").equals(level.dimension().location().toString())) continue;
             var altar = BlockPos.of(tag.getLong("altar"));

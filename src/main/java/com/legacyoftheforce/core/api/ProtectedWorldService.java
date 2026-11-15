@@ -9,4 +9,5 @@ public interface ProtectedWorldService {
     boolean mayModify(ServerPlayer actor, ServerLevel level, BlockPos position, ModificationKind kind);
     default boolean mayMoveEntity(ServerPlayer actor, Entity target, BlockPos position) { return false; }
     default boolean mayArrive(ServerPlayer actor, ServerLevel destination, BlockPos position) { return false; }
+    default boolean mayUseContainer(ServerPlayer actor, ServerLevel level, BlockPos position) { return false; }
 }

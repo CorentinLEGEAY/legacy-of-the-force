@@ -1,0 +1,15 @@
+# P3 — Contrôle graphique du siège le 15 novembre 2026
+
+**Statut partiel : montée et ancrage natif observés, contact/proportions visuels non validés.** Aucun changement de code de siège pendant ce contrôle.
+
+Client natif ForceTesterOne PID5044, dédié25565, monde run/world. Speeder payé déjà existant UUID32392c62-c238-4986-bfce-605b19b70ba3, dimension minecraft:the_nether, position1002,5/240/1068,19296, palette blanche/orange, charge0 et quatre modules100HP. La première tentative d'observation avait placé le joueur en Overworld par une commande console ; véhicule retrouvé ensuite dans sa vraie région DIM-1, sans perte ni transfert.
+
+Mini-plan : observer de profil dans la bonne dimension, monter via l'interaction normale, vue F5 et contrechamp, comparer coordonnées serveur/client, préserver l'UUID/inventaire puis restaurer les réglages. Aucun nouveau véhicule ni carburant fourni.
+
+Téléportation administrateur d'observation dans le Nether à1005,5/240/1068,2, yaw90/pitch20. Touche Utiliser temporairement K pour éviter la rotation de caméra provoquée par les clics Computer Use en souris capturée. Montée normale acceptée : HUD speeder, un siège, charge0 et intégrité100, vitesse0. Vues F5 arrière/profil et avant ; tentative d'agrandir la fenêtre par double clic a déplacé la caméra, cadrage restauré par téléportation/commande ride (celle-ci ne constitue pas une deuxième preuve d'interaction normale). FOV31 puis55 pour inspecter, vision nocturne temporaire60secondes, HUD masqué/rétabli.
+
+Serveur Pos du passager : Y240,0146875. F3 client : Y240,01469 ; mêmes XZ/dimension. Calcul d'ancrage existant : sommet nominal du coussin240,71875, compensation des hanches du modèle joueur0,7040625. Les valeurs sont cohérentes avec le GameTest existant, mais cela ne remplace pas le contrôle du modèle rendu. Dans les vues rapprochées, siège très étroit et appui peu lisible sous le bassin ; aucun ajustement arbitraire de hauteur appliqué. **Contact esthétique à confirmer/améliorer dans une tranche de rendu dédiée**, avec test basé sur les vraies transformations du modèle si faisable.
+
+Impulsion Shift courte injectée sans descente observée ; ne pas annoncer le raccourci validé par ce contrôle. Détachement final par commande native ride dismount, première personne/HUD restaurés. Effet temporaire expiré, absence confirmée. Client déconnecté19:56:58 puis fermé normalement ; serveur arrêté19:57:11, quatre dimensions sauvées. Profil de test arrêté : FOV normal, Utiliser=clic droit rétablis. Relecture indépendante de la région et du joueur : même UUID unique/position/charge0/HP100, aucun passager ni RootVehicle, seul papier préexistant. Journal de voyage parallèle reste DONE/révision5, pas d'inventaire restauré par le reçu clos.
+
+Prochaine tranche : géométrie/proportions d'un siège utilisable avec le modèle joueur vanilla, contact bassin/coussin et orientation selon les quatre rotations ; observation en mouvement et à deux clients, touche de descente sur une durée d'entrée adaptée. Les tests de conduite antérieurs restent documentés séparément ; ce contrôle immobile sans énergie ne prouve aucune nouvelle conduite ni validation globale P3.

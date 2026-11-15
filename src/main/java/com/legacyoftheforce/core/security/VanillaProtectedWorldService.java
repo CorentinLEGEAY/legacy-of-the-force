@@ -25,6 +25,10 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
                 || actor.server != destination.getServer() || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator()
                 || !destination.hasChunkAt(position) || !destination.isInWorldBounds(position) || !destination.getWorldBorder().isWithinBounds(position)) return false;
         // Arriving is not editing a block: vanilla spawn protection must not strand a returning player.
+        for (var policy : com.legacyoftheforce.core.api.WorldProtectionHooks.policies()) {
+            try { if (!policy.allowsArrival(actor, destination, position)) return false; }
+            catch (RuntimeException unavailable) { return false; }
+        }
         for (var policy : policies) {
             try { if (!policy.allowsArrival(actor, destination, position)) return false; }
             catch (RuntimeException unavailable) { return false; }
@@ -41,6 +45,10 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
                 || level.getServer().isUnderSpawnProtection(level, position, actor)) return false;
         if (target instanceof TamableAnimal tame && tame.isTame() && !actor.getUUID().equals(tame.getOwnerUUID())) return false;
         if (target instanceof AbstractHorse horse && horse.isTamed() && !actor.getUUID().equals(horse.getOwnerUUID())) return false;
+        for (var policy : com.legacyoftheforce.core.api.WorldProtectionHooks.policies()) {
+            try { if (!policy.allowsEntity(actor, target, position)) return false; }
+            catch (RuntimeException unavailable) { return false; }
+        }
         for (var policy : policies) {
             try { if (!policy.allowsEntity(actor, target, position)) return false; }
             catch (RuntimeException unavailableAdapter) { return false; }
@@ -55,6 +63,10 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
                 || !level.getWorldBorder().isWithinBounds(position)
                 || level.getServer().isUnderSpawnProtection(level, position, actor)
                 || !level.mayInteract(actor, position)) return false;
+        for (var policy : com.legacyoftheforce.core.api.WorldProtectionHooks.policies()) {
+            try { if (!policy.allows(actor, level, position, kind)) return false; }
+            catch (RuntimeException unavailable) { return false; }
+        }
         for (var policy : policies) {
             try {
                 if (!policy.allows(actor, level, position, kind)) return false;

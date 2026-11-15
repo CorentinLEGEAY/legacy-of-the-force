@@ -94,16 +94,16 @@ public final class TravelGameTests {
         helper.assertTrue(TravelPoint.at(actor).equals(point) && barrier.read(actor).equals(nativeBefore), "Unoccupied rejoin must not save or move");
         actor.setPos(actor.getX() + 100, actor.getY(), actor.getZ()); var distantPoint = TravelPoint.at(actor);
         var chunk = new net.minecraft.world.level.ChunkPos(actor.blockPosition());
-        actor.serverLevel().getChunkSource().addRegionTicket(TicketType.POST_TELEPORT, chunk, 2, actor.getId()); actor.serverLevel().getChunk(chunk.x, chunk.z);
+        actor.serverLevel().getChunkSource().addRegionTicket(TicketType.FORCED, chunk, 2, chunk); actor.serverLevel().getChunk(chunk.x, chunk.z);
         // Entity queries only include visible chunks. Add the occupant at its final loaded position.
-        helper.runAfterDelay(2, () -> {
+        helper.startSequence().thenWaitUntil(() -> helper.assertTrue(actor.serverLevel().isPositionEntityTicking(actor.blockPosition()), "Distant fixture chunk must become entity ticking")).thenExecute(() -> {
             var cow = EntityType.COW.create(helper.getLevel()); cow.setNoAi(true); cow.setPos(actor.position()); helper.getLevel().addFreshEntity(cow);
             try {
                 helper.assertTrue(SafeArrival.occupied(actor), "Distant fixture must overlap too"); service.recoverLogin(actor);
                 helper.assertTrue(TravelPoint.at(actor).equals(distantPoint) && barrier.read(actor).equals(nativeBefore), "An old journey must not relocate later exploration");
                 helper.succeed();
             } catch (java.io.IOException failure) { helper.fail("Unexpected distant rejoin failure: " + failure); }
-            finally { cow.discard(); actor.serverLevel().getChunkSource().removeRegionTicket(TicketType.POST_TELEPORT, chunk, 2, actor.getId()); }
+            finally { cow.discard(); actor.serverLevel().getChunkSource().removeRegionTicket(TicketType.FORCED, chunk, 2, chunk); }
         });
     }
 

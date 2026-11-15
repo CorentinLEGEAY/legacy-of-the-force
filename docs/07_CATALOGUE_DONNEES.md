@@ -115,6 +115,11 @@ P4-01 Ilum : `dimension/ilum.json`, `dimension_type/ilum.json`, biome `worldgen/
 ```
 
 ## Validation des schémas
+### Boss Ilum P4-03 — formats implémentés
+IDs réels : entités `ilum_guardian`, `ilum_frost_lord`, `arena_ice` ; autels blocs/items `jedi_trial_altar`, `sith_trial_altar` ; objet `ilum_boss_relic`. Les exemples de boss ci-dessus sont des propositions de catalogue, pas les IDs enregistrés de cette tranche.
+
+Sous `data/legacyoftheforce/bosses` : arènes schéma1, identifiant stable dérivé dimension/position/type, rencontre et boot UUID, état SPAWNING/ACTIVE/SETTLING/COOLDOWN, readyAt et lootOwners ; intentions temporaires de victoire dans victories. Entités boss et glace ont des données NBT versionnées ; boss futur conservé inerte. Autel natif à neuf emplacements : lotfSchemaVersion1, inventaire vanilla et UUID de publication. Aucun objet Java direct sauvegardé. Ces fichiers, les régions de blocs/entités, playerdata et les reçus RPG doivent rester dans la même sauvegarde. Migration/recovery et comportement de la glace temporaire restent à éprouver avant validation globale.
+
 ### Atlas et journal de voyage P4-02
 Attachment natif joueur `legacyoftheforce:travel_state` schéma1 : `revision`long, `operation`UUID si révision>0, `knownPlanets`liste bornée (Ilum uniquement dans cette tranche), `returnCredit`booléen, `home`point Overworld, `pending`UUID optionnel, `readyAt`/`combatUntil`longs non négatifs. Point : dimension ID, xyz doubles finis, yaw/pitch floats bornés. Extensions retenues ; atlas≤8192octets, format futur lu/conservé sans action.
 

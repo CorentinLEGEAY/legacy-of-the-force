@@ -45,7 +45,8 @@ public final class MobForceController {
         if (actor == null || target == null || (action != ForceAction.PUSH && action != ForceAction.PULL) || !actor.serverLevel().getServer().isSameThread()
                 || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator() || actor.level() != target.level()
                 || !target.isAlive() || target.isRemoved()) return ForceResult.no("invalid_target");
-        if (target.getType().is(IMMUNE) || target.getType().is(BOSSES)) return ForceResult.no("resistant_target");
+        if (target.getType().is(IMMUNE) || target.getType().is(BOSSES) && !(target instanceof ForceImpulseResistance)) return ForceResult.no("resistant_target");
+        if (target instanceof ForceImpulseResistance posture && !posture.acceptsForceImpulse()) return ForceResult.no("resistant_target");
         if (!protection.mayMoveEntity(actor, target, target.blockPosition())) return ForceResult.no("protected_area");
         if (actor.getEyePosition().distanceToSqr(target.getEyePosition()) > ForceConfig.RANGE.get() * ForceConfig.RANGE.get()
                 || !visible(actor, target)) return ForceResult.no("out_of_range");
@@ -70,6 +71,7 @@ public final class MobForceController {
         double cost = (action == ForceAction.PUSH ? ForceConfig.PUSH_COST.get() : ForceConfig.PULL_COST.get()) + mass * ForceConfig.MOB_COST_PER_MASS.get();
         if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.MOB_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         adapter.applyImpulse(velocity);
+        if (target instanceof ForceImpulseResistance posture) posture.forceImpulseCommitted();
         state.activate(now, ForceConfig.MOB_COOLDOWN.get());
         sessions.put(target.getUUID(), new Session(actor, target, adapter, now + ForceConfig.MOB_DURATION.get()));
         NeoForge.EVENT_BUS.post(new ForceImpulseCommitted(actor.getUUID(), target.getUUID(), actor.serverLevel().dimension(), now, target.position(), action));

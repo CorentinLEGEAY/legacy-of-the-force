@@ -87,6 +87,7 @@ public final class SaberCombat {
         endurance.noteParry(attacker.getUUID(), actor.getMainHandItem().get(SaberContent.ASSEMBLY.get()).crystal().orElseThrow().state().orElseThrow().id(), now(actor));
         event.setAmount((float) (event.getAmount() * (1 - Math.clamp(SaberConfig.PARRY_REDUCTION.get() + stats.get().parryBonus(), 0, 0.9))));
         feedback(actor, "saber.legacyoftheforce.parried");
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.legacyoftheforce.core.api.MeleeParried(actor.getUUID(), attacker.getUUID(), now(actor)));
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("saber")

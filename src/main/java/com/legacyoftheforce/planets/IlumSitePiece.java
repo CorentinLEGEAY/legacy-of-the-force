@@ -66,7 +66,7 @@ public final class IlumSitePiece extends StructurePiece {
             for (int y = 1; y <= 5; y++) put(world, clip, kind == 2 ? Blocks.POLISHED_BLACKSTONE_BRICKS : Blocks.QUARTZ_PILLAR, x, y, z);
             put(world, clip, Blocks.SEA_LANTERN, x, 5, z);
         }
-        put(world, clip, kind == 2 ? Blocks.CHISELED_POLISHED_BLACKSTONE : Blocks.CHISELED_QUARTZ_BLOCK, 5, 1, 8);
-        put(world, clip, Blocks.LIGHT_BLUE_STAINED_GLASS, 5, 2, 8);
+        put(world, clip, kind == 1 || kind == 2 ? com.legacyoftheforce.core.api.BossArenaSites.altar(kind == 2) : Blocks.CHISELED_QUARTZ_BLOCK, 5, 1, 8);
+        if (kind == 3) put(world, clip, Blocks.LIGHT_BLUE_STAINED_GLASS, 5, 2, 8);
     }
 }

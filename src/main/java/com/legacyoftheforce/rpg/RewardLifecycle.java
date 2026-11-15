@@ -56,6 +56,11 @@ public final class RewardLifecycle {
             return RewardResult.REJECTED;
         }
     }
+    static com.legacyoftheforce.core.api.BossRewardStatus bossStatus(UUID playerId, UUID event) {
+        if (owner == null || transactions == null || !owner.isSameThread()) return com.legacyoftheforce.core.api.BossRewardStatus.PENDING;
+        try { return transactions.bossStatus(playerId, event); }
+        catch (IOException failure) { LegacyOfTheForce.LOGGER.error("Boss reward receipt unavailable", failure); return com.legacyoftheforce.core.api.BossRewardStatus.PENDING; }
+    }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("rpg")
                 .then(Commands.literal("recover").requires(source -> source.hasPermission(2)).executes(context -> {

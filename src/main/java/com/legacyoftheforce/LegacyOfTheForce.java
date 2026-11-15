@@ -37,6 +37,11 @@ public final class LegacyOfTheForce {
         TransactionContent.register(modBus);
         com.legacyoftheforce.core.operation.PlayerSaveCheckpoint.register(modBus);
         SaberContent.register(modBus);
+        com.legacyoftheforce.bosses.BossContent.register(modBus);
+        container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.bosses.BossConfig.SPEC, "legacyoftheforce-bosses.toml");
+        var bosses = new com.legacyoftheforce.bosses.BossLifecycle(new ProgressService());
+        NeoForge.EVENT_BUS.register(bosses);
+        com.legacyoftheforce.core.api.WorldProtectionHooks.register(bosses);
         com.legacyoftheforce.planets.PlanetContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());

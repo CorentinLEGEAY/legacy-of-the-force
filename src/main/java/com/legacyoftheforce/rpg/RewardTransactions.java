@@ -59,6 +59,7 @@ final class RewardTransactions {
             var payload = new CompoundTag(); payload.putInt("schemaVersion", 1); payload.putUUID("owner", owner);
             payload.putUUID("event", event); payload.putLong("revision", candidate.rewardRevision());
             payload.put("profile", candidate.serializeNBT(null));
+            payload.putBoolean("accepted", result.accepted());
             active.prepare(event, payload); fault.after(Stage.PREPARED);
             finish(event, payload);
             active.transition(event, OperationPhase.PREPARED, OperationPhase.CLOSED, payload); fault.after(Stage.CLOSED);
@@ -92,6 +93,7 @@ final class RewardTransactions {
         var existing = receipt(event);
         var paid = new CompoundTag(); paid.putInt("schemaVersion", 1); paid.putUUID("event", event);
         paid.putUUID("owner", owner); paid.putLong("revision", payload.getLong("revision"));
+        if (payload.contains("accepted", Tag.TAG_BYTE)) paid.putBoolean("accepted", payload.getBoolean("accepted"));
         if (existing == null) AtomicNbtFile.write(receiptPath(event), paid, 4096);
         else if (!existing.equals(paid)) throw new IOException("Conflicting reward receipt retained");
         fault.after(Stage.RECEIPT);
@@ -113,9 +115,18 @@ final class RewardTransactions {
         if (!tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") != 1
                 || !tag.hasUUID("event") || !tag.getUUID("event").equals(event) || !tag.hasUUID("owner")
                 || !tag.contains("revision", Tag.TAG_LONG) || tag.getLong("revision") < 1) throw new IOException("Unsupported reward receipt retained");
+        if (tag.contains("accepted") && (!tag.contains("accepted", Tag.TAG_BYTE) || tag.getByte("accepted") < 0 || tag.getByte("accepted") > 1)) throw new IOException("Invalid reward outcome retained");
         return tag;
     }
+    com.legacyoftheforce.core.api.BossRewardStatus bossStatus(UUID owner, UUID event) throws IOException {
+        if (!ready) return com.legacyoftheforce.core.api.BossRewardStatus.PENDING;
+        var paid = receipt(event);
+        if (paid == null || !paid.contains("accepted", Tag.TAG_BYTE)) return com.legacyoftheforce.core.api.BossRewardStatus.PENDING;
+        if (!paid.getUUID("owner").equals(owner)) throw new IOException("Boss reward receipt identity conflict");
+        return paid.getBoolean("accepted") ? com.legacyoftheforce.core.api.BossRewardStatus.AWARDED : com.legacyoftheforce.core.api.BossRewardStatus.DECLINED;
+    }
     private void validate(CompoundTag tag, UUID event) throws IOException {
+        if (tag.contains("accepted") && (!tag.contains("accepted", Tag.TAG_BYTE) || tag.getByte("accepted") < 0 || tag.getByte("accepted") > 1)) throw new IOException("Invalid reward outcome retained");
         if (!tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") != 1
                 || !tag.hasUUID("owner") || !tag.hasUUID("event") || !tag.getUUID("event").equals(event)
                 || !tag.contains("revision", Tag.TAG_LONG) || tag.getLong("revision") < 1 || !tag.contains("profile", Tag.TAG_COMPOUND)

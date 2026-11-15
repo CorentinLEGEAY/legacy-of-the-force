@@ -11,4 +11,5 @@ public interface PlayerProgressService {
     default boolean powerReady(UUID playerId, String powerId) { return false; }
     default boolean tryStartPower(UUID playerId, String powerId, double energy, int cooldownTicks) { return false; }
     RewardResult awardBoss(UUID playerId, BossReward reward);
+    default BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) { return BossRewardStatus.PENDING; }
 }

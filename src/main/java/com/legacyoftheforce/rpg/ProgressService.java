@@ -10,6 +10,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ProgressService implements PlayerProgressService {
+    private static UUID bossReceipt(UUID event, UUID player) { return UUID.nameUUIDFromBytes(("boss/" + event + "/" + player).getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+    @Override public com.legacyoftheforce.core.api.BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) {
+        var server = ServerLifecycleHooks.getCurrentServer();
+        return server == null || !server.isSameThread() || playerId == null || eventId == null ? com.legacyoftheforce.core.api.BossRewardStatus.PENDING : RewardLifecycle.bossStatus(playerId, bossReceipt(eventId, playerId));
+    }
     @Override public boolean powerReady(UUID playerId, String powerId) {
         var player = onlinePlayer(playerId);
         return player != null && player.getData(ProgressAttachments.PLAYER_PROGRESS).powerReady(powerId, player.server.overworld().getGameTime());
@@ -47,7 +52,7 @@ public final class ProgressService implements PlayerProgressService {
     @Override public RewardResult awardBoss(UUID playerId, BossReward reward) {
         var player = onlinePlayer(playerId);
         if (player == null || reward == null) return RewardResult.REJECTED;
-        var receiptId = UUID.nameUUIDFromBytes(("boss/" + reward.eventId() + "/" + playerId).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        var receiptId = bossReceipt(reward.eventId(), playerId);
         var result = RewardLifecycle.award(player, receiptId, progress -> progress.awardBoss(reward.eventId(), reward.bossId(),
                 reward.category(), player.server.overworld().getGameTime(), reward.cooldownTicks(), reward.xp(),
                 CombatRewards.configuredRules()));

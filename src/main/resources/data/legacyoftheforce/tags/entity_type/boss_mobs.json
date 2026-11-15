@@ -1,1 +1,7 @@
-{"replace":false,"values":[]}
+{
+  "replace": false,
+  "values": [
+    "legacyoftheforce:ilum_guardian",
+    "legacyoftheforce:ilum_frost_lord"
+  ]
+}

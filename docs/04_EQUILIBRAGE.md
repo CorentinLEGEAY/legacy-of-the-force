@@ -77,6 +77,11 @@ Valeurs de configuration Force : `vehicle.stabilizeLevel=25`, `vehicle.brakeLeve
 Seulement un véhicule dont tous les châssis légers sont à0HP, au garage et sous les mêmes droits/délai que l'entretien. Deux clics à moins de100ticks, cible UUID inchangée ; aucune démolition de véhicule intact. Rendement par matière et par module : `floor(quantité JSON × HP /100)`. Valeurs initiales du champ `salvage` dans `speeder_modules/*.json`, modifiables par données : châssis27 pépites de fer ; moteur9 pépites de fer +1 lingot cuivre ; batterie9 pépites de fer +1 cuivre ; siège4 pépites de fer +2 cuirs. Une pièce détruite rend0. Pas de module rechargé, cellule, teinture ou redstone rendus par ces règles initiales. Une épave0/75/100/100 rend19 pépites,1 cuivre,2 cuirs ; plan papier conservé. Règle absente, stockage inconnu ou inventaire plein : refus intégral.
 
 ## Planètes — proposition
+### Boss Ilum P4-03 — valeurs de développement
+Configuration serveur bosses : santé220, dégâts5, vitesse0,24, contribution minimale2 dégâts ou2 soutiens récents ; XP800, alignement±25 verrouillé. Cooldown récompense par joueur/boss72000ticks, arène12000ticks, reset sans participant100ticks ; quatre participants par défaut, plafond16. Santé supplémentaire35% par membre présent à la fin de l'introduction40ticks. Phases à70%/30%, télégraphe minimum16ticks. Glace10HP, durée160ticks, vitesse0,28 et deux entités maximum par boss ; vulnérabilité après parade40ticks puis immunité de contrôle80ticks. Portées/coûts/délais/multiplicateurs des attaques configurables. Reliquaire partagé : une relique et quatre cellules ; relique+fer donnent quatre kits de réparation via recette native.
+
+Valeurs non équilibrées en survie complète. Le plafond configurable de santé dépasse actuellement le plafond d'attribut natif ; le corriger avant validation finale. Seuils de phase, plafond d'énergie, géométrie et quelques durées restent constants ; mise en configuration à poursuivre. Les participants tardifs ne recalculent pas la santé initiale. Voir validation/P4-03.md pour limites et preuves.
+
 
 ### Ilum P4-01 — valeurs initiales
 

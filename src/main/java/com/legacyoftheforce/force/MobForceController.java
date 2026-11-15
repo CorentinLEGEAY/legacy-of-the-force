@@ -144,7 +144,8 @@ public final class MobForceController {
         var sweep = target.getBoundingBox().expandTowards(velocity).deflate(0.001);
         double volume = (Math.ceil(sweep.getXsize()) + 1) * (Math.ceil(sweep.getYsize()) + 1) * (Math.ceil(sweep.getZsize()) + 1);
         if (!Double.isFinite(volume) || volume > ForceConfig.MOB_PATH_CELLS.get()) return false;
-        for (var position : BlockPos.betweenClosedStream(sweep).toList()) if (!protection.mayMoveEntity(actor, target, position)) return false;
+        var positions = BlockPos.betweenClosedStream(sweep).iterator();
+        while (positions.hasNext()) if (!protection.mayMoveEntity(actor, target, positions.next())) return false;
         return true;
     }
     private record Session(ServerPlayer actor, Mob target, ForceTargetAdapter adapter, long expires) {}

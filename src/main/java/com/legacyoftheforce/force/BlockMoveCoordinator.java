@@ -277,7 +277,9 @@ public final class BlockMoveCoordinator {
         for (int step = 1; step <= steps; step++) {
             var center = session.position.lerp(end, (double) step / steps);
             var box = new AABB(center.x - 0.499, center.y - 0.499, center.z - 0.499, center.x + 0.499, center.y + 0.499, center.z + 0.499);
-            for (var position : BlockPos.betweenClosedStream(box).toList()) {
+            var positions = BlockPos.betweenClosedStream(box).iterator();
+            while (positions.hasNext()) {
+                var position = positions.next();
                 var level = actor.serverLevel();
                 if (!protection.mayModify(actor, level, position, ModificationKind.MOVE_THROUGH)) return false;
                 if (position.equals(session.record.source())) continue;

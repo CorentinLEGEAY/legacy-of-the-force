@@ -59,4 +59,7 @@ Tester le gameplay **sur un serveur dédié**, même si le développement se dé
 - Le rendu de tous les effets doit être désactivable/simplifiable côté client.
 
 ## Critères d'arrêt de release
+### Régression des volumes de permission — 2026-11-15
+Pour les blocs, mobs, véhicules et arrivées, refuser un seul emplacement du volume qui ne soit ni son centre ni le dernier coin parcouru ; vérifier refus avant paiement/publication. Les itérateurs BlockPos.betweenClosed réutilisent une MutableBlockPos : ne pas collecter leurs références via toList avant examen. Parcours immédiat ou copie immutable obligatoire si une position doit être conservée. Trois tests Force supplémentaires ont reproduit les contournements avant correction, puis passent après parcours immédiat. Détails : validation/PERMISSION_VOLUMES.md.
+
 Ne pas publier si : duplication de ressources persistante ; crash lors d'une déconnexion en télékinésie ; perte de véhicules ou d'inventaires ; téléportation interdimensionnelle avec effacement d'objets ; privilèges client permettant d'attribuer XP ou dégâts arbitraires.

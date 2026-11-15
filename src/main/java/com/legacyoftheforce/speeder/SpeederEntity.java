@@ -79,8 +79,8 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
                         || !SpeederRetirement.supportedStorage(SpeederEntity.this)
                         || SpeederPerformance.inspect(snapshot, SpeederCatalog.definitions()).orElseThrow().wrecked()
                         || !loadedAndAllowed(getBoundingBox(), actor)) return false;
-                for (var pos : BlockPos.betweenClosedStream(getBoundingBox().deflate(.001)).toList())
-                    if (!policy.mayMoveEntity(actor, SpeederEntity.this, pos)) return false;
+                var positions = BlockPos.betweenClosedStream(getBoundingBox().deflate(.001)).iterator();
+                while (positions.hasNext()) if (!policy.mayMoveEntity(actor, SpeederEntity.this, positions.next())) return false;
                 return Math.abs(action == ForceAction.STABILIZE ? snapshot.motion().verticalSpeed() : snapshot.motion().speed()) > .0001;
             }
             @Override public void dampMotion(ServerPlayer actor, ForceAction action, double retention) {

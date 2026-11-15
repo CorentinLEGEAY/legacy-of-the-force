@@ -18,6 +18,18 @@ import net.neoforged.neoforge.gametest.*;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class SpeederForceGameTests {
+    @GameTest(template = "empty_large", timeoutTicks = 100)
+    public static void oneProtectedCornerBlocksVehicleForceBeforePayment(GameTestHelper helper) {
+        var setup = setup(helper); var vehicle = setup.vehicle(); var box = vehicle.getBoundingBox().deflate(.001);
+        var denied = BlockPos.containing(box.minX, box.minY, box.minZ); var before = vehicle.savedState().tag();
+        helper.assertFalse(denied.equals(vehicle.blockPosition()), "Fixture must deny an envelope corner rather than the entity centre");
+        setup.protection().registerPolicy(new ProtectionPolicy() {
+            @Override public boolean allows(ServerPlayer a, ServerLevel l, BlockPos p, ModificationKind kind) { return true; }
+            @Override public boolean allowsEntity(ServerPlayer a, net.minecraft.world.entity.Entity target, BlockPos p) { return !p.equals(denied); }
+        });
+        helper.assertFalse(setup.controller().castAt(setup.actor(), vehicle, ForceAction.STABILIZE).accepted(), "A protected non-final corner must block vehicle Force");
+        helper.assertTrue(setup.progress().energy == 100 && vehicle.savedState().tag().equals(before), "Partial claims refusal must preserve energy and native motion"); helper.succeed();
+    }
     private record Setup(ServerPlayer actor, SpeederEntity vehicle, Account progress, VanillaProtectedWorldService protection) {
         VehicleForceController controller() { return new VehicleForceController(progress, protection); }
     }

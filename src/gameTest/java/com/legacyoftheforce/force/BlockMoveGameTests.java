@@ -22,6 +22,18 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class BlockMoveGameTests {
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void oneProtectedCellAtTheStartOfTheSweepBlocksDeposit(GameTestHelper helper) throws IOException {
+        var source = helper.absolutePos(new BlockPos(1, 1, 1)); var destination = source.east();
+        helper.getLevel().setBlockAndUpdate(source, Blocks.DIRT.defaultBlockState()); var player = actor(helper); var progress = new TestProgress();
+        var coordinator = coordinator(helper, journal(helper), progress,
+                (a, l, p, kind) -> kind != ModificationKind.MOVE_THROUGH || !p.equals(source), new VerifiedChunkSaveBarrier());
+        helper.assertTrue(coordinator.grabAt(player, source).accepted(), "Grab permission is independent of the protected sweep cell");
+        helper.assertFalse(coordinator.dropAt(player, destination).accepted(), "One denied non-final sweep cell must block deposit");
+        helper.assertTrue(coordinator.holding(player.getUUID()) && helper.getLevel().getBlockState(destination).isAir(), "Refusal must keep the one held block without publishing it");
+        helper.assertTrue(coordinator.cancel(player.getUUID()).accepted() && helper.getLevel().getBlockState(source).is(Blocks.DIRT), "Cancel must restore exactly one source block");
+        helper.succeed();
+    }
     private static ServerPlayer actor(GameTestHelper helper) {
         var level = helper.getLevel();
         var profile = new GameProfile(UUID.randomUUID(), "BlockMoveTest");

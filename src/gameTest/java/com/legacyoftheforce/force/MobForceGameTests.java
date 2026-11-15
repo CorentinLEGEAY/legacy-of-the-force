@@ -21,6 +21,19 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class MobForceGameTests {
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void oneProtectedUpperCellBlocksTheWholeMobSweepBeforePayment(GameTestHelper helper) {
+        var actor = actor(helper); var progress = new TestProgress(helper.getLevel().getServer()); progress.add(actor, 100, 100);
+        var cow = helper.spawnWithNoFreeWill(EntityType.COW, 3.5f, 1, 3.5f); var denied = cow.blockPosition().above();
+        var protection = new VanillaProtectedWorldService(); protection.registerPolicy(new ProtectionPolicy() {
+            @Override public boolean allows(ServerPlayer a, net.minecraft.server.level.ServerLevel l, BlockPos p, ModificationKind kind) { return true; }
+            @Override public boolean allowsEntity(ServerPlayer a, net.minecraft.world.entity.Entity target, BlockPos p) { return !p.equals(denied); }
+        });
+        var controller = new MobForceController(progress, protection);
+        helper.assertFalse(controller.castAt(actor, cow, ForceAction.PUSH).accepted(), "One denied upper cell away from the last corner must block the impulse");
+        helper.assertTrue(progress.energy(actor) == 100 && cow.getDeltaMovement().lengthSqr() == 0, "Refused sweep must spend no energy and move nothing");
+        controller.stopAll(); helper.succeed();
+    }
     private static ServerPlayer actor(GameTestHelper helper) {
         var level = helper.getLevel(); var profile = new GameProfile(UUID.randomUUID(), "MobForceTest");
         var actor = new ServerPlayer(level.getServer(), level, profile, ClientInformation.createDefault());

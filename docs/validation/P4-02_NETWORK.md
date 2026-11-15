@@ -25,6 +25,18 @@ Toujours utiliser un identifiant neuf, préserver les anciens mondes et ne pas l
 
 Les lanceurs dérivent classpath, JVM/providers et environnement du `RunGameTask` de ModDevGradle2.0.148 ; ils ne réutilisent pas un manifeste d'un ancien test. Les assets viennent de `prepareClientTwoRun`. `onboardAccessibility:false` concerne uniquement les profils de test neufs ; distance de simulation client5, limite30FPS et heaps bornés. Deux JRE clients isolés permettent d'identifier les processus. Le serveur reste hors authentification uniquement sur127.0.0.1. Preuves NBT sous `world/validation` et `profile/validation`, logs/résultats de lancement sous `.tools` ; ces données locales restent ignorées par Git.
 
+Prérequis Windows : PowerShell7, JDK21 local et deux copies de ce JDK sous `.tools/java-client-one` et `.tools/java-client-two` (non distribuées). Après installation du JDK utilisé ici, préparer uniquement les copies absentes :
+
+```powershell
+foreach ($name in 'java-client-one','java-client-two') {
+    if (-not (Test-Path -LiteralPath ".tools/$name")) {
+        Copy-Item -LiteralPath '.tools/java/jdk-21.0.13+9' -Destination ".tools/$name" -Recurse
+    }
+}
+```
+
+Adapter le chemin source si un autre JDK21 est installé. Les checkers demandent Python3 ; le lanceur solo accepte `-PythonPath` pour remplacer le runtime Python local par défaut. Les tests ne modifient aucune installation Java système.
+
 ## Essais non validés et limites
 
 `net1` : classpath vide avant exécution du RunGameTask, corrigé via `classpathProvider`. `net2` : écran d'accessibilité initial empêchant QuickPlay ; options isolées corrigées. Aucun de ces essais ne compte comme réussite. `solo1`/`solo2`/`solo3` restent non validés : confirmation expérimentale non traitée ; contrôle du profil corrigé avec chemin absolu normalisé (`gameDirectory` vaut « . »). Le bouton natif sauvegarde/chargement est effectivement observé dans `solo4`. Le test ne désactive aucune assertion de gameplay.

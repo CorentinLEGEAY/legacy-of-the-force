@@ -28,25 +28,28 @@ public final class SoloOwnerSaveValidation {
         if (CHECKED.contains(server)) return;
         var actor = server.getPlayerList().getPlayerByName("ForceTesterSolo");
         if (actor == null) return;
+        var mode = System.getProperty("lotf.validation.soloOwnerSave.mode", "Load");
+        if (mode.equals("KillTravel") && !com.legacyoftheforce.planets.SoloTravelSaveValidation.ready(actor)) return;
         CHECKED.add(server);
         try {
-            var mode = System.getProperty("lotf.validation.soloOwnerSave.mode", "Load");
             Path root = server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
             if (!root.getFileName().toString().equals("TravelValidation")
                     || !root.getParent().getParent().getFileName().toString().startsWith("run-travel-client-solo-")
                     || server.isDedicatedServer() || !server.isSingleplayerOwner(actor.getGameProfile())
-                    || actor.getInventory().countItem(Items.DIAMOND) != (mode.equals("Recover") ? 9 : 7)) throw new IllegalStateException("Stopped solo fixture copy required");
+                    || actor.getInventory().countItem(Items.DIAMOND) != (mode.startsWith("Recover") ? 9 : 7)) throw new IllegalStateException("Stopped solo fixture copy required");
             var proof = new CompoundTag(); proof.putInt("schemaVersion", 1);
             proof.putString("mode", mode); proof.putLong("pid", ProcessHandle.current().pid());
             proof.put("before", actor.saveWithoutId(new CompoundTag()));
             proof.put("embedded", server.getWorldData().getLoadedPlayerTag().copy());
             proof.put("levelFile", AtomicNbtFile.read(server.getWorldPath(LevelResource.LEVEL_DATA_FILE), 16 * 1024 * 1024));
-            if (mode.equals("Recover")) {
+            if (mode.startsWith("Recover")) {
+                if (mode.equals("RecoverTravel")) com.legacyoftheforce.planets.SoloTravelSaveValidation.recovered(actor, root, proof);
                 proof.putBoolean("passed", actor.getInventory().countItem(Items.DIAMOND) == 9);
                 AtomicNbtFile.write(root.resolve("validation/solo-owner-save.nbt"), proof, 1048576);
                 LegacyOfTheForce.LOGGER.info("SOLO_OWNER_SAVE_RECOVER_PASS"); return;
             }
             actor.getInventory().setItem(3, new ItemStack(Items.DIAMOND, 9));
+            if (mode.equals("KillTravel")) { com.legacyoftheforce.planets.SoloTravelSaveValidation.pause(actor, root, proof); return; }
             proof.put("durable", new VerifiedPlayerSaveBarrier().persist(actor));
             if (mode.equals("Kill")) {
                 AtomicNbtFile.write(root.resolve("validation/solo-owner-checkpoint.nbt"), proof, 1048576);

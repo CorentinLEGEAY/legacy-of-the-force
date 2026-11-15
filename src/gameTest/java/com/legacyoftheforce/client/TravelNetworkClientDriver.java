@@ -26,7 +26,18 @@ public final class TravelNetworkClientDriver {
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
         if (Boolean.getBoolean("lotf.validation.soloOwnerSave")) {
             var mc = Minecraft.getInstance();
-            if (Files.isRegularFile(mc.gameDirectory.toPath().resolve("saves/TravelValidation/validation/solo-owner-save.nbt"))) mc.stop();
+            if (Files.isRegularFile(mc.gameDirectory.toPath().resolve("saves/TravelValidation/validation/solo-owner-save.nbt"))) {
+                if (System.getProperty("lotf.validation.soloOwnerSave.mode", "").equals("RecoverTravel")) {
+                    if (mc.player == null || mc.level == null || !mc.level.dimension().equals(PlanetContent.ILUM)) return;
+                    try {
+                        var ack = new CompoundTag(); ack.putInt("schemaVersion", 1); ack.putLong("pid", ProcessHandle.current().pid());
+                        ack.putUUID("owner", mc.player.getUUID()); ack.putString("dimension", mc.level.dimension().location().toString());
+                        AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/solo-travel-client.nbt"), ack, 4096);
+                        LegacyOfTheForce.LOGGER.info("SOLO_TRAVEL_CLIENT_ILUM_ACK");
+                    } catch (Exception failure) { throw new IllegalStateException("Cannot persist native solo travel acknowledgment", failure); }
+                }
+                mc.stop();
+            }
             return;
         }
         if (!Boolean.getBoolean("lotf.validation.travelNetwork")) return; var mc = Minecraft.getInstance(); ticks++;

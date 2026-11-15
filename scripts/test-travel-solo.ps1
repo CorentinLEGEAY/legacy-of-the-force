@@ -2,7 +2,7 @@ param(
     [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'solo1',
     [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$TemplateRun = 'net3',
     [switch]$OwnerSaveProbe,
-    [ValidateSet('Load', 'Kill', 'Recover')][string]$OwnerSaveMode = 'Load',
+    [ValidateSet('Load', 'Kill', 'Recover', 'KillTravel', 'RecoverTravel')][string]$OwnerSaveMode = 'Load',
     [string]$PythonPath = 'C:/Program Files/WindowsApps/OpenAI.CodexPrimaryRuntime.v26-1110-973-0_26.1110.973.0_x64__3k8sg7r9htsxt/dependencies/python/python.exe'
 )
 $ErrorActionPreference = 'Stop'
@@ -29,6 +29,7 @@ if ($OwnerSaveProbe) {
     # Preserve the source. Reproduce native owner loading from a complete stopped solo copy.
     Get-ChildItem -LiteralPath $templateWorld -Force | Copy-Item -Destination $world -Recurse
     if (Test-Path -LiteralPath (Join-Path $world 'validation/solo-owner-save.nbt')) { throw 'Owner save probe must not overwrite an existing proof.' }
+    if ($OwnerSaveMode.StartsWith('Kill') -and (Test-Path -LiteralPath (Join-Path $world 'validation/solo-owner-checkpoint.nbt'))) { throw 'A new kill must not reuse a previous checkpoint marker.' }
 } else {
     Copy-Item -LiteralPath (Join-Path $templateWorld 'level.dat') -Destination (Join-Path $world 'level.dat')
 }
@@ -60,7 +61,7 @@ $forced = $false
 try {
     $deadline = (Get-Date).AddSeconds(270)
     while (-not $client.HasExited -and (Get-Date) -lt $deadline) {
-        if ($OwnerSaveProbe -and $OwnerSaveMode -eq 'Kill' -and (Test-Path -LiteralPath (Join-Path $world 'validation/solo-owner-checkpoint.nbt'))) {
+        if ($OwnerSaveProbe -and $OwnerSaveMode.StartsWith('Kill') -and (Test-Path -LiteralPath (Join-Path $world 'validation/solo-owner-checkpoint.nbt'))) {
             $forced = $true; $client.Kill(); $client.WaitForExit(5000) | Out-Null; break
         }
         $client.WaitForExit(1000) | Out-Null
@@ -73,7 +74,7 @@ try {
     $client.Dispose()
 }
 if ($OwnerSaveProbe) {
-    if ($OwnerSaveMode -eq 'Kill') {
+    if ($OwnerSaveMode.StartsWith('Kill')) {
         if (-not $forced -or $exitCode -eq 0) { throw 'Expected actual abrupt termination of the owned solo test JVM.' }
         Write-Output 'OBSERVED: stopped owned solo JVM after durable barrier without shutdown command; verify and recover a copy.'
         return

@@ -77,6 +77,12 @@ Valeurs de configuration Force : `vehicle.stabilizeLevel=25`, `vehicle.brakeLeve
 Seulement un véhicule dont tous les châssis légers sont à0HP, au garage et sous les mêmes droits/délai que l'entretien. Deux clics à moins de100ticks, cible UUID inchangée ; aucune démolition de véhicule intact. Rendement par matière et par module : `floor(quantité JSON × HP /100)`. Valeurs initiales du champ `salvage` dans `speeder_modules/*.json`, modifiables par données : châssis27 pépites de fer ; moteur9 pépites de fer +1 lingot cuivre ; batterie9 pépites de fer +1 cuivre ; siège4 pépites de fer +2 cuirs. Une pièce détruite rend0. Pas de module rechargé, cellule, teinture ou redstone rendus par ces règles initiales. Une épave0/75/100/100 rend19 pépites,1 cuivre,2 cuirs ; plan papier conservé. Règle absente, stockage inconnu ou inventaire plein : refus intégral.
 
 ## Planètes — proposition
+
+### Ilum P4-01 — valeurs initiales
+
+Un ensemble de structures, espacement16chunks/séparation8, sel172851 ; poids mine3, templeJedi1, sanctuaireSith1, ruines1. Une candidature peut être refusée sous le niveau marin+2 ou sur une variation de terrain>8blocs. Un seul gisement par mine ; pas de veine de minerai commune. Pioche fer minimum, Fortune/Toucher de soie ne multiplient pas le cristal. Récolte exclusivement dans Ilum. Purité uniforme dans [0,55;0,90], stabilité [0,60;0,95], valeurs configurables `ilum.minedPurityMinimum/Maximum` et `ilum.minedStabilityMinimum/Maximum` dans configuration sabre ; bornes inversées triées, chaque valeur limitée0–1. Aucun changement des valeurs de création créative existantes.
+
+La feature JSON de givre traite chaque chunk ; crête de glace chance1/5, hauteur3–7 (codec borné chance1–64 et hauteur2–16). Biome température−0,7, précipitations0,7 ; neige/glace et faune/monstres vanilla. Aucun malus de froid scripté dans cette tranche. Espacement, poids, géométrie et tables sont des données/code originaux ; le réglage en situation de jeu reste à mesurer. Renouvellement de ressource sans régénérer les chunks à implémenter dans les systèmes d'expédition/loot, pas par un reset du monde.
 - Un type principal de cristal rare par planète ; rareté associée à la structure plutôt qu'à un taux de minerai omniprésent.
 - 1 boss Jedi et 1 boss Sith par planète ; arènes persistantes, réinvocation encadrée.
 - Cristaux : sources renouvelables **sans régénération destructrice des blocs placés par les joueurs** ; préférer structures/systèmes d'expédition/loot réinitialisables par événement.

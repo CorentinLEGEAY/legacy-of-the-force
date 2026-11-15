@@ -1,0 +1,8 @@
+{
+  "type": "legacyoftheforce:ilum_frost",
+  "config": {
+    "ridge_chance": 5,
+    "minimum_height": 3,
+    "maximum_height": 7
+  }
+}

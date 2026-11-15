@@ -1,0 +1,8 @@
+{
+  "feature": "legacyoftheforce:ilum_frost",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

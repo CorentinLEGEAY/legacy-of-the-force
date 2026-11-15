@@ -227,5 +227,8 @@
   "force.legacyoftheforce.no_vehicle_target": "Aim at a visible speeder",
   "force.legacyoftheforce.vehicle_unavailable": "Vehicle must be yours, unoccupied, moving and permitted",
   "key.legacyoftheforce.force_stabilize": "Stabilize unoccupied speeder",
-  "key.legacyoftheforce.force_brake": "Slow unoccupied speeder"
+  "key.legacyoftheforce.force_brake": "Slow unoccupied speeder",
+  "block.legacyoftheforce.ilum_crystal_cluster": "Sealed Ilum crystal cluster",
+  "biome.legacyoftheforce.ilum_glacial_fields": "Ilum glacial fields",
+  "dimension.legacyoftheforce.ilum": "Ilum"
 }

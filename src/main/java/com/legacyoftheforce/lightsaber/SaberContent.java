@@ -23,6 +23,8 @@ public final class SaberContent {
     private static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, LegacyOfTheForce.MOD_ID);
+    private static final DeferredRegister<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>> LOOT_FUNCTIONS = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, LegacyOfTheForce.MOD_ID);
+    public static final Supplier<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<IdentifyIlumCrystal>> IDENTIFY_ILUM = LOOT_FUNCTIONS.register("identify_ilum_crystal", () -> new net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<>(IdentifyIlumCrystal.CODEC));
     public static final Supplier<SoundEvent> IGNITE = SOUNDS.register("saber_ignite", () -> SoundEvent.createVariableRangeEvent(id("saber_ignite")));
     public static final Supplier<SoundEvent> EXTINGUISH = SOUNDS.register("saber_extinguish", () -> SoundEvent.createVariableRangeEvent(id("saber_extinguish")));
     public static final Supplier<DataComponentType<KyberData>> KYBER_DATA = COMPONENTS.register("kyber", () ->
@@ -44,7 +46,7 @@ public final class SaberContent {
         for (var slot : SaberSlot.values()) plan.put(slot, id(slot.key() + "_basic"));
         plan.put(SaberSlot.EMITTER, id(emitter == 1 ? "emitter_claw" : "emitter_basic")); return Map.copyOf(plan);
     }
-    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); SOUNDS.register(bus); ATTACHMENTS.register(bus); }
+    public static void register(IEventBus bus) { ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); SOUNDS.register(bus); ATTACHMENTS.register(bus); LOOT_FUNCTIONS.register(bus); }
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) PART_NAMES.forEach(name -> event.accept(partItem(name)));
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(KYBER.get());

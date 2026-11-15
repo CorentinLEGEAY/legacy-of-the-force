@@ -1,0 +1,27 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:ilum_crystal_mine",
+      "weight": 3
+    },
+    {
+      "structure": "legacyoftheforce:ilum_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:ilum_sith_sanctum",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:ilum_ruins",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 172851,
+    "spacing": 16,
+    "separation": 8,
+    "spread_type": "linear"
+  }
+}

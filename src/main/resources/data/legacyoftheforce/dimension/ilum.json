@@ -1,0 +1,11 @@
+{
+  "type": "legacyoftheforce:ilum",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "minecraft:overworld",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "legacyoftheforce:ilum_glacial_fields"
+    }
+  }
+}

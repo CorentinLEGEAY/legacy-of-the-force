@@ -86,6 +86,8 @@ Recyclage P3-03 : champ optionnel `salvage` dans chaque JSON `speeder_modules`, 
 Reçu joueur `legacyoftheforce:speeder_assembly_receipt`, dans `neoforge:attachments` : `schemaVersion=1` entier, `revision` long ≥0, `operation` UUID obligatoire quand révision >0. Schéma futur conservé, mutation refusée ; budget 1 Kio. Journal par joueur : `schemaVersion=1`, `owner`/`operation` UUID, `phase` string connue, `before`/`after` (Inventory native + receipt), `vehicle` initial gelé ; budget 256 Kio. Révision après = avant +1 et UUID après = opération. Ces images sont des preuves de paiement ; après DONE, seules les données d'entité donnent l'état vivant. Voir `validation/P3-02_ASSEMBLY.md`.
 
 ## Définition de planète
+
+P4-01 Ilum : `dimension/ilum.json`, `dimension_type/ilum.json`, biome `worldgen/biome/ilum_glacial_fields.json`, feature `ilum_frost` et structure set pondéré `ilum_sites`. Générateur de bruit vanilla référencé par ID, givre et plans de sites originaux. Les quatre structures utilisent le type `legacyoftheforce:ilum_site` avec `site_kind`0mine/1templeJedi/2sanctuaireSith/3ruines ; pièce native11×16×11 sauvegardée avec `schemaVersion=1` et `siteKind`. Champs opaques conservés ; schéma futur conservé en lecture seule sans génération. Les blocs ordinaires et métadonnées de structure suivent les chunks Minecraft, sans hook de régénération au login/unload. Butin du gisement : fonction serveur `identify_ilum_crystal` créant le composant kyber existant, schéma1, avec UUID et qualités bornées. La table exige dimension Ilum et pioche ; le tier fer est imposé par tags vanilla.
 ```json
 {
   "schemaVersion": 1,

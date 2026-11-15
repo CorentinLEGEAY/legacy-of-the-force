@@ -4,6 +4,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class SaberConfig {
     public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.DoubleValue MINED_PURITY_MIN, MINED_PURITY_MAX, MINED_STABILITY_MIN, MINED_STABILITY_MAX;
     public static final ModConfigSpec.IntValue CRAFT_INTERVAL;
     public static final ModConfigSpec.IntValue ACTIVATION_INTERVAL;
     public static final ModConfigSpec.IntValue PARRY_WINDOW, PARRY_COOLDOWN, RECOVERY_DELAY;
@@ -13,6 +14,10 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        MINED_PURITY_MIN = builder.defineInRange("ilum.minedPurityMinimum", .55, 0, 1);
+        MINED_PURITY_MAX = builder.defineInRange("ilum.minedPurityMaximum", .90, 0, 1);
+        MINED_STABILITY_MIN = builder.defineInRange("ilum.minedStabilityMinimum", .60, 0, 1);
+        MINED_STABILITY_MAX = builder.defineInRange("ilum.minedStabilityMaximum", .95, 0, 1);
         BOND_2 = builder.defineInRange("bond.harmonizedThreshold", 30, 1, 999998);
         BOND_3 = builder.defineInRange("bond.resonantThreshold", 90, 2, 999999);
         BOND_4 = builder.defineInRange("bond.legendaryThreshold", 180, 3, 1000000);

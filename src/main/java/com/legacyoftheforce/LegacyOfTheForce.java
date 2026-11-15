@@ -35,6 +35,7 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC);
         container.registerConfig(ModConfig.Type.SERVER, ForceConfig.SPEC, "legacyoftheforce-force.toml");
         TransactionContent.register(modBus);
+        com.legacyoftheforce.core.operation.PlayerSaveCheckpoint.register(modBus);
         SaberContent.register(modBus);
         com.legacyoftheforce.planets.PlanetContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");

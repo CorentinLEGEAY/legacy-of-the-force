@@ -24,6 +24,11 @@ public final class TravelNetworkClientDriver {
     private static final ListTag STEPS = new ListTag();
     private static void require(boolean value, String message) { if (!value) throw new IllegalStateException(message); }
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
+        if (Boolean.getBoolean("lotf.validation.soloOwnerSave")) {
+            var mc = Minecraft.getInstance();
+            if (Files.isRegularFile(mc.gameDirectory.toPath().resolve("saves/TravelValidation/validation/solo-owner-save.nbt"))) mc.stop();
+            return;
+        }
         if (!Boolean.getBoolean("lotf.validation.travelNetwork")) return; var mc = Minecraft.getInstance(); ticks++;
         if (stage.equals("FAILED") || stage.equals("PASS")) { if (mc.getConnection() == null || Boolean.getBoolean("lotf.validation.travelSolo")) mc.stop(); return; }
         try {

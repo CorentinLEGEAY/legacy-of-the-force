@@ -59,6 +59,9 @@ Tester le gameplay **sur un serveur dédié**, même si le développement se dé
 - Le rendu de tous les effets doit être désactivable/simplifiable côté client.
 
 ## Critères d'arrêt de release
+### Reprise d'une arrivée déjà sauvegardée — P4-02
+Après ARRIVED et ACTIVE_DURABLE, changer les droits ou placer un danger de fixture avant reprise : refuser de clore sans site autorisé, préserver fichier joueur/journal si rien n'est possible, sinon relocaliser sans modifier le danger ni repayer. Refuser home et voisinage pour vérifier le secours au spawn avec bookmark conservé. Cas reproduits sur dédié et contrôlés indépendamment ; vingt checkpoints Error et six kills Java du transfert réel après correction. Harnais/scripts et limites dans validation/P4-02_CRASH.md ; ces tests ne valident pas deux connexions réseau réelles.
+
 ### Régression des volumes de permission — 2026-11-15
 Pour les blocs, mobs, véhicules et arrivées, refuser un seul emplacement du volume qui ne soit ni son centre ni le dernier coin parcouru ; vérifier refus avant paiement/publication. Les itérateurs BlockPos.betweenClosed réutilisent une MutableBlockPos : ne pas collecter leurs références via toList avant examen. Parcours immédiat ou copie immutable obligatoire si une position doit être conservée. Trois tests Force supplémentaires ont reproduit les contournements avant correction, puis passent après parcours immédiat. Détails : validation/PERMISSION_VOLUMES.md.
 

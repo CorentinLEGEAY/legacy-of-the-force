@@ -124,6 +124,7 @@ public final class TravelService {
             record = advance(record, Phase.ARRIVED); probe.reached(Checkpoint.ARRIVED); value = record.view();
         }
         if (value.phase() == Phase.ARRIVED) {
+            revalidateArrival(actor, value);
             var active = record.activeImage(); var durable = fromFile(players.read(actor));
             if (!durable.equals(active)) {
                 if (!durable.equals(value.after()) || value.kind() != Kind.DISCOVER && !inside(TravelPoint.at(actor), value)) throw new IOException("Travel arrival not durable");
@@ -133,6 +134,22 @@ public final class TravelService {
             if (value.kind() == Kind.DISCOVER) net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PlanetDiscovered(value.owner(), value.operation(), PlanetContent.ILUM.location()));
             else net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PlanetTravelCompleted(value.owner(), value.operation(), value.source().dimension(), actor.level().dimension().location()));
         }
+    }
+    private void revalidateArrival(ServerPlayer actor, TravelTransaction.View value) throws IOException {
+        if (value.kind() == Kind.DISCOVER) return;
+        var current = TravelPoint.at(actor);
+        if (!inside(current, value)) throw new IOException("Unfinished arrival location conflict");
+        actor.serverLevel().getChunk(actor.blockPosition());
+        if (SafeArrival.safe(actor, actor.serverLevel(), current, protection)) return;
+        // A crash can restore older terrain, or claims can change after the destination was saved.
+        // Keep the paid image and open receipt until a currently permitted safe destination is durable.
+        var image = snapshot(actor);
+        var destination = select(actor, value.target(), value.fallback(), value.kind()).orElseThrow(() -> new IOException("Saved arrival is no longer safe; retained"));
+        actor.closeContainer();
+        TravelLifecycle.permit(actor, () -> actor.teleportTo(server.getLevel(ResourceKey.create(Registries.DIMENSION, destination.dimension())), destination.x(), destination.y(), destination.z(), destination.yaw(), destination.pitch()));
+        actor.setDeltaMovement(Vec3.ZERO); actor.fallDistance = 0; actor.setPortalCooldown();
+        if (!inside(TravelPoint.at(actor), value) || !SafeArrival.safe(actor, actor.serverLevel(), TravelPoint.at(actor), protection)) throw new IOException("Replacement arrival denied or unsafe; retained");
+        persist(actor, image);
     }
     private Optional<TravelPoint> select(ServerPlayer actor, TravelPoint target, TravelPoint fallback, Kind kind) {
         var found = SafeArrival.find(actor, target, kind == Kind.OUTBOUND, protection);

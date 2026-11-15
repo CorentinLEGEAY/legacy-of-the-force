@@ -20,6 +20,17 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
         if (policies.size() >= 32) throw new IllegalStateException("Too many protection adapters");
         policies.addIfAbsent(Objects.requireNonNull(policy));
     }
+    @Override public boolean mayArrive(ServerPlayer actor, ServerLevel destination, BlockPos position) {
+        if (actor == null || destination == null || position == null || !destination.getServer().isSameThread()
+                || actor.server != destination.getServer() || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator()
+                || !destination.hasChunkAt(position) || !destination.isInWorldBounds(position) || !destination.getWorldBorder().isWithinBounds(position)) return false;
+        // Arriving is not editing a block: vanilla spawn protection must not strand a returning player.
+        for (var policy : policies) {
+            try { if (!policy.allowsArrival(actor, destination, position)) return false; }
+            catch (RuntimeException unavailable) { return false; }
+        }
+        return true;
+    }
 
     @Override public boolean mayMoveEntity(ServerPlayer actor, Entity target, BlockPos position) {
         if (actor == null || target == null || (!(target instanceof Mob) && !(target instanceof com.legacyoftheforce.core.api.VehicleForceTargetProvider)) || position == null || !actor.serverLevel().getServer().isSameThread()

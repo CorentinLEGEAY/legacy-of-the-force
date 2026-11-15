@@ -10,4 +10,5 @@ import net.minecraft.world.entity.Entity;
 public interface ProtectionPolicy {
     boolean allows(ServerPlayer actor, ServerLevel level, BlockPos position, ModificationKind kind);
     default boolean allowsEntity(ServerPlayer actor, Entity target, BlockPos position) { return false; }
+    default boolean allowsArrival(ServerPlayer actor, ServerLevel destination, BlockPos position) { return false; }
 }

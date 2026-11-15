@@ -88,6 +88,11 @@ La feature JSON de givre traite chaque chunk ; crête de glace chance1/5, hauteu
 - Cristaux : sources renouvelables **sans régénération destructrice des blocs placés par les joueurs** ; préférer structures/systèmes d'expédition/loot réinitialisables par événement.
 
 ## Principes de validation
+### Voyage Ilum P4-02
+Configuration serveur `legacyoftheforce-travel.toml` : `outboundEnergyCells=1`, `prepaidReturnEnergyCells=1` (chacun1–32), `requirePortableTerminal=true`, `arrivalSearchRadius=8` (2–16), `returnVerticalSearch=4` (1–16), `minimumActionIntervalTicks=40` (10–1200), `combatLockTicks=200` (0–1200,0désactive). Le retour consomme une réservation payée à l'aller, pas une cellule supplémentaire transportée. Réservation préservée à la mort ; nouveau départ depuis Overworld avec réservation existante ne paie que l'aller. Boutons du menu espacés de10ticks. Coûts et images figés dans le journal : changer la configuration ne repaie pas une opération déjà préparée.
+
+Recettes JSON : deux terminaux pour fer5/cuivre2/verre1/redstone1 ; carte pour boussole1/papier1/améthyste1/lapis1. Carte consommée à la première découverte, pas aux voyages suivants. Terminal transporté posé par le joueur, réutilisable ; recherche d'arrivée n'en génère aucun. Ancre Ilum stable XZ0,5/0,5, retour au départ sauvegardé puis spawn Overworld si nécessaire. Carte graphique et équilibrage de difficulté/boss à compléter avec P4-03 ; pas de coordonnées de cristal révélées.
+
 - Un joueur sans sabre doit pouvoir commencer et progresser, mais le sabre reste un objectif marquant.
 - Le niveau 100 est un objectif de long terme, pas atteignable en quelques heures de ferme à mobs.
 - Un boss n'est pas une source infinie de ±25 instantanément.

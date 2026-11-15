@@ -115,6 +115,11 @@ P4-01 Ilum : `dimension/ilum.json`, `dimension_type/ilum.json`, biome `worldgen/
 ```
 
 ## Validation des schémas
+### Atlas et journal de voyage P4-02
+Attachment natif joueur `legacyoftheforce:travel_state` schéma1 : `revision`long, `operation`UUID si révision>0, `knownPlanets`liste bornée (Ilum uniquement dans cette tranche), `returnCredit`booléen, `home`point Overworld, `pending`UUID optionnel, `readyAt`/`combatUntil`longs non négatifs. Point : dimension ID, xyz doubles finis, yaw/pitch floats bornés. Extensions retenues ; atlas≤8192octets, format futur lu/conservé sans action.
+
+Journal `data/legacyoftheforce/travel/<owner>.nbt` schéma1≤262144octets : owner/opération UUID, kind DISCOVER/OUTBOUND/RETURN, phase PREPARED/PAID/ARRIVED/DONE/ABORTED, images before/after d'inventaire natif et atlas, source/target/fallback optionnel, cost entier. Inventaire≤41emplacements natifs distincts ; débit exact d'une carte ou de cellules, aucun remplacement/ajout/changement de composant. DONE est un reçu, pas une sauvegarde à réappliquer. Le journal et le fichier joueur natif font partie de la même sauvegarde du monde.
+
 - IDs connus, `schemaVersion` entier, couleurs et valeurs bornées, pas de null là où un champ est requis.
 - Recette/plan impossible → refus avec motif sans consommation d'objets.
 - Ne pas accepter un UUID fourni par un client comme preuve de propriété.

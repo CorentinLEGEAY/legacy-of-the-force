@@ -138,6 +138,9 @@ Le point de reprise n'est pas un second profil modifiable : il n'est appliqué q
 N'ajouter une bibliothèque (animation, rendu, permissions, intégration) que si elle a une version confirmée compatible avec la version cible, et documenter : licence, fonction, version, alternative sans dépendance. Aucun mod tiers obligatoire par défaut.
 
 ## Liens de référence versionnés
+### Voyages P4-02
+L'atlas personnel est un attachment immuable copié à la mort. Le journal atomique par joueur sous data/legacyoftheforce/travel coordonne le fichier natif d'inventaire/atlas avec la téléportation native ; pas de writer concurrent de playerdata. PREPARED/PAID/ARRIVED/DONE ou ABORTED impayé ; versions/budgets/débits et images vérifiés. DONE ne restaure aucun ancien inventaire/emplacement. Arrivée sans terrain modifié, contrat core.api mayArrive/allowsArrival distinct de mayModify ; adaptateur non implémenté = refus. Événements post-commit PlanetDiscovered/PlanetTravelCompleted avec opération UUID, sans garantie de livraison exactement une fois ; consommateurs durables à réconcilier avec l'atlas. Détails et gates : validation/P4-02.md.
+
 - https://docs.neoforged.net/docs/1.21.1/gettingstarted/
 - https://docs.neoforged.net/docs/1.21.1/items/datacomponents/
 - https://docs.neoforged.net/docs/1.21.1/datastorage/attachments/

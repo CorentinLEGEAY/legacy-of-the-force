@@ -27,6 +27,7 @@ public final class ClientBootstrap {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
                 event.register(com.legacyoftheforce.speeder.SpeederContent.MENU.get(), SpeederGarageScreen::new));
         modBus.addListener(forceKeys::register);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> event.register(com.legacyoftheforce.planets.PlanetContent.TERMINAL_MENU.get(), GalacticTerminalScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
                 event.register(com.legacyoftheforce.lightsaber.SaberContent.MENU.get(), SaberWorkshopScreen::new));
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) -> event.enqueueWork(() ->

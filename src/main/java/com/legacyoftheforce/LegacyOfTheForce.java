@@ -37,6 +37,8 @@ public final class LegacyOfTheForce {
         TransactionContent.register(modBus);
         SaberContent.register(modBus);
         com.legacyoftheforce.planets.PlanetContent.register(modBus);
+        container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
+        NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());
         com.legacyoftheforce.speeder.SpeederContent.register(modBus);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.speeder.SpeederAssemblyLifecycle());
         var speederNetwork = new com.legacyoftheforce.speeder.SpeederNetwork();

@@ -20,11 +20,18 @@ public final class ProgressHud {
                 : Component.translatable("hud.legacyoftheforce.progress", value.level(), value.xpInLevel(),
                         Math.round(value.forceEnergy()), Math.round(value.maxForceEnergy()),
                         String.format(java.util.Locale.ROOT, "%+.1f", value.alignmentTenths() / 10.0));
-        graphics.drawString(minecraft.font, label, 6, 6, 0xFFFFFFFF);
+        int top = HudLayout.top();
+        int availableWidth = Math.max(1, graphics.guiWidth() - 12);
+        var lines = minecraft.font.split(label, availableWidth);
+        int textHeight = lines.size() * minecraft.font.lineHeight;
+        graphics.drawWordWrap(minecraft.font, label, 6, top, availableWidth, 0xFFFFFFFF);
+        int barY = top + textHeight + 3;
+        HudLayout.progressBottom(value.unavailable() ? top + textHeight : barY + 4);
         if (!value.unavailable()) {
-            graphics.fill(6, 18, 106, 22, 0xA0000000);
-            int width = (int) Math.round(100 * value.forceEnergy() / value.maxForceEnergy());
-            graphics.fill(6, 18, 6 + width, 22, 0xFF5599FF);
+            int barWidth = Math.min(100, availableWidth);
+            graphics.fill(6, barY, 6 + barWidth, barY + 4, 0xA0000000);
+            int width = (int) Math.round(barWidth * value.forceEnergy() / value.maxForceEnergy());
+            graphics.fill(6, barY, 6 + width, barY + 4, 0xFF5599FF);
         }
     }
 }

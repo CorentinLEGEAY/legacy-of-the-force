@@ -2,6 +2,7 @@ param(
     [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'bs1',
     [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$TemplateRun = 'bn6',
     [switch]$Recover,
+    [switch]$Fluids,
     [string]$PythonPath = 'C:/Program Files/WindowsApps/OpenAI.CodexPrimaryRuntime.v26-1110-973-0_26.1110.973.0_x64__3k8sg7r9htsxt/dependencies/python/python.exe'
 )
 $ErrorActionPreference = 'Stop'
@@ -54,6 +55,7 @@ $programFile = Join-Path $repoPath ".tools/boss-solo-$Run-args.txt"
 $arguments = [Collections.Generic.List[string]]::new(); foreach ($arg in $launch.arguments) { $arguments.Add([string]$arg) }
 $mainIndex = $arguments.IndexOf('net.neoforged.devlaunch.Main'); if ($mainIndex -lt 0) { throw 'Unexpected native client entry point.' }
 foreach ($arg in @('-Xms256M', '-Xmx2048M', '-Dlotf.validation.bossNetwork=true', '-Dlotf.validation.bossSolo=true')) { $arguments.Insert($mainIndex, $arg) }
+if ($Fluids) { $arguments.Insert($mainIndex, '-Dlotf.validation.bossFluids=true') }
 if ($Recover) { $arguments.Insert($mainIndex, '-Dlotf.validation.bossSoloRecover=true') }
 $arguments[$arguments.Count - 1] = '@' + $programFile.Replace('\', '\\')
 $info = [Diagnostics.ProcessStartInfo]::new(); $info.FileName = Join-Path $repoPath '.tools/java-client-two/bin/java.exe'

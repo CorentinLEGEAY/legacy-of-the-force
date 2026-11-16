@@ -101,7 +101,7 @@ public final class BossNetworkValidation {
                 return;
             }
             if(s.stage.equals("SETTLE") && now>=s.ready) {
-                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("serverPid",ProcessHandle.current().pid());proof.putString("serverClass",server.getClass().getName());proof.putBoolean("solo",SOLO);proof.putLong("initialXp",s.initialXp);proof.put("battles",s.battles);proof.put("initialPlayers",s.initialPlayers);
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("serverPid",ProcessHandle.current().pid());proof.putString("serverClass",server.getClass().getName());proof.putBoolean("solo",SOLO);proof.putBoolean("fluids",Boolean.getBoolean("lotf.validation.bossFluids"));proof.putLong("initialXp",s.initialXp);proof.put("battles",s.battles);proof.put("initialPlayers",s.initialPlayers);
                 var players=new ListTag();int relics=0,cells=0;
                 for(var actor:s.players) {
                     var progress=new ProgressService().get(actor.getUUID()).orElseThrow();require(progress.totalXpEarned()==s.initialXp+1600 && progress.alignmentTenths()==0,"Both native boss rewards must apply exactly once");
@@ -125,7 +125,7 @@ public final class BossNetworkValidation {
         long xp=0;for(int level=1;level<15;level++) xp+=ProgressionRules.DEFAULT.xpNext(level);s.initialXp=xp;
         actor.getData(ProgressAttachments.PLAYER_PROGRESS).award(UUID.randomUUID(),xp,0,ProgressionRules.DEFAULT);ProgressEvents.sync(actor);
         var saber=new ItemStack(SaberContent.SABER.get());saber.set(SaberContent.ASSEMBLY.get(),SaberData.create(UUID.randomUUID(),SaberContent.plan(0)).withCrystal(KyberBond.awaken(KyberItem.freshBlue(),actor.server.overworld().getGameTime())).withActive(true));
-        actor.getInventory().setItem(0,saber);actor.getInventory().setItem(1,new ItemStack(Items.GOLDEN_APPLE,16));actor.getInventory().selected=0;
+        actor.getInventory().setItem(0,saber);actor.getInventory().setItem(1,new ItemStack(Items.GOLDEN_APPLE,16));actor.getInventory().selected=0;if(Boolean.getBoolean("lotf.validation.bossFluids")) actor.getInventory().setItem(2,new ItemStack(Items.WATER_BUCKET));
         actor.setItemSlot(EquipmentSlot.HEAD,new ItemStack(Items.DIAMOND_HELMET));actor.setItemSlot(EquipmentSlot.CHEST,new ItemStack(Items.DIAMOND_CHESTPLATE));actor.setItemSlot(EquipmentSlot.LEGS,new ItemStack(Items.DIAMOND_LEGGINGS));actor.setItemSlot(EquipmentSlot.FEET,new ItemStack(Items.DIAMOND_BOOTS));actor.inventoryMenu.broadcastChanges();s.initialPlayers.add(new VerifiedPlayerSaveBarrier().persist(actor));
     }
     private static void place(MinecraftServer server,Session s) throws Exception {

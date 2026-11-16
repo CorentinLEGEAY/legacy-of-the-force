@@ -15,7 +15,11 @@ def uid(values):
 
 
 def chunk(world, x, z):
-    region = world / "dimensions/legacyoftheforce/ilum/region" / f"r.{x // 32}.{z // 32}.mca"
+    return read_chunk(world / "dimensions/legacyoftheforce/ilum/region", x, z)
+
+
+def read_chunk(region_dir, x, z):
+    region = region_dir / f"r.{x // 32}.{z // 32}.mca"
     with region.open("rb") as source:
         source.seek(4 * ((x & 31) + (z & 31) * 32))
         location = struct.unpack(">I", source.read(4))[0]

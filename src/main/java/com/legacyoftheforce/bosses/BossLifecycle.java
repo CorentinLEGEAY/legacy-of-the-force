@@ -30,9 +30,16 @@ public final class BossLifecycle implements ProtectionPolicy {
         if (event.getEntity() instanceof ServerPlayer actor) { var service=BossArenaService.forServer(actor.server); if (service!=null) service.logout(actor.getUUID());if(loot(actor.server)!=null) loot(actor.server).forget(actor.getUUID()); }
     }
     @SubscribeEvent public void tick(ServerTickEvent.Post event) { var service = BossArenaService.forServer(event.getServer()); if (service != null) service.tick(); }
-    private static boolean protectedAt(LevelAccessor level, BlockPos pos) {
+    public static boolean protectedAt(LevelAccessor level, BlockPos pos) {
         if (!(level instanceof ServerLevel serverLevel)) return false; var service = BossArenaService.forServer(serverLevel.getServer());
         return service != null && service.protectedAt(serverLevel, pos);
+    }
+    public static void rejectFluid(net.minecraft.world.entity.player.Player actor,LevelAccessor level,BlockPos pos) {
+        if(!(actor instanceof ServerPlayer player) || !(level instanceof ServerLevel serverLevel) || player.server!=serverLevel.getServer() || !player.server.isSameThread() || player.connection==null) return;
+        player.connection.send(new net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket(serverLevel,pos));
+        // Vanilla's unchanged-stack early return does not undo a client's predicted bucket replacement.
+        player.inventoryMenu.sendAllDataToRemote();
+        var service=BossArenaService.forServer(player.server);if(service!=null) service.fluidFeedback(player);
     }
     @Override public boolean allows(ServerPlayer actor, ServerLevel level, BlockPos pos, ModificationKind kind) { return !protectedAt(level, pos); }
     @Override public boolean allowsArrival(ServerPlayer actor, ServerLevel level, BlockPos pos) { return true; }

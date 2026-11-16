@@ -88,6 +88,7 @@ public final class IlumBossGameTests {
         var tests = new ArrayList<>(Arrays.stream(BossKind.values()).map(kind -> new TestFunction("boss_dedicated", "bosses." + kind.path, "legacyoftheforce:empty", 900, 0L, true, helper -> {
             try { battle(helper, kind); } catch (Exception failure) { throw new RuntimeException(failure); }
         })).toList());
+        tests.add(new TestFunction("boss_dedicated","bosses.fluids","legacyoftheforce:empty",900,0L,true,helper -> { try { fluids(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.lifecycle","legacyoftheforce:empty",1200,0L,true,helper -> { try { lifecycle(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.safety","legacyoftheforce:empty",500,0L,true,helper -> { try { safety(helper); } catch (Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.loot","legacyoftheforce:empty",1200,0L,true,helper -> { try { lootRecovery(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
@@ -104,6 +105,74 @@ public final class IlumBossGameTests {
 
     private static void battle(GameTestHelper helper, BossKind kind) throws Exception {
         var fixture=fixture(helper,kind,2,List.of(),true);ready(helper,fixture,()->battle(helper,kind,fixture,true));
+    }
+    private static void fluidAim(ServerPlayer actor,BlockPos pos) {
+        var delta=net.minecraft.world.phys.Vec3.atCenterOf(pos).subtract(actor.getEyePosition());
+        actor.setYRot((float)(Math.atan2(delta.z,delta.x)*180/Math.PI-90));actor.setXRot((float)(-Math.atan2(delta.y,Math.sqrt(delta.x*delta.x+delta.z*delta.z))*180/Math.PI));
+    }
+    private static void fluids(GameTestHelper helper) throws Exception {
+        var f=fixture(helper,BossKind.GUARDIAN,1);ready(helper,f,()-> {
+            var actor=f.players.getFirst();var center=f.altar.north(3);var target=center.east(2);var service=BossArenaService.forServer(actor.server);
+            helper.assertTrue(service.challenge(actor,f.altar,BossKind.GUARDIAN),"Active arena required for fluid test");
+            var boss=f.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(f.altar)).getFirst();boss.setNoAi(true); // Isolate fluid physics; real combat has separate tests.
+            var actions=new net.minecraft.nbt.ListTag();
+            for(var bucket:List.of(net.minecraft.world.item.Items.WATER_BUCKET,net.minecraft.world.item.Items.LAVA_BUCKET)) {
+                actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(bucket));actor.getInventory().selected=0;fluidAim(actor,target.below());
+                var before=actor.getInventory().save(new net.minecraft.nbt.ListTag());actor.gameMode.useItem(actor,f.level,actor.getMainHandItem(),net.minecraft.world.InteractionHand.MAIN_HAND);
+                helper.assertTrue(f.level.getFluidState(target).isEmpty() && actor.getInventory().save(new net.minecraft.nbt.ListTag()).equals(before),"Native filled bucket cannot change active arena or consume contents");
+                var tag=new net.minecraft.nbt.CompoundTag();tag.putString("action",bucket==net.minecraft.world.item.Items.WATER_BUCKET ? "water_bucket" : "lava_bucket");tag.put("before",before);tag.put("after",actor.getInventory().save(new net.minecraft.nbt.ListTag()));actions.add(tag);
+            }
+            f.level.setBlockAndUpdate(target,Blocks.OAK_STAIRS.defaultBlockState());actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WATER_BUCKET));fluidAim(actor,target);
+            actor.gameMode.useItem(actor,f.level,actor.getMainHandItem(),net.minecraft.world.InteractionHand.MAIN_HAND);
+            helper.assertTrue(!f.level.getBlockState(target).getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED) && actor.getMainHandItem().is(net.minecraft.world.item.Items.WATER_BUCKET),"Protected stair cannot be waterlogged");
+            for(var state:List.of(Blocks.WATER.defaultBlockState(),Blocks.POWDER_SNOW.defaultBlockState())) {
+                f.level.setBlockAndUpdate(target,state);actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET));fluidAim(actor,target);
+                var before=actor.getInventory().save(new net.minecraft.nbt.ListTag());actor.gameMode.useItem(actor,f.level,actor.getMainHandItem(),net.minecraft.world.InteractionHand.MAIN_HAND);
+                helper.assertTrue(f.level.getBlockState(target).equals(state) && actor.getInventory().save(new net.minecraft.nbt.ListTag()).equals(before),"Native empty bucket cannot steal protected water or powder snow");
+                var tag=new net.minecraft.nbt.CompoundTag();tag.putString("action",state.is(Blocks.WATER) ? "pickup_water" : "pickup_powder");tag.put("before",before);tag.put("after",actor.getInventory().save(new net.minecraft.nbt.ListTag()));actions.add(tag);
+            }
+            f.level.setBlockAndUpdate(target,Blocks.AIR.defaultBlockState());
+            var dispenser=center.east(3);var dispenseTarget=dispenser.west();f.level.setBlockAndUpdate(dispenser,Blocks.DISPENSER.defaultBlockState().setValue(net.minecraft.world.level.block.DispenserBlock.FACING,Direction.WEST));
+            var inventory=(net.minecraft.world.level.block.entity.DispenserBlockEntity)f.level.getBlockEntity(dispenser);var drops=new ArrayList<UUID>();
+            for(var bucket:List.of(net.minecraft.world.item.Items.WATER_BUCKET,net.minecraft.world.item.Items.LAVA_BUCKET)) {
+                inventory.setItem(0,new net.minecraft.world.item.ItemStack(bucket));f.level.getBlockState(dispenser).tick(f.level,dispenser,f.level.random);
+                helper.assertTrue(f.level.getFluidState(dispenseTarget).isEmpty(),"Native dispenser cannot place protected fluid");
+                var emitted=f.level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,BossArenaService.bounds(f.altar).inflate(2),i->i.getItem().is(bucket));
+                helper.assertTrue(inventory.countItem(bucket)+emitted.stream().mapToInt(i->i.getItem().getCount()).sum()==1,"Rejected dispense retains exactly one filled bucket including vanilla fallback ejection");
+                for(var item:emitted) drops.add(item.getUUID());
+            }
+            var origin=actor.position();var positive=center.east(11);f.level.setBlockAndUpdate(positive.below(),Blocks.STONE_BRICKS.defaultBlockState());
+            actor.teleportTo(f.level,positive.getX()+.5,positive.getY(),positive.getZ()+2.5,0,0);f.level.getChunkSource().move(actor);
+            var controls=new net.minecraft.nbt.ListTag();
+            for(var state:List.of(Blocks.WATER.defaultBlockState(),Blocks.POWDER_SNOW.defaultBlockState())) {
+                f.level.setBlockAndUpdate(positive,state);actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BUCKET));fluidAim(actor,positive);
+                var before=actor.getInventory().save(new net.minecraft.nbt.ListTag());actor.gameMode.useItem(actor,f.level,actor.getMainHandItem(),net.minecraft.world.InteractionHand.MAIN_HAND);
+                helper.assertTrue(f.level.getBlockState(positive).isAir() && actor.getMainHandItem().is(state.is(Blocks.WATER) ? net.minecraft.world.item.Items.WATER_BUCKET : net.minecraft.world.item.Items.POWDER_SNOW_BUCKET),"Native outside pickup must remain allowed");
+                var tag=new net.minecraft.nbt.CompoundTag();tag.putString("action",state.is(Blocks.WATER) ? "outside_water_pickup" : "outside_powder_pickup");tag.put("before",before);tag.put("after",actor.getInventory().save(new net.minecraft.nbt.ListTag()));controls.add(tag);
+            }
+            actor.teleportTo(f.level,origin.x,origin.y,origin.z,0,0);f.level.getChunkSource().move(actor);
+            var source=center.east(5);var blocked=source.west();
+            for(var p:List.of(source.below(),source.east(),source.north(),source.south())) f.level.setBlockAndUpdate(p,Blocks.STONE_BRICKS.defaultBlockState());
+            var control=source.east(4);var controlTarget=control.east();
+            for(var p:List.of(control.below(),controlTarget.below(),control.west(),control.north(),control.south())) f.level.setBlockAndUpdate(p,Blocks.STONE_BRICKS.defaultBlockState());
+            helper.assertTrue(((net.minecraft.world.item.BucketItem)net.minecraft.world.item.Items.WATER_BUCKET).emptyContents(null,f.level,source,null,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WATER_BUCKET)),"Outside native bucket placement must remain allowed");
+            helper.assertTrue(((net.minecraft.world.item.BucketItem)net.minecraft.world.item.Items.WATER_BUCKET).emptyContents(null,f.level,control,null,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.WATER_BUCKET)),"Outside control source required");
+            helper.startSequence().thenIdle(50).thenExecute(checked(()-> {
+                helper.assertTrue(f.level.getFluidState(blocked).isEmpty(),"Scheduled water flow cannot cross the active boundary");
+                helper.assertTrue(f.level.getFluidState(controlTarget).is(net.minecraft.tags.FluidTags.WATER),"Scheduled outside control must actually flow");
+                service.reset(boss);
+            })).thenIdle(30).thenExecute(checked(()-> {
+                helper.assertTrue(f.level.getFluidState(blocked).is(net.minecraft.tags.FluidTags.WATER),"Native water must resume after arena reset without a manual source poke");
+                var tile=(BossAltarEntity)f.level.getBlockEntity(f.altar);tile.publish(UUID.randomUUID(),true);
+                helper.assertTrue(BossLifecycle.protectedAt(f.level,f.altar),"Uncollected altar stays protected after reset");
+                var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("altar",f.altar.asLong());proof.putUUID("encounter",boss.getUUID());proof.put("actions",actions);proof.put("controls",controls);proof.putBoolean("waterloggingRefused",true);proof.putBoolean("dispenserRefused",true);proof.putBoolean("flowBlocked",true);proof.putBoolean("flowResumed",true);
+                var positions=new net.minecraft.nbt.ListTag();for(var p:List.of(source,blocked,control,controlTarget)) { var tag=new net.minecraft.nbt.CompoundTag();tag.putIntArray("pos",new int[]{p.getX(),p.getY(),p.getZ()});tag.putString("block",net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(f.level.getBlockState(p).getBlock()).toString());positions.add(tag); }proof.put("samples",positions);
+                var entities=new net.minecraft.nbt.ListTag();for(var id:drops) { helper.assertTrue(f.level.getEntity(id) instanceof net.minecraft.world.entity.item.ItemEntity,"Vanilla rejected bucket ejection must remain present");entities.add(f.level.getEntity(id).saveWithoutId(new net.minecraft.nbt.CompoundTag())); }proof.put("ejected",entities);proof.put("nativePlayer",new VerifiedPlayerSaveBarrier().persist(actor));
+                new VerifiedChunkSaveBarrier().persist(f.level,Set.of(f.altar,source,control));proof.put("altarNative",nativeAltar(f.level,f.altar));
+                AtomicNbtFile.write(actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-fluids.nbt"),proof,524288);
+                cleanup(f);helper.succeed();actor.server.sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=FLUIDS actions=8"));
+            }));
+        });
     }
     private static final class LifeCase {
         final String mode;final Fixture fixture;int stage;long after;IlumBossEntity boss;

@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='bn1')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='bn1',[switch]$Fluids)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-boss-$Run/world";$prefix=Join-Path $repoPath ".tools/boss-network-$Run"
 if(Test-Path -LiteralPath $world) { throw 'Fresh isolated run required; preserve prior worlds.' }
@@ -8,6 +8,7 @@ $launch=Get-Content -LiteralPath (Join-Path $repoPath '.tools/travel-network-lau
 $template=(Get-Content -LiteralPath (Join-Path $repoPath 'build/moddev/clientTwoRunProgramArgs.txt') -Raw).Replace('127.0.0.1:25587','127.0.0.1:25588')
 $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID).Path
 foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-boss-test-server.ps1'),'-Run',$Run,'-Network')) { $info.ArgumentList.Add($arg) }
+if($Fluids) { $info.ArgumentList.Add('-Fluids') }
 $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
 $runner=[Diagnostics.Process]::new();$runner.StartInfo=$info;$started=Get-Date;$runner.Start() | Out-Null
 $serverOut=$runner.StandardOutput.ReadToEndAsync();$serverErr=$runner.StandardError.ReadToEndAsync();$log=Join-Path $repoPath "run-boss-$Run/logs/latest.log"
@@ -35,6 +36,7 @@ enableVsync:false
         $program="$prefix-client$index-args.txt";$template.Replace('ForceTesterTwo',$name) | Set-Content -LiteralPath $program -Encoding utf8NoBOM
         $argsList=[Collections.Generic.List[string]]::new();foreach($arg in $launch.arguments) { $argsList.Add([string]$arg) }
         $main=$argsList.IndexOf('net.neoforged.devlaunch.Main');if($main -lt 0) { throw 'Unexpected native launcher.' }
+        if($Fluids) { $argsList.Insert($main,'-Dlotf.validation.bossFluids=true') }
         $argsList.Insert($main,'-Xms256M');$argsList.Insert($main,'-Xmx1536M');$argsList.Insert($main,'-Dlotf.validation.bossNetwork=true');$argsList[$argsList.Count-1]='@'+$program.Replace('\','\\')
         $ci=[Diagnostics.ProcessStartInfo]::new();$ci.FileName=Join-Path $repoPath ".tools/java-client-$suffix/bin/java.exe"
         foreach($arg in $argsList) { $ci.ArgumentList.Add($arg) }

@@ -289,5 +289,6 @@
   "boss.legacyoftheforce.loading": "Zone d'épreuve en cours de chargement ; réessayez dans un instant.",
   "boss.legacyoftheforce.inventory_full": "Il faut assez de place pour tout le butin partagé.",
   "boss.legacyoftheforce.collected": "Butin partagé récupéré dans votre inventaire.",
-  "boss.legacyoftheforce.loot_pending": "Reprise du butin en attente : données conservées. Contactez l'administrateur."
+  "boss.legacyoftheforce.loot_pending": "Reprise du butin en attente : données conservées. Contactez l'administrateur.",
+  "boss.legacyoftheforce.fluid_locked": "Les fluides sont verrouillés tant que cette zone est protégée."
 }

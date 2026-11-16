@@ -39,7 +39,7 @@ public final class BossNetworkClientDriver {
     private static double endurance=100;
     private static boolean connected,finished,failed,eating,backedUp;
     private static final boolean SOLO=Boolean.getBoolean("lotf.validation.bossSolo"), RECOVER=Boolean.getBoolean("lotf.validation.bossSoloRecover");
-    private static int foodCount;
+    private static int foodCount,fluidStage;private static long fluidAfter;private static CompoundTag fluidPrediction;
     private static BlockPos altar;
     private static IlumBossEntity previous;
     private static Seen pendingIcePush;private static long pendingIceAt;
@@ -105,6 +105,21 @@ public final class BossNetworkClientDriver {
             if(seen.lastAttack==signature && seen.lastWindup>0 && boss.windup()==0) seen.signature=true;
             if((seen.lastAttack==BossAttack.SLASH || seen.lastAttack==BossAttack.HEAVY) && seen.lastWindup>0 && boss.windup()==0 && seen.forceAttempts<3) forceAt=ticks+3;
             seen.lastAttack=boss.attack();seen.lastWindup=boss.windup();
+            if(Boolean.getBoolean("lotf.validation.bossFluids") && boss.kind()==BossKind.GUARDIAN && fluidStage<2) {
+                controls(mc,false,false,false);var target=altar.north(3).east(2);mc.player.getInventory().selected=2;
+                if(fluidStage==0) {
+                    require(mc.player.getInventory().getItem(2).is(Items.WATER_BUCKET),"Fixture water bucket must be synchronized before prediction");
+                    face(mc,Vec3.atBottomCenterOf(target).add(0,-.01,0));mc.gameMode.useItem(mc.player,InteractionHand.MAIN_HAND);
+                    require(mc.player.getInventory().getItem(2).is(Items.BUCKET) && mc.level.getFluidState(target).is(net.minecraft.tags.FluidTags.WATER),"Native client must actually predict water placement and empty the bucket");
+                    fluidPrediction=new CompoundTag();fluidPrediction.putBoolean("predictedWater",true);fluidPrediction.putBoolean("predictedEmptyBucket",true);fluidPrediction.putLong("target",target.asLong());fluidStage=1;fluidAfter=ticks+20;
+                } else if(ticks>=fluidAfter) {
+                    require(mc.level.getFluidState(target).isEmpty(),"Server acknowledgment must roll back the predicted water");
+                    require(mc.player.getInventory().getItem(2).is(Items.WATER_BUCKET),"Server must restore the client's predicted bucket contents");
+                    fluidPrediction.putBoolean("waterRolledBack",true);fluidPrediction.putBoolean("bucketRestored",true);fluidStage=2;mc.player.getInventory().selected=0;
+                    LegacyOfTheForce.LOGGER.info("BOSS_FLUID_PREDICTION_PASS");
+                }
+                cache(mc);return;
+            }
             if(boss.phase()==0) { controls(mc,false,false,false);mc.player.getInventory().selected=0;useAltar(mc);return; }
             if(eating) {
                 face(mc,boss.getEyePosition());mc.player.getInventory().selected=1;
@@ -141,7 +156,7 @@ public final class BossNetworkClientDriver {
             }
             cache(mc);
         } catch(Exception failure) {
-            failed=true;controls(mc,false,false,false);
+            failed=true;controls(mc,false,false,false);if(mc.player!=null && mc.level!=null) cache(mc);
             try { var proof=new CompoundTag();proof.putString("error",failure.toString());if(cached!=null) proof.put("lastPlayer",cached);proof.putInt("attacks",attacks);proof.putInt("guards",guards);proof.putInt("forces",forces);proof.putDouble("estimatedEndurance",endurance);var battles=new ListTag();SEEN.values().forEach(s->battles.add(s.tag()));proof.put("battles",battles);AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/boss-network-client-failed.nbt"),proof,262144); }
             catch(Exception snapshotFailure) { failure.addSuppressed(snapshotFailure); }
             LegacyOfTheForce.LOGGER.error("BOSS_NETWORK_CLIENT_FAILED",failure);
@@ -169,6 +184,7 @@ public final class BossNetworkClientDriver {
     private static void finish(Minecraft mc) throws Exception {
         require(cached!=null && SEEN.size()==2 && SEEN.values().stream().allMatch(s->s.phases.containsAll(Set.of(1,2,3)) && s.ice && s.signature && s.defeated),"Both client-observed fights must finish all mechanics before disconnect");
         var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.put("lastPlayer",cached);var battles=new ListTag();SEEN.values().forEach(s->battles.add(s.tag()));proof.put("battles",battles);
+        if(Boolean.getBoolean("lotf.validation.bossFluids")) { require(fluidStage==2,"Native fluid rollback scenario required");proof.put("fluidPrediction",fluidPrediction); }
         proof.putInt("attacks",attacks);proof.putInt("guards",guards);proof.putInt("forces",forces);proof.putInt("menuClicks",menuClicks);proof.putInt("itemUses",itemUses);
         AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/boss-network-client.nbt"),proof,262144);finished=true;LegacyOfTheForce.LOGGER.info("BOSS_NETWORK_CLIENT_PASS");mc.stop();
     }

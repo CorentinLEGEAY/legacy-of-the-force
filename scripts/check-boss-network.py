@@ -9,6 +9,7 @@ spec=importlib.util.spec_from_file_location('boss_reader',Path(__file__).with_na
 boss=importlib.util.module_from_spec(spec);spec.loader.exec_module(boss)
 ilum=boss.ilum
 
+def nbt_bucket_count(player): return count(player['Inventory'],'minecraft:water_bucket')
 def count(inventory,item): return sum(stack['count'] for stack in inventory if stack['id']==item)
 def profile(player): return player['neoforge:attachments']['legacyoftheforce:player_progress']
 def loot_receipt(player): return player.get('neoforge:attachments',{}).get('legacyoftheforce:boss_loot_receipt',{'schemaVersion':1,'revision':0})
@@ -41,6 +42,13 @@ def verify(repo,run,solo=False):
         client=load(Path(launch['profile'])/'validation/boss-network-client.nbt');assert client['schemaVersion']==1 and client['pid']==launch['pid'] and (client['pid']==proof['serverPid'] if solo else client['pid']!=proof['serverPid'])
         client_log=(Path(launch['profile'])/'logs/latest.log').read_text(encoding='utf-8-sig');assert 'BOSS_NETWORK_CLIENT_PASS' in client_log and 'BOSS_NETWORK_CLIENT_FAILED' not in client_log
         client_pids.add(client['pid']);identity=ilum.uid(client['lastPlayer']['owner']);assert identity in players and players[identity]['name']==launch['name'];clients[identity]=client
+        if proof.get('fluids'):
+            prediction=client['fluidPrediction'];assert all(prediction[k]==1 for k in ('predictedWater','predictedEmptyBucket','waterRolledBack','bucketRestored'))
+            tile=proof['battles'][0]['altarNative'];x,y,z=tile['x']+2,tile['y'],tile['z']-3
+            packed=((x&0x3ffffff)<<38)|((z&0x3ffffff)<<12)|(y&0xfff);packed=packed if packed<2**63 else packed-2**64
+            assert prediction['target']==packed and nbt_bucket_count(initial[identity])==1
+            assert nbt_bucket_count(players[identity]['native'])==1 and count(players[identity]['native']['Inventory'],'minecraft:bucket')==0
+            assert ilum.block(ilum.chunk(world,x//16,z//16),x,y,z) not in ('minecraft:water','minecraft:lava')
         native=players[identity]['native'];saved=load(world/f'playerdata/{identity}.dat');origin=initial[identity]
         assert saved['Inventory']==native['Inventory']==client['lastPlayer']['Inventory']
         if solo:
@@ -98,7 +106,7 @@ def verify(repo,run,solo=False):
         assert all(ilum.uid(e['UUID'])!=encounter for dx in (-1,0,1) for dz in (-1,0,1) for e in boss.entity_chunk(world,x//16+dx,z//16+dz) if 'UUID' in e)
         reports.append({'kind':kind,'contributors':n,'parries':battle['parries'],'paidCounters':battle['counters'],'iceHits':battle['iceHits'],'iceCounters':battle['iceForces']})
     assert len(claims)==2 and not list((world/'data/legacyoftheforce/bosses/victories').glob('*.nbt'))
-    return {'nativeClients':len(clients),'serverPid':proof['serverPid'],'clientPids':sorted(client_pids),'battles':reports,'personalXpDelta':1600,'netAlignment':0,'sharedRelics':relics,'sharedCells':cells,'pendingVictories':0}
+    return {'nativeClients':len(clients),'serverPid':proof['serverPid'],'clientPids':sorted(client_pids),'battles':reports,'personalXpDelta':1600,'netAlignment':0,'sharedRelics':relics,'sharedCells':cells,'pendingVictories':0,'nativeBucketRollbacks':len(clients) if proof.get('fluids') else 0}
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('run');args=parser.parse_args();assert 1<=len(args.run)<=12 and all(c in 'abcdefghijklmnopqrstuvwxyz0123456789_-' for c in args.run)

@@ -31,7 +31,7 @@ public final class BossArenaService {
     private final Path root;
     private final UUID boot = UUID.randomUUID();
     private final Map<UUID, CompoundTag> arenas = new LinkedHashMap<>();
-    private final Map<UUID, Long> nextInteraction = new HashMap<>();
+    private final Map<UUID, Long> nextInteraction = new HashMap<>(), nextFluidFeedback=new HashMap<>();
     private final DurableOperationStore victories;
     private boolean ready = true;
     public static BossArenaService forServer(MinecraftServer server) { return SERVICES.get(server); }
@@ -69,6 +69,9 @@ public final class BossArenaService {
                 var encounter = tag.getUUID("encounter"); boolean won = victories.list().stream().anyMatch(entry -> entry.id().equals(encounter));
                 tag.putString("state", won ? "SETTLING" : "COOLDOWN"); tag.putLong("readyAt", now() + BossConfig.RESET_DELAY.get()); save(id, tag);
             }
+            if(tag.getString("state").equals("COOLDOWN") && (!tag.hasUUID("boot") || !tag.getUUID("boot").equals(boot))) {
+                tag.putUUID("boot",boot);save(id,tag);wakeFluids(level,pos);
+            }
         } else {
             tag.putInt("schemaVersion", 1); tag.putString("dimension", level.dimension().location().toString()); tag.putLong("altar", pos.asLong());
             tag.putString("kind", kind.name()); tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", 0); tag.putUUID("encounter", UUID.randomUUID());
@@ -78,6 +81,14 @@ public final class BossArenaService {
             if (removable.isEmpty()) return tag; arenas.remove(removable.get().getKey());
         }
         arenas.put(id, tag.copy()); return tag;
+    }
+    private void wakeFluids(ServerLevel level,BlockPos altar) {
+        // A cancelled spread consumes its scheduled tick. Wake only loaded fluids once the lock ends.
+        var center=altar.north(3);
+        for(var pos:BlockPos.betweenClosed(center.offset(-5,-2,-5),center.offset(5,5,5))) {
+            if(!level.hasChunkAt(pos)) continue;
+            var fluid=level.getFluidState(pos);if(!fluid.isEmpty()) level.scheduleTick(pos.immutable(),fluid.getType(),fluid.getType().getTickDelay(level));
+        }
     }
     private long now() { return server.overworld().getGameTime(); }
     private void feedback(ServerPlayer actor, String key) { actor.displayClientMessage(Component.translatable("boss.legacyoftheforce." + key), false); }
@@ -133,7 +144,11 @@ public final class BossArenaService {
             record.putString("state", "ACTIVE"); save(id, record);checkpoints.accept(Checkpoint.ACTIVE); feedback(actor, "challenge"); return true;
         } catch (IOException | RuntimeException failure) { fail(failure); feedback(actor, "pending"); return false; }
     }
-    public void logout(UUID player) { nextInteraction.remove(player); }
+    void fluidFeedback(ServerPlayer actor) {
+        if(now()<nextFluidFeedback.getOrDefault(actor.getUUID(),0L) || nextFluidFeedback.size()>=1024 && !nextFluidFeedback.containsKey(actor.getUUID())) return;
+        nextFluidFeedback.put(actor.getUUID(),now()+10);actor.displayClientMessage(Component.translatable("boss.legacyoftheforce.fluid_locked"),true);
+    }
+    public void logout(UUID player) { nextInteraction.remove(player);nextFluidFeedback.remove(player); }
     boolean authorized(IlumBossEntity boss) {
         if (!ready || !(boss.level() instanceof ServerLevel level) || boss.altar() == null) return false;
         try { var record = arena(level, boss.altar(), boss.kind()); return record.getString("state").equals("ACTIVE") && record.getUUID("encounter").equals(boss.getUUID()); }
@@ -143,7 +158,7 @@ public final class BossArenaService {
         if (!authorized(boss)) return;
         try {
             var tag = arena(boss.serverLevel(), boss.altar(), boss.kind()); tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", now() + BossConfig.RESET_DELAY.get());
-            save(arenaId(boss.serverLevel(), boss.altar(), boss.kind()), tag); boss.discard();
+            save(arenaId(boss.serverLevel(), boss.altar(), boss.kind()), tag); boss.discard();wakeFluids(boss.serverLevel(),boss.altar());
         } catch (IOException failure) { fail(failure); }
     }
     boolean defeated(IlumBossEntity boss) {
@@ -217,7 +232,7 @@ public final class BossArenaService {
         if (entry.phase().equals("DESTINATION_STAGED")) {
             var tag = arena(level, pos, kind);
             if (tag.getUUID("encounter").equals(entry.id())) {
-                tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", p.getLong("arenaReadyAt")); tag.put("lootOwners", p.getList("awarded", Tag.TAG_STRING).copy()); save(arenaId(level, pos, kind), tag);checkpoints.accept(Checkpoint.COOLDOWN);
+                tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", p.getLong("arenaReadyAt")); tag.put("lootOwners", p.getList("awarded", Tag.TAG_STRING).copy()); save(arenaId(level, pos, kind), tag);wakeFluids(level,pos);checkpoints.accept(Checkpoint.COOLDOWN);
             }
             var ids = new HashSet<UUID>();
             for (var raw : p.getList("awarded", Tag.TAG_STRING)) {

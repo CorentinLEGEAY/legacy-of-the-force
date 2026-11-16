@@ -289,5 +289,6 @@
   "boss.legacyoftheforce.loading": "The trial area is still loading; try again in a moment.",
   "boss.legacyoftheforce.inventory_full": "Make room for all the shared loot first.",
   "boss.legacyoftheforce.collected": "Shared loot collected into your inventory.",
-  "boss.legacyoftheforce.loot_pending": "Loot recovery pending: data retained. Contact the administrator."
+  "boss.legacyoftheforce.loot_pending": "Loot recovery pending: data retained. Contact the administrator.",
+  "boss.legacyoftheforce.fluid_locked": "Fluids are locked while this area is protected."
 }

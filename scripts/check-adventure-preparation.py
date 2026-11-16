@@ -47,7 +47,12 @@ def entities(world):
     folder = world / 'entities'
     for region in folder.glob('r.*.*.mca'):
         _, rx, rz, _ = region.name.split('.')
-        header = region.read_bytes()[:4096]
+        with region.open('rb') as source:
+            header = source.read(8192)
+        # Native RegionFile opens CREATE and can close without writing any sectors.
+        if not header:
+            continue
+        assert len(header) == 8192, 'Truncated nonempty region header'
         for index in range(1024):
             if struct.unpack_from('>I', header, index * 4)[0]:
                 chunk = ilum.read_chunk(folder, int(rx) * 32 + index % 32, int(rz) * 32 + index // 32)

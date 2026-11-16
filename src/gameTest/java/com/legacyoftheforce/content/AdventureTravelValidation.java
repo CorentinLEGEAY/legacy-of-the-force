@@ -86,9 +86,11 @@ public final class AdventureTravelValidation {
                 t.proof.put(key,new VerifiedPlayerSaveBarrier().persist(actor));t.revision=(int)atlas.revision();feedback(actor,key.toUpperCase(Locale.ROOT));
             }
             if(s.tracks.stream().anyMatch(t->t.revision!=3))return;
+            if(AdventureDuelValidation.enabled()&&!AdventureDuelValidation.personalized(server))return;
             var actors=new ListTag();for(var t:s.tracks)actors.add(t.proof);
-            var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope",AdventureJourneyValidation.enabled()?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("preparationPid",s.preparation.getLong("pid"));proof.put("actors",actors);
+            var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope",AdventureDuelValidation.enabled()?"preparation_crystal_duel_return_paid_paint":AdventureJourneyValidation.enabled()?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("preparationPid",s.preparation.getLong("pid"));proof.put("actors",actors);
             if(AdventureJourneyValidation.enabled())require(Files.isRegularFile(s.root.resolve("validation/adventure-crystal-stage.nbt")),"Real crystal stage required before journey proof");
+            if(AdventureDuelValidation.enabled())require(Files.isRegularFile(s.root.resolve("validation/adventure-duel-stage.nbt")),"Real paid duel/loot stage required before journey proof");
             AtomicNbtFile.write(s.root.resolve("validation/adventure-"+(AdventureJourneyValidation.enabled()?"journey":"travel")+"-server.nbt"),proof,1048576);s.stage="PASS";
             for(var t:s.tracks)feedback(t.actor,"PASS");LegacyOfTheForce.LOGGER.info("ADVENTURE_{}_SERVER_PASS pid={}",AdventureJourneyValidation.enabled()?"JOURNEY":"TRAVEL",ProcessHandle.current().pid());
         } catch(Exception failure) {s.stage="FAILED";LegacyOfTheForce.LOGGER.error("ADVENTURE_{}_SERVER_FAILED",AdventureJourneyValidation.enabled()?"JOURNEY":"TRAVEL",failure);}

@@ -1,10 +1,12 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel)
 $ErrorActionPreference='Stop'
+if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
 if(Test-Path -LiteralPath $world) { throw 'Fresh isolated run required; preserve prior worlds.' }
 if($Mode -ne 'Prep') {
     $source=Join-Path $repoPath "run-adventure-$PreparationRun/world"
     if(-not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-preparation-server.nbt'))) { throw 'Stopped native preparation proof required.' }
+    if($Mode -eq 'Recovery' -and -not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-personalization-stage.nbt'))) { throw 'Completed paid route required before recovery.' }
     $active=Get-CimInstance Win32_Process -Filter "Name='java.exe'" | Where-Object { $_.CommandLine -like "*run-adventure-$PreparationRun*" }
     if($active) { throw 'Source world still has an active JVM.' }
     $sourceLock=Join-Path $source 'session.lock'
@@ -14,7 +16,7 @@ if($Mode -ne 'Prep') {
     Copy-Item -LiteralPath $source -Destination $world -Recurse
     $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} else {'adventureTravel'}
 $artifact=if($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
 $marker=if($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
@@ -24,6 +26,7 @@ $template=(Get-Content -LiteralPath (Join-Path $repoPath 'build/moddev/clientTwo
 if($SmallViewport) { $template+="`n--width`n640`n--height`n480`n" }
 $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID).Path
 foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-adventure-test-server.ps1'),'-Run',$Run,'-Mode',$Mode)) { $info.ArgumentList.Add($arg) }
+if($Duel) { $info.ArgumentList.Add('-Duel') }
 $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
 $runner=[Diagnostics.Process]::new();$runner.StartInfo=$info;$started=Get-Date;$runner.Start() | Out-Null
 $serverOut=$runner.StandardOutput.ReadToEndAsync();$serverErr=$runner.StandardError.ReadToEndAsync();$log=Join-Path $repoPath "run-adventure-$Run/logs/latest.log"
@@ -55,6 +58,7 @@ tutorialStep:none
         $argsList=[Collections.Generic.List[string]]::new();foreach($arg in $launch.arguments) { $argsList.Add([string]$arg) }
         $main=$argsList.IndexOf('net.neoforged.devlaunch.Main');if($main -lt 0) { throw 'Unexpected native launcher.' }
         if($Mode -eq 'Journey') { $argsList.Insert($main,'-Dlotf.validation.adventureJourney=true') }
+        if($Duel) { $argsList.Insert($main,'-Dlotf.validation.adventureDuel=true') }
         $argsList.Insert($main,'-Xms256M');$argsList.Insert($main,'-Xmx1536M');$argsList.Insert($main,"-Dlotf.validation.$validationFlag=true");$argsList[$argsList.Count-1]='@'+$program.Replace('\','\\')
         $ci=[Diagnostics.ProcessStartInfo]::new();$ci.FileName=Join-Path $repoPath ".tools/java-client-$suffix/bin/java.exe"
         foreach($arg in $argsList) { $ci.ArgumentList.Add($arg) }

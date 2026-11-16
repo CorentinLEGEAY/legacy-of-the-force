@@ -20,7 +20,8 @@ def stacks(player):
     return {s['id']: s for s in player['Inventory'] if s['count'] == 1}
 
 
-def verify(repo, run, preparation):
+def verify(repo, run, preparation, prefix_of_full_run=False):
+    # Full-run checking delegates its unchanged crystal prefix here; this function never certifies P4-05.
     prep.verify(repo, preparation)
     world = repo / f'run-adventure-{run}/world'
     source = load(repo / f'run-adventure-{preparation}/world/validation/adventure-preparation-server.nbt')
@@ -29,7 +30,7 @@ def verify(repo, run, preparation):
     assert result['observed'] and result['serverExitCode'] == 0 and len(result['clients']) == 2
     proof = load(world / 'validation/adventure-journey-server.nbt')
     crystal = load(world / 'validation/adventure-crystal-stage.nbt')
-    assert proof['scope'] == 'preparation_then_crystal_journey' and proof['schemaVersion'] == 1
+    assert proof['scope'] == ('preparation_crystal_duel_return_paid_paint' if prefix_of_full_run else 'preparation_then_crystal_journey') and proof['schemaVersion'] == 1
     assert crystal['scope'] == 'guided_native_crystal_route' and crystal['schemaVersion'] == 1
     assert proof['preparationPid'] == source['pid'] and proof['pid'] != source['pid']
     assert len(proof['actors']) == len(crystal['players']) == 2 and len(crystal['crafts']) == 4
@@ -67,7 +68,11 @@ def verify(repo, run, preparation):
         assert cp['scope'] == proof['scope'] and cp['schemaVersion'] == 1 and cp['pid'] == client['pid']
         assert prep.ilum.uid(cp['owner']) == owner
         pids.append(cp['pid'])
-        assert [c['stage'] for c in cp['checkpoints']] == ['resumed', 'packed', 'decoded', 'arrival', 'crystal_stage', 'portable', 'returned']
+        labels = ['resumed', 'packed', 'decoded', 'arrival', 'crystal_stage']
+        if prefix_of_full_run: labels += ['duel_stage']
+        labels += ['portable', 'returned']
+        if prefix_of_full_run: labels += ['personalized']
+        assert [c['stage'] for c in cp['checkpoints']] == labels
         client_stages = {c['stage']: c for c in cp['checkpoints']}
         assert actor['before']['Inventory'] == source['players'][index]['Inventory']
         ledger = prep.counts(actor['before']['Inventory'])
@@ -82,9 +87,9 @@ def verify(repo, run, preparation):
             ledger.update(prep.counts([server_craft['result']]))
             assert prep.counts(client_craft['after']['Inventory']) == ledger
         assert prep.counts(client_stages['packed']['Inventory']) == ledger
-        for label, vanilla, client_label in [('decoded', actor['decoded'], 'decoded'), ('arrival', actor['arrival'], 'arrival'),
-                                              ('crystal', crystal['players'][index], 'crystal_stage'), ('portable', actor['portable'], 'portable'),
-                                              ('returned', actor['returned'], 'returned')]:
+        stages = [('decoded', actor['decoded'], 'decoded'), ('arrival', actor['arrival'], 'arrival'), ('crystal', crystal['players'][index], 'crystal_stage')]
+        if not prefix_of_full_run: stages += [('portable', actor['portable'], 'portable'), ('returned', actor['returned'], 'returned')]
+        for label, vanilla, client_label in stages:
             if label == 'decoded': prep.spend(ledger, MOD + 'ilum_coordinates')
             if label == 'arrival': prep.spend(ledger, MOD + 'speeder_energy_cell', 2)
             if label == 'crystal' and index == 0: prep.spend(ledger, MOD + 'saber_workshop')
@@ -96,17 +101,19 @@ def verify(repo, run, preparation):
             assert vanilla['Dimension'] == client_stages[client_label]['dimension'] == dimension
             progress = vanilla['neoforge:attachments'][MOD + 'player_progress']
             assert progress['level'] == 1 and progress['totalXpEarned'] == progress['alignmentTenths'] == 0
-        saber = stacks(actor['returned'])[MOD + 'lightsaber']['components'][MOD + 'saber_assembly']
+        endpoint = crystal['players'][index] if prefix_of_full_run else actor['returned']
+        saber = stacks(endpoint)[MOD + 'lightsaber']['components'][MOD + 'saber_assembly']
         original = stacks(actor['before'])[MOD + 'lightsaber']['components'][MOD + 'saber_assembly']
         assert saber['saberId'] == original['saberId'] and saber['parts'] == original['parts']
         if index == 0:
             assert saber['crystal'] == kyber and saber['active']
-            assert stacks(actor['returned'])['minecraft:iron_pickaxe']['components']['minecraft:damage'] == 3
+            assert stacks(endpoint)['minecraft:iron_pickaxe']['components']['minecraft:damage'] == 3
         else:
             assert 'crystal' not in saber
-        native = load(world / f'playerdata/{owner}.dat')
-        assert native['Inventory'] == actor['returned']['Inventory'] and native['Pos'] == actor['before']['Pos']
-        assert native['neoforge:attachments'][MOD + 'travel_state']['revision'] == 3
+        if not prefix_of_full_run:
+            native = load(world / f'playerdata/{owner}.dat')
+            assert native['Inventory'] == actor['returned']['Inventory'] and native['Pos'] == actor['before']['Pos']
+            assert native['neoforge:attachments'][MOD + 'travel_state']['revision'] == 3
         assert actor['terminal'] == cp['terminal']
         tx, ty, tz = actor['terminal']
         terminals.add((tx, ty, tz))
@@ -125,7 +132,7 @@ def verify(repo, run, preparation):
     assert len(vehicles) == len(terminals) == 2 and len(set(pids)) == 3
     assert {prep.ilum.uid(v['UUID']) for v in vehicles} == {prep.ilum.uid(v['UUID']) for v in source['vehicles']}
     for vehicle in vehicles:
-        assert vehicle['vehicleState'] == next(v['vehicleState'] for v in source['vehicles'] if v['UUID'] == vehicle['UUID'])
+        if not prefix_of_full_run: assert vehicle['vehicleState'] == next(v['vehicleState'] for v in source['vehicles'] if v['UUID'] == vehicle['UUID'])
     log = (repo / f'run-adventure-{run}/logs/latest.log').read_text(encoding='utf-8-sig')
     assert 'ADVENTURE_JOURNEY_SERVER_PASS' in log and 'ADVENTURE_JOURNEY_CRYSTAL_PASS' in log and 'ADVENTURE_JOURNEY_SERVER_FAILED' not in log and 'All dimensions are saved' in log
     return {'scope': proof['scope'], 'pids': pids, 'realMine': True, 'twoNativeWalkers': True,

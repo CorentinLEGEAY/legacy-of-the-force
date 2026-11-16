@@ -21,6 +21,7 @@ import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
 /** Guided exploration is explicit test assistance; all movement/mining/placement is native gameplay. */
 @EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
 public final class AdventureJourneyClientDriver {
+    public static BlockPos entrance() {return entrance;}
     private static BlockPos source,entrance,workshop;private static boolean installed;private static String stage="SITE";private static NativeWalkingDriver walking;private static int mining;private static long ready,miningAt;private static Vec3 pickupStart;
     @SubscribeEvent public static void feedback(ClientChatReceivedEvent.System event) {
         if(!Boolean.getBoolean("lotf.validation.adventureJourney"))return;String message=event.getMessage().getString();

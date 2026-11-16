@@ -44,6 +44,7 @@ public final class AdventureJourneyValidation {
         Session(Path root) {this.root=root;proof.putInt("schemaVersion",1);proof.putString("scope","guided_native_crystal_route");proof.put("paths",paths);proof.put("crafts",crafts);proof.put("movement",movement);}
     }
     private static void require(boolean valid,String reason) {if(!valid)throw new IllegalStateException(reason);}
+    public static CompoundTag navigationProof(MinecraftServer server) {var s=SESSIONS.get(server);require(s!=null,"Original journey required");var tag=new CompoundTag();tag.put("paths",s.paths.copy());tag.put("movement",s.movement.copy());tag.put("crafts",s.crafts.copy());return tag;}
     private static void send(ServerPlayer actor,String message) {actor.sendSystemMessage(Component.literal("LOTF_JOURNEY_"+message));}
     @SubscribeEvent public static void start(ServerStartedEvent event) {
         if(!enabled())return;var root=event.getServer().getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
@@ -56,8 +57,8 @@ public final class AdventureJourneyValidation {
             .then(Commands.literal("path").then(Commands.argument("goal",StringArgumentType.word()).then(Commands.argument("sequence",IntegerArgumentType.integer(1,512)).executes(context->{
                 var actor=context.getSource().getPlayerOrException();var s=SESSIONS.get(actor.server);require(s!=null&&s.source!=null&&s.actors.contains(actor),"Native paired journey required");
                 long now=actor.server.overworld().getGameTime();if(now-s.lastPath.getOrDefault(actor.getUUID(),-100L)<20) {send(actor,"BUSY "+IntegerArgumentType.getInteger(context,"sequence"));return 0;}s.lastPath.put(actor.getUUID(),now);require(s.paths.size()<512,"Bounded navigation trace");
-                String goal=StringArgumentType.getString(context,"goal");require(Set.of("entrance","cavern").contains(goal),"Known test waypoint required");
-                var target=goal.equals("entrance")?s.entrance:s.source.north(2).west(s.actors.indexOf(actor)*2);
+                String goal=StringArgumentType.getString(context,"goal");require(Set.of("entrance","cavern").contains(goal)||goal.equals("boss")&&AdventureDuelValidation.enabled(),"Known test waypoint required");
+                var target=goal.equals("boss")?AdventureDuelValidation.target(actor):goal.equals("entrance")?s.entrance:s.source.north(2).west(s.actors.indexOf(actor)*2);
                 // A dimension-compatible gabarit is never added to the entity manager, ticked or persisted.
                 var gabarit=new Zombie(EntityType.ZOMBIE,actor.serverLevel());gabarit.setPos(actor.position());gabarit.setOnGround(true);gabarit.getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(48);
                 var navigation=new GroundPathNavigation(gabarit,actor.level());navigation.setMaxVisitedNodesMultiplier(4);navigation.setCanFloat(true);
@@ -84,7 +85,7 @@ public final class AdventureJourneyValidation {
         var server=event.getServer();var s=SESSIONS.get(server);if(s==null||s.failed)return;
         try {
             if(s.source!=null) {
-                if(!s.installed&&server.overworld().getGameTime()%20==0)for(var actor:s.actors) {
+                if((!s.installed||AdventureDuelValidation.enabled()&&!AdventureDuelValidation.finished(server))&&server.overworld().getGameTime()%20==0)for(var actor:s.actors) {
                     require(s.movement.size()<3600,"Bounded native movement evidence");var sample=new CompoundTag();sample.putUUID("owner",actor.getUUID());sample.putLong("tick",server.overworld().getGameTime());sample.putDouble("x",actor.getX());sample.putDouble("y",actor.getY());sample.putDouble("z",actor.getZ());sample.putFloat("health",actor.getHealth());s.movement.add(sample);
                 }
                 return;

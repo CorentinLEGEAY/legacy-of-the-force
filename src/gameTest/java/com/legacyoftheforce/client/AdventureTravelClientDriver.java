@@ -73,7 +73,8 @@ public final class AdventureTravelClientDriver {
                 if(!acknowledgements.contains("ARRIVAL")||!mc.level.dimension().equals(PlanetContent.ILUM))return;
                 checkpoint(mc,"arrival");mc.player.closeContainer();stage(JOURNEY?"JOURNEY":"PLACE",30+role*40);return;
             }
-            if(stage.equals("JOURNEY")) {if(AdventureJourneyClientDriver.step(mc,role,ticks)) {checkpoint(mc,"crystal_stage");stage("PLACE",30+role*40);}return;}
+            if(stage.equals("JOURNEY")) {if(AdventureJourneyClientDriver.step(mc,role,ticks)) {checkpoint(mc,"crystal_stage");stage(Boolean.getBoolean("lotf.validation.adventureDuel")?"DUEL":"PLACE",30+role*40);}return;}
+            if(stage.equals("DUEL")) {if(AdventureDuelClientDriver.step(mc,role,ticks)) {checkpoint(mc,"duel_stage");stage("PLACE",220+role*40);}return;}
             if(stage.equals("PLACE")) {
                 capture(mc,"adventure-arrival.png");equipTerminal(mc);var hit=findPlacement(mc);portable=hit.getBlockPos().relative(hit.getDirection());
                 mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,hit);stage("PLACED",16);return;
@@ -86,9 +87,12 @@ public final class AdventureTravelClientDriver {
             if(stage.equals("RETURN")) {
                 if(!(mc.player.containerMenu instanceof GalacticTerminalMenu menu))return;require(menu.atIlum()&&menu.credit(),"Native prepaid return expected");capture(mc,"adventure-return.png");button(mc,"return");stage("HOME",16);return;
             }
-            if(stage.equals("HOME")) {
-                if(!acknowledgements.contains("PASS")||!mc.level.dimension().equals(Level.OVERWORLD))return;checkpoint(mc,"returned");
-                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putInt("garageCaptureVersion",2);proof.putString("scope",JOURNEY?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);proof.put("packingCrafts",packingCrafts);
+            if(stage.equals("PERSONALIZE")) {if(AdventurePersonalizationClientDriver.step(mc,role,ticks)) {checkpoint(mc,"personalized");stage("FINAL_PROOF",12);}return;}
+            if(stage.equals("HOME")||stage.equals("FINAL_PROOF")) {
+                if(!mc.level.dimension().equals(Level.OVERWORLD))return;
+                if(stage.equals("HOME")&&Boolean.getBoolean("lotf.validation.adventureDuel")) {if(!acknowledgements.contains("RETURNED"))return;checkpoint(mc,"returned");stage("PERSONALIZE",12);return;}
+                if(!acknowledgements.contains("PASS"))return;if(!Boolean.getBoolean("lotf.validation.adventureDuel"))checkpoint(mc,"returned");
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putInt("garageCaptureVersion",2);proof.putString("scope",Boolean.getBoolean("lotf.validation.adventureDuel")?"preparation_crystal_duel_return_paid_paint":JOURNEY?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);proof.put("packingCrafts",packingCrafts);if(Boolean.getBoolean("lotf.validation.adventureDuel"))proof.put("dyeCraft",AdventurePersonalizationClientDriver.craft());
                 proof.putIntArray("terminal",new int[]{portable.getX(),portable.getY(),portable.getZ()});AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-"+(JOURNEY?"journey":"travel")+"-client.nbt"),proof,1048576);
                 stage="PASS";LegacyOfTheForce.LOGGER.info("ADVENTURE_{}_CLIENT_PASS pid={}",JOURNEY?"JOURNEY":"TRAVEL",ProcessHandle.current().pid());mc.stop();
             }

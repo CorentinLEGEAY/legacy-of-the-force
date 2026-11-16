@@ -10,6 +10,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
 public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGarageMenu> {
+    private static final int PAINT_WIDTH = 82;
+    private int paintWidth = PAINT_WIDTH;
     private int layer;
     private Button layerButton;
     private final List<net.minecraft.client.gui.components.AbstractWidget> editorWidgets = new ArrayList<>();
@@ -19,10 +21,12 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     private Button dyeButton, zoneButton, paintButton;
     private Button recycleButton;
     public SpeederGarageScreen(SpeederGarageMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title); imageWidth = 320; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
+        super(menu, inventory, title); imageWidth = 260 + PAINT_WIDTH + 8; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
     }
     private void click(int button) { minecraft.gameMode.handleInventoryButtonClick(menu.containerId, button); }
     @Override protected void init() {
+        paintWidth = Math.clamp(width - 268, 52, PAINT_WIDTH);
+        imageWidth = 268 + paintWidth;
         super.init();
         layerButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.layer", layer + 1), b -> {
             layer = (layer + 1) % 3; b.setMessage(Component.translatable("speeder.legacyoftheforce.layer", layer + 1));
@@ -58,10 +62,10 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
                 .bounds(leftPos + 128, topPos + 91, 120, 16)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.repair_help"))).build());
         dyeButton = addRenderableWidget(Button.builder(Component.translatable("speeder.legacyoftheforce.paint_dye_short"), b -> click(62))
-                .bounds(leftPos + 260, topPos + 20, 52, 16).build());
-        zoneButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(63)).bounds(leftPos + 260, topPos + 60, 52, 16).build());
-        paintButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(menu.diagnostic() ? 65 : 64)).bounds(leftPos + 260, topPos + 82, 52, 16).build());
-        recycleButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(66)).bounds(leftPos + 260, topPos + 202, 52, 16)
+                .bounds(leftPos + 260, topPos + 20, paintWidth, 16).build());
+        zoneButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(63)).bounds(leftPos + 260, topPos + 60, paintWidth, 16).build());
+        paintButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(menu.diagnostic() ? 65 : 64)).bounds(leftPos + 260, topPos + 82, paintWidth, 16).build());
+        recycleButton = addRenderableWidget(Button.builder(Component.empty(), b -> click(66)).bounds(leftPos + 260, topPos + 202, paintWidth, 16)
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.recycle_help"))).build());
         updateMode();
     }
@@ -83,9 +87,9 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
         graphics.fill(leftPos + 253, topPos + 4, leftPos + 254, topPos + imageHeight - 4, 0xff52687a);
-        int dye = menu.paintDye().getTextureDiffuseColor(); graphics.fill(leftPos + 260, topPos + 40, leftPos + 312, topPos + 54, dye | 0xff000000);
-        graphics.fill(leftPos + 260, topPos + 110, leftPos + 312, topPos + 123, menu.primaryColor() | 0xff000000);
-        graphics.fill(leftPos + 260, topPos + 128, leftPos + 312, topPos + 141, menu.secondaryColor() | 0xff000000);
+        int dye = menu.paintDye().getTextureDiffuseColor(); graphics.fill(leftPos + 260, topPos + 40, leftPos + 260 + paintWidth, topPos + 54, dye | 0xff000000);
+        graphics.fill(leftPos + 260, topPos + 110, leftPos + 260 + paintWidth, topPos + 123, menu.primaryColor() | 0xff000000);
+        graphics.fill(leftPos + 260, topPos + 128, leftPos + 260 + paintWidth, topPos + 141, menu.secondaryColor() | 0xff000000);
         for (var slot : menu.slots) graphics.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff52687a);
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -95,7 +99,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         graphics.drawString(font, String.format(Locale.ROOT, "#%06X", dye & 0xffffff), 264, 43, contrast(dye), false);
         graphics.drawString(font, "1", 264, 113, contrast(menu.primaryColor()), false);
         graphics.drawString(font, "2", 264, 131, contrast(menu.secondaryColor()), false);
-        graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_cost" : "paint_draft"), menu.dyeCost()), 260, 150, 52, 0xd5e9e9);
+        graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_cost" : "paint_draft"), menu.dyeCost()), 260, 150, paintWidth, 0xd5e9e9);
         if (menu.diagnostic()) {
             graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.diagnostic_" + menu.diagnosticStatus().name().toLowerCase(Locale.ROOT)), 8, 26, 0xffd085, false);
             if (menu.diagnosticStatus() == GarageDiagnostics.Status.READY || menu.diagnosticStatus() == GarageDiagnostics.Status.OCCUPIED) {

@@ -36,8 +36,19 @@ foreach($phase in 1,2) {
     function Wait-ProductionMarker([string]$Pattern,[int]$Seconds=120) {
         $deadline=(Get-Date).AddSeconds($Seconds)
         while(-not $native.HasExited -and (Get-Date) -lt $deadline) {
-            if((Test-Path -LiteralPath $log) -and (Get-Item -LiteralPath $log).LastWriteTime -ge $started) {
-                $text=Get-Content -LiteralPath $log -Raw
+            $text=''
+            try {
+                if([IO.File]::GetLastWriteTime($log) -ge $started) {
+                    $stream=[IO.File]::Open($log,[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+                    $reader=[IO.StreamReader]::new($stream)
+                    try { $text=$reader.ReadToEnd() } finally { $reader.Dispose() }
+                }
+            } catch [IO.FileNotFoundException] {
+                # Log4j can rotate latest.log between checking its date and opening it.
+            } catch [IO.DirectoryNotFoundException] {
+                # First boot may not have created the log directory yet.
+            }
+            if($text) {
                 if($text -match 'MixinApplyError|InvalidInjectionException|InjectionError|Failed to start the minecraft server') { throw 'Packaged mod startup failed; preserve logs.' }
                 if($text -match $Pattern) { return }
             }

@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
 if(Test-Path -LiteralPath $world) { throw 'Fresh isolated run required; preserve prior worlds.' }
@@ -21,6 +21,7 @@ $marker=if($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_TRAVEL'}
 if($LASTEXITCODE -ne 0) { throw 'Native client preparation failed.' }
 $launch=Get-Content -LiteralPath (Join-Path $repoPath '.tools/travel-network-launch.json') -Raw | ConvertFrom-Json
 $template=(Get-Content -LiteralPath (Join-Path $repoPath 'build/moddev/clientTwoRunProgramArgs.txt') -Raw).Replace('127.0.0.1:25587','127.0.0.1:25586')
+if($SmallViewport) { $template+="`n--width`n640`n--height`n480`n" }
 $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID).Path
 foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-adventure-test-server.ps1'),'-Run',$Run,'-Mode',$Mode)) { $info.ArgumentList.Add($arg) }
 $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true

@@ -44,8 +44,15 @@ public final class AdventureTravelClientDriver {
             require(mc.player.isAlive(),"Original owner must remain alive");if(ticks<ready)return;
             if(stage.equals("WAIT")) {
                 if(!acknowledgements.contains("READY"))return;role=AdventureRoute.NAMES.indexOf(mc.player.getGameProfile().getName());require(role>=0,"Original native owner required");
-                checkpoint(mc,"resumed");use(mc,AdventureRoute.terminal(role));stage("DECODE",14);return;
+                checkpoint(mc,"resumed");use(mc,AdventureRoute.garage(role));stage("REVIEW_GARAGE",14);return;
             }
+            if(stage.equals("REVIEW_GARAGE")) {
+                if(!(mc.player.containerMenu instanceof com.legacyoftheforce.speeder.SpeederGarageMenu)||!(mc.screen instanceof SpeederGarageScreen))return;
+                layer(mc,1);stage("GARAGE_MODULES",14);return;
+            }
+            if(stage.equals("GARAGE_MODULES")) {require(mc.screen instanceof SpeederGarageScreen,"Native garage must be displayed");capture(mc,"adventure-garage-resumed.png");layer(mc,2);stage("GARAGE_SEAT",14);return;}
+            if(stage.equals("GARAGE_SEAT")) {require(mc.screen instanceof SpeederGarageScreen,"Native garage must remain displayed");capture(mc,"adventure-garage-seat.png");mc.player.closeContainer();stage("OPEN_TERMINAL",12);return;}
+            if(stage.equals("OPEN_TERMINAL")) {use(mc,AdventureRoute.terminal(role));stage("DECODE",14);return;}
             if(stage.equals("DECODE")) {if(!(mc.player.containerMenu instanceof GalacticTerminalMenu menu))return;require(menu.atHome()&&!menu.known(),"Original locked destination expected");button(mc,"decode");stage("DECODED",14);return;}
             if(stage.equals("DECODED")) {
                 if(!acknowledgements.contains("DECODED"))return;var menu=(GalacticTerminalMenu)mc.player.containerMenu;
@@ -70,7 +77,7 @@ public final class AdventureTravelClientDriver {
             }
             if(stage.equals("HOME")) {
                 if(!acknowledgements.contains("PASS")||!mc.level.dimension().equals(Level.OVERWORLD))return;checkpoint(mc,"returned");
-                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope","preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putInt("garageCaptureVersion",2);proof.putString("scope","preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);
                 proof.putIntArray("terminal",new int[]{portable.getX(),portable.getY(),portable.getZ()});AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-travel-client.nbt"),proof,1048576);
                 stage="PASS";LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CLIENT_PASS pid={}",ProcessHandle.current().pid());mc.stop();
             }
@@ -82,6 +89,10 @@ public final class AdventureTravelClientDriver {
     private static void button(Minecraft mc,String key) {
         var label=Component.translatable("travel.legacyoftheforce."+key).getString();var button=mc.screen.children().stream().filter(w->w instanceof Button b&&b.getMessage().getString().equals(label)).map(w->(Button)w).findFirst().orElseThrow();
         require(button.active&&button.visible,"Native travel button must be usable: "+key);button.onPress();
+    }
+    private static void layer(Minecraft mc,int current) {
+        var label=Component.translatable("speeder.legacyoftheforce.layer",current).getString();var button=mc.screen.children().stream().filter(w->w instanceof Button b&&b.getMessage().getString().equals(label)).map(w->(Button)w).findFirst().orElseThrow();
+        require(button.active&&button.visible,"Native layer selector must be usable");button.onPress();
     }
     private static void equipTerminal(Minecraft mc) {
         require(mc.player.containerMenu instanceof InventoryMenu,"Native inventory required before portable placement");

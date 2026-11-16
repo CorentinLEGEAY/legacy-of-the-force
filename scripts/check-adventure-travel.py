@@ -17,7 +17,7 @@ def components(inventory):
                    for stack in inventory)
 
 
-def verify(repo, run, preparation):
+def verify(repo, run, preparation, garage=False):
     prep.verify(repo, preparation)
     world = repo / f'run-adventure-{run}/world'
     source = load(repo / f'run-adventure-{preparation}/world/validation/adventure-preparation-server.nbt')
@@ -42,6 +42,14 @@ def verify(repo, run, preparation):
         cp = load(profile / 'validation/adventure-travel-client.nbt')
         assert cp['schemaVersion'] == 1 and cp['scope'] == proof['scope']
         assert prep.ilum.uid(cp['owner']) == owner and cp['pid'] == client['pid']
+        if garage:
+            from PIL import Image
+            assert cp['garageCaptureVersion'] == 2
+            for name in ['resumed', 'seat']:
+                with Image.open(profile / f'screenshots/adventure-garage-{name}.png') as image:
+                    assert image.width >= 640 and image.height >= 480
+                    pixels = Counter(image.convert('RGB').get_flattened_data())
+                    assert pixels[(20, 35, 50)] > image.width * image.height // 4, 'Garage panel absent from actual framebuffer'
         pids.append(cp['pid'])
         labels = ['resumed', 'decoded', 'arrival', 'portable', 'returned']
         assert [s['stage'] for s in cp['checkpoints']] == labels
@@ -103,7 +111,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run')
     parser.add_argument('--preparation', default='ap4')
+    parser.add_argument('--garage', action='store_true', help='Require final rendered garage/layer captures; earlier data-only runs cannot pass this check.')
     args = parser.parse_args()
     for name in [args.run, args.preparation]:
         assert 1 <= len(name) <= 12 and all(c in 'abcdefghijklmnopqrstuvwxyz0123456789_-' for c in name)
-    print(json.dumps(verify(Path(__file__).resolve().parent.parent, args.run, args.preparation), indent=2))
+    print(json.dumps(verify(Path(__file__).resolve().parent.parent, args.run, args.preparation, args.garage), indent=2))

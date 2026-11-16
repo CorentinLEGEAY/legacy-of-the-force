@@ -138,8 +138,11 @@ public final class MobForceController {
         return true;
     }
     private boolean pathAllowed(ServerPlayer actor, Mob target, Vec3 velocity) {
+        // Downward floor contact is resolved by native movement, just as during beforeTick.
+        // Keep the full permission sweep; only the obstacle test excludes the downward overlap.
+        var obstacleSweep = new Vec3(velocity.x, Math.max(0, velocity.y), velocity.z);
         return pathPermissionsAllowed(actor, target, velocity)
-                && actor.serverLevel().noCollision(target, target.getBoundingBox().expandTowards(velocity).deflate(0.001));
+                && actor.serverLevel().noCollision(target, target.getBoundingBox().expandTowards(obstacleSweep).deflate(0.001));
     }
     private boolean pathPermissionsAllowed(ServerPlayer actor, Mob target, Vec3 velocity) {
         if (actor.level() != target.level() || !Double.isFinite(velocity.lengthSqr())) return false;

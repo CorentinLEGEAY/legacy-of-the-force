@@ -73,6 +73,10 @@ public final class IlumBossGameTests {
         }
         return new Fixture(level, altar, players, channels,generated);
     }
+    private static void ready(GameTestHelper helper,Fixture fixture,Checked action) {
+        helper.startSequence().thenWaitUntil(()->helper.assertTrue(fixture.level.entityManager.areEntitiesLoaded(new ChunkPos(fixture.altar.north(3)).toLong())
+                && fixture.level.isPositionEntityTicking(fixture.altar.north(3)),"Wait for actual native entity chunk readiness")).thenExecute(checked(action));
+    }
     private static void cleanup(Fixture fixture) {
         for (var actor : fixture.players) fixture.level.getServer().getPlayerList().remove(actor);
         for (var channel : fixture.channels) channel.finishAndReleaseAll();
@@ -86,26 +90,79 @@ public final class IlumBossGameTests {
         })).toList());
         tests.add(new TestFunction("boss_dedicated","bosses.safety","legacyoftheforce:empty",500,0L,true,helper -> { try { safety(helper); } catch (Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.loot","legacyoftheforce:empty",1200,0L,true,helper -> { try { lootRecovery(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
+        tests.add(new TestFunction("boss_dedicated","bosses.boundary","legacyoftheforce:empty",400,0L,true,helper -> { try { boundary(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
+        tests.add(new TestFunction("boss_dedicated","bosses.loading","legacyoftheforce:empty",400,0L,true,helper -> { try { loading(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.cooldown","legacyoftheforce:empty",900,0L,true,helper -> {
             try {
                 var previous = AtomicNbtFile.read(helper.getLevel().getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-guardian.nbt"),262144);
                 var identities = previous.getList("players",net.minecraft.nbt.Tag.TAG_COMPOUND).stream().map(t -> ((net.minecraft.nbt.CompoundTag)t).getUUID("owner")).toList();
-                battle(helper,BossKind.GUARDIAN,fixture(helper,BossKind.GUARDIAN,2,identities),false);
+                var fixture=fixture(helper,BossKind.GUARDIAN,2,identities);ready(helper,fixture,()->battle(helper,BossKind.GUARDIAN,fixture,false));
             } catch (Exception failure) { throw new RuntimeException(failure); }
         })); return tests;
     }
 
     private static void battle(GameTestHelper helper, BossKind kind) throws Exception {
-        battle(helper,kind,fixture(helper,kind,2,List.of(),true),true);
+        var fixture=fixture(helper,kind,2,List.of(),true);ready(helper,fixture,()->battle(helper,kind,fixture,true));
     }
     private static final class LootCrash extends Error {}
+    private static void loading(GameTestHelper helper) throws Exception {
+        var fixture=fixture(helper,BossKind.GUARDIAN,1);ready(helper,fixture,()->loading(helper,fixture));
+    }
+    private static void loading(GameTestHelper helper,Fixture fixture) throws Exception {
+        var actor=fixture.players.getFirst();var service=BossArenaService.forServer(actor.server);var chunk=new net.minecraft.world.level.ChunkPos(fixture.altar.north(3));
+        var path=actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("data/legacyoftheforce/bosses/arenas/"+BossArenaService.arenaId(fixture.level,fixture.altar,BossKind.GUARDIAN)+".nbt");
+        helper.assertFalse(java.nio.file.Files.exists(path),"Fresh loading fixture has no arena record");
+        fixture.level.entityManager.updateChunkStatus(chunk,net.minecraft.world.level.entity.Visibility.HIDDEN);
+        try {
+            helper.assertFalse(service.challenge(actor,fixture.altar,BossKind.GUARDIAN),"Loaded blocks with hidden entity visibility cannot publish a boss");
+            helper.assertFalse(java.nio.file.Files.exists(path),"Loading refusal must not write a partial spawn intent");
+            helper.assertTrue(fixture.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(fixture.altar)).isEmpty(),"Loading refusal spawns nothing");
+        } finally { fixture.level.entityManager.updateChunkStatus(chunk,net.minecraft.world.level.entity.Visibility.TICKING); }
+        helper.startSequence().thenIdle(12).thenExecute(checked(()->{
+            helper.assertTrue(service.challenge(actor,fixture.altar,BossKind.GUARDIAN),"Same service must still be available after native entity chunk readiness");
+            var bosses=fixture.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(fixture.altar));helper.assertTrue(bosses.size()==1 && service.authorized(bosses.getFirst()),"Exactly one durable authorized boss");
+            var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putBoolean("loadingRefused",true);proof.putBoolean("readyAccepted",true);proof.put("arena",AtomicNbtFile.read(path,16384));
+            AtomicNbtFile.write(actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-loading.nbt"),proof,32768);cleanup(fixture);helper.getLevel().getServer().sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=LOADING"));helper.succeed();
+        }));
+    }
+    private static void boundary(GameTestHelper helper) throws Exception {
+        var fixture=fixture(helper,BossKind.GUARDIAN,1);ready(helper,fixture,()->boundary(helper,fixture));
+    }
+    private static void boundary(GameTestHelper helper,Fixture fixture) throws Exception {
+        var actor=fixture.players.getFirst();var service=BossArenaService.forServer(actor.server);
+        helper.assertTrue(service.challenge(actor,fixture.altar,BossKind.GUARDIAN),"Boundary fixture starts a real encounter");
+        var boss=fixture.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(fixture.altar)).getFirst();
+        var before=new double[1];var after=new double[1];
+        helper.startSequence().thenWaitUntil(()->helper.assertTrue(boss.phase()==1,"Wait for real introduction"))
+            .thenExecute(checked(()->{
+                actor.getData(com.legacyoftheforce.rpg.ProgressAttachments.PLAYER_PROGRESS).award(UUID.randomUUID(),1232,0,com.legacyoftheforce.rpg.ProgressionRules.DEFAULT);
+                var center=net.minecraft.world.phys.Vec3.atBottomCenterOf(fixture.altar.north(3));actor.setPos(center.add(0,0,-1.4));actor.setYRot(180);actor.setXRot(-10);boss.setPos(center.add(0,0,-3.6));boss.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                boss.parried(actor); // Posture setup only; the separate socket-client trial proves actual parrying.
+                before[0]=new ProgressService().get(actor.getUUID()).orElseThrow().forceEnergy();
+                var impulse=new com.legacyoftheforce.force.MobForceController(new ProgressService(),new VanillaProtectedWorldService()).castAt(actor,boss,ForceAction.PUSH);
+                helper.assertTrue(impulse.accepted(),"Server Force controller must accept the counter: "+impulse.reason());
+                after[0]=new ProgressService().get(actor.getUUID()).orElseThrow().forceEnergy();helper.assertTrue(after[0]<before[0],"Real server Force action must spend energy");
+                boss.move(net.minecraft.world.entity.MoverType.SELF,new net.minecraft.world.phys.Vec3(0,0,-1));
+                var bounds=BossArenaService.bounds(fixture.altar);var box=boss.getBoundingBox();
+                helper.assertTrue(box.minX>=bounds.minX-.0001 && box.maxX<=bounds.maxX+.0001 && box.minZ>=bounds.minZ-.0001 && box.maxZ<=bounds.maxZ+.0001,"Native movement after Force must keep the entire boss inside the arena");
+            }))
+            .thenIdle(20)
+            .thenExecute(checked(()->{
+                helper.assertTrue(boss.isAlive() && service.authorized(boss),"A countered boss cannot reset while its player remains in the arena");
+                var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putDouble("beforeEnergy",before[0]);proof.putDouble("afterEnergy",after[0]);proof.put("boss",boss.saveWithoutId(new net.minecraft.nbt.CompoundTag()));proof.putLong("altar",fixture.altar.asLong());
+                AtomicNbtFile.write(actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-boundary.nbt"),proof,262144);cleanup(fixture);helper.getLevel().getServer().sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=BOUNDARY"));helper.succeed();
+            }));
+    }
     private static net.minecraft.nbt.CompoundTag nativeAltar(ServerLevel level,BlockPos pos) throws Exception {
         var chunk=level.getChunkSource().chunkMap.read(new net.minecraft.world.level.ChunkPos(pos)).join().orElseThrow();
         return chunk.getList("block_entities",net.minecraft.nbt.Tag.TAG_COMPOUND).stream().map(t->(net.minecraft.nbt.CompoundTag)t)
                 .filter(t->t.getInt("x")==pos.getX() && t.getInt("y")==pos.getY() && t.getInt("z")==pos.getZ()).findFirst().orElseThrow().copy();
     }
     private static void lootRecovery(GameTestHelper helper) throws Exception {
-        var fixture=fixture(helper,BossKind.GUARDIAN,2);var actor=fixture.players.getFirst();var peer=fixture.players.get(1);var tile=(BossAltarEntity)fixture.level.getBlockEntity(fixture.altar);
+        var fixture=fixture(helper,BossKind.GUARDIAN,2);ready(helper,fixture,()->lootRecovery(helper,fixture));
+    }
+    private static void lootRecovery(GameTestHelper helper,Fixture fixture) throws Exception {
+        var actor=fixture.players.getFirst();var peer=fixture.players.get(1);var tile=(BossAltarEntity)fixture.level.getBlockEntity(fixture.altar);
         var root=actor.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/loot");var proofs=new net.minecraft.nbt.ListTag();
         try {
             for(var checkpoint:BossLootService.Checkpoint.values()) {
@@ -182,7 +239,10 @@ public final class IlumBossGameTests {
         } finally { cleanup(fixture); }
     }
     private static void safety(GameTestHelper helper) throws Exception {
-        var fixture = fixture(helper,BossKind.GUARDIAN,1); var actor = fixture.players.getFirst(); var service = BossArenaService.forServer(actor.server);
+        var fixture=fixture(helper,BossKind.GUARDIAN,1);ready(helper,fixture,()->safety(helper,fixture));
+    }
+    private static void safety(GameTestHelper helper,Fixture fixture) throws Exception {
+        var actor = fixture.players.getFirst(); var service = BossArenaService.forServer(actor.server);
         helper.assertTrue(service.challenge(actor,fixture.altar,BossKind.GUARDIAN),"Safety fixture must start real encounter");
         var boss = fixture.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(fixture.altar)).getFirst();
         var regionPos = fixture.altar.north(2);

@@ -132,6 +132,8 @@ Le retrait passe par `BossLootMenu` et `BossLootService` : collecte intégrale v
 
 L'accès au conteneur utilise `mayUseContainer`/`allowsContainer`, distinct de l'édition de blocs et de l'arrivée. Adaptateur manquant/en erreur = refus ; les intégrations de claims doivent implémenter explicitement cette permission. La protection des arènes autorise ce contrat général, tandis que le service de boss vérifie les bénéficiaires de la victoire et les verrous.
 
+Avant de créer une intention de spawn, l'autel exige stockage d'entités chargé et position entity-ticking. Des blocs présents ne suffisent pas à garantir la publication d'une entité native ; en attente, refus temporaire avec message, sans fichier d'arène ni suspension globale. `IlumBossEntity.move` limite le déplacement demandé au volume de son arène via `ArenaMovement` et annule seulement les composantes bloquées ; aucune restauration de santé ou téléportation. Pour les mobs poussés, le test d'obstacle initial rejoint celui de beforeTick : la descente de gravité est résolue par vanilla, le sweep complet de permissions reste vérifié. Preuves réseau et régressions : validation/P4-03_NETWORK.md.
+
 - **Bloc soulevé** : validation → enregistrement transaction → retrait contrôlé du monde → création représentation mobile → déplacement → dépôt à un emplacement libre OU restauration/sécurisation au point source → clôture transaction. Prévoir crash/reconnexion.
 - **Sabre/vehicule créé** : validation de toutes les pièces → consommation **une seule fois** sur serveur → création unique de l'item/entité → résultat de transaction ; jamais fabrication depuis un aperçu client.
 - **Voyage** : interdire les doubles requêtes pendant un transfert, préserver inventaire et état RPG.

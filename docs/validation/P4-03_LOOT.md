@@ -2,6 +2,8 @@
 
 16 novembre 2026. Tranche de robustesse du butin ; **P4-03 et V1.0 restent en cours**.
 
+Actualisation02:02 : la nouvelle collecte a ensuite été utilisée avec succès par deux vrais clients lors des deux duels ; voir `P4-03_NETWORK.md`. Les mentions de validations réseau encore ouvertes plus bas décrivent l'état au terme de la tranche de crashes. Le solo et les autres limites restent ouverts.
+
 ## Fonctionnement et protocole
 
 L'autel conserve son conteneur natif visible. Un clic ou Maj-clic sur un emplacement de butin collecte **tout** le contenu vers l'inventaire principal. Curseur vide, place suffisante, proximité, survie, participation récompensée et droits requis. Aucune récompense portée par le curseur, insertion, échange de barre rapide, jet, clonage, glissement ou double-clic de ramassage. Un clic répété n'accorde rien. Les deux bénéficiaires du boss partagent les mêmes objets, sans multiplier le coffre par joueur. Messages FR/EN, titre « Butin partagé · clic ». L'appréciation de cette nouvelle interaction avec un vrai client reste à réaliser.

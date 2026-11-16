@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'boss1')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run = 'boss1',[switch]$Network)
 $ErrorActionPreference = 'Stop'
 $repoPath = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)); $runPath = Join-Path $repoPath "run-boss-$Run"
 New-Item -ItemType Directory -Path $runPath -Force | Out-Null
@@ -26,6 +26,7 @@ gradle.projectsEvaluated {
     rootProject.neoForge.runs.named('server') {
         gameDirectory = rootProject.file('run-boss-$Run')
         systemProperty 'lotf.validation.bossDedicated', 'true'
+        systemProperty 'lotf.validation.bossNetwork', '$($Network.ToString().ToLowerInvariant())'
         systemProperty 'neoforge.enableGameTest', 'true'
     }
 }

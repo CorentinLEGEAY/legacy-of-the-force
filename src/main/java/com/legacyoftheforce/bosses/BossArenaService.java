@@ -95,6 +95,8 @@ public final class BossArenaService {
         if (now() < nextInteraction.getOrDefault(actor.getUUID(),0L)) return false;
         if (nextInteraction.size() >= 1024 && !nextInteraction.containsKey(actor.getUUID())) return false;
         nextInteraction.put(actor.getUUID(),now()+10);
+        var spawn=pos.north(3);
+        if(!actor.serverLevel().entityManager.areEntitiesLoaded(new net.minecraft.world.level.ChunkPos(spawn).toLong()) || !actor.serverLevel().isPositionEntityTicking(spawn)) { feedback(actor,"loading");return false; }
         if (!arenas.containsKey(arenaId(actor.serverLevel(),pos,kind)) && arenas.size() >= 128 && arenas.values().stream().noneMatch(t -> t.getString("state").equals("COOLDOWN"))) return false;
         try {
             var record = arena(actor.serverLevel(), pos, kind); UUID id = arenaId(actor.serverLevel(), pos, kind);

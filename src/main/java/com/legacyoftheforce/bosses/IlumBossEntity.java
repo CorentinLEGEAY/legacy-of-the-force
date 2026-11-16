@@ -45,6 +45,13 @@ public final class IlumBossEntity extends PathfinderMob implements Enemy, ForceI
     public int phase() { return entityData.get(PHASE); }
     public BossAttack attack() { return BossAttack.values()[Math.clamp(entityData.get(ATTACK), 0, BossAttack.values().length - 1)]; }
     public int windup() { return entityData.get(WINDUP); }
+    @Override public void move(MoverType type,Vec3 requested) {
+        var allowed=!level().isClientSide() && altar!=null && retained==null ? ArenaMovement.constrain(BossArenaService.bounds(altar),getBoundingBox(),requested) : requested;
+        super.move(type,allowed);
+        if(!allowed.equals(requested)) {
+            var motion=getDeltaMovement();setDeltaMovement(allowed.x==requested.x ? motion.x : 0,allowed.y==requested.y ? motion.y : 0,allowed.z==requested.z ? motion.z : 0);hurtMarked=true;
+        }
+    }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) { super.defineSynchedData(builder); builder.define(PHASE, 0); builder.define(ATTACK, 0); builder.define(WINDUP, 0); }
     void bind(BlockPos pos) { altar = pos.immutable(); cooldown = BossConfig.INTRO.get(); getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.HEALTH.get()); getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(BossConfig.SPEED.get()); setHealth(getMaxHealth()); }
     boolean join(ServerPlayer actor) {

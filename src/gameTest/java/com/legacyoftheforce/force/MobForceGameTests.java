@@ -21,6 +21,19 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 @GameTestHolder("legacyoftheforce")
 @PrefixGameTestTemplate(false)
 public final class MobForceGameTests {
+    @GameTest(template="empty",timeoutTicks=100)
+    public static void groundedResistantMobCanBePushedWithNegativeGravityVelocity(GameTestHelper helper) {
+        var actor=actor(helper);var progress=new TestProgress(helper.getLevel().getServer());progress.add(actor,100,100);
+        helper.setBlock(new BlockPos(3,0,3),Blocks.STONE);
+        var target=helper.spawnWithNoFreeWill(EntityType.COW,3.5f,1,3.5f);target.setNoAi(false);
+        target.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(.7);
+        target.setDeltaMovement(new Vec3(0,-.0784,0));var before=target.position();var controller=new MobForceController(progress,new VanillaProtectedWorldService());
+        var result=controller.castAt(actor,target,ForceAction.PUSH);
+        helper.assertTrue(result.accepted(),"Ground contact must not reject a horizontal impulse: "+result.reason());
+        helper.assertTrue(progress.energy(actor)<100,"Grounded impulse must really charge Force");target.move(MoverType.SELF,target.getDeltaMovement());
+        helper.assertTrue(target.position().subtract(before).multiply(1,0,1).lengthSqr()>0 && target.getY()>=before.y-.00001,"Vanilla resolves the floor while horizontal motion remains real");
+        helper.assertTrue(helper.getBlockState(new BlockPos(3,0,3)).is(Blocks.STONE),"Native floor is unchanged");controller.stopAll();helper.succeed();
+    }
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void oneProtectedUpperCellBlocksTheWholeMobSweepBeforePayment(GameTestHelper helper) {
         var actor = actor(helper); var progress = new TestProgress(helper.getLevel().getServer()); progress.add(actor, 100, 100);

@@ -34,6 +34,8 @@ Tester le gameplay **sur un serveur dédié**, même si le développement se dé
 - Boss non dupliqué par rechargement de chunk ; récompense une fois par victoire éligible.
 - Victoire partagée : seules les personnes ayant participé selon les règles obtiennent récompenses.
 - Déconnexion pendant un combat, boss despawn, arène interrompue → récupération cohérente.
+- Deux sockets clientes réelles : deux duels d'Ilum, trois phases/décor/signature observés par chaque JVM, contribution récente de chacun, parades/impulsions payées et collecte par clics vanilla ; recouper inventaires des clients, fichiers joueurs, reçus et régions. Fixture d'équipement/niveau explicite, pas de soin/dégât/téléportation pendant combat. Preuves : validation/P4-03_NETWORK.md.
+- Mob résistant au sol avec gravité verticale négative : poussée autorisée et payée, mouvement horizontal réel, collision vanilla avec le sol intact ; permissions du volume complet conservées. Boss près d'une limite : aucun déplacement natif du corps hors arène ni reset malgré un participant présent. Autel avec entités cachées/non prêtes : aucune intention ni spawn ; publication possible dès readiness, sans suspendre le service.
 
 ## Matrice de plateforme
 | Scénario | Solo | Serveur dédié | Deux clients | Redémarrage |

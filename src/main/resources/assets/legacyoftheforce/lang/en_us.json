@@ -286,6 +286,7 @@
   "boss.legacyoftheforce.attack.shards": "Volley — push the ice or dodge",
   "boss.legacyoftheforce.attack.nova": "Frost wave — retreat or take cover",
   "boss.legacyoftheforce.clear_cursor": "Clear the cursor before collecting loot.",
+  "boss.legacyoftheforce.loading": "The trial area is still loading; try again in a moment.",
   "boss.legacyoftheforce.inventory_full": "Make room for all the shared loot first.",
   "boss.legacyoftheforce.collected": "Shared loot collected into your inventory.",
   "boss.legacyoftheforce.loot_pending": "Loot recovery pending: data retained. Contact the administrator."

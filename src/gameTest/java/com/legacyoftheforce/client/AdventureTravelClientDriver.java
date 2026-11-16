@@ -27,6 +27,8 @@ public final class AdventureTravelClientDriver {
     private static final Set<String> acknowledgements=new HashSet<>();
     private static final ListTag checkpoints=new ListTag();
     private static String stage="WAIT";private static long ticks,ready;private static int role;private static boolean connected;private static BlockPos portable;
+    private static final boolean JOURNEY=Boolean.getBoolean("lotf.validation.adventureJourney");
+    private static NativeCraftingDriver packing;private static int packed;private static final ListTag packingCrafts=new ListTag();
     private static void require(boolean valid,String message) {if(!valid)throw new IllegalStateException(message);}
     private static void stage(String next,int delay) {stage=next;ready=ticks+delay;LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CLIENT_STAGE {}",next);}
     @SubscribeEvent public static void feedback(ClientChatReceivedEvent.System event) {
@@ -37,7 +39,7 @@ public final class AdventureTravelClientDriver {
         if(!Boolean.getBoolean("lotf.validation.adventureTravel"))return;var mc=Minecraft.getInstance();ticks++;
         if(stage.equals("PASS")||stage.equals("FAILED")) {mc.stop();return;}
         try {
-            require((System.nanoTime()-STARTED)/1_000_000_000L<300,"Native continuation deadline exceeded in "+stage);
+            require((System.nanoTime()-STARTED)/1_000_000_000L<(JOURNEY?1800:300),"Native continuation deadline exceeded in "+stage);
             require(mc.gameDirectory.toPath().toAbsolutePath().normalize().getFileName().toString().startsWith("run-adventure-client-"),"Isolated native continuation profile required");
             require(!connected||mc.getConnection()!=null,"Connection lost before continuation proof");
             if(mc.player==null||mc.level==null||mc.gameMode==null||mc.getConnection()==null)return;connected=true;
@@ -51,7 +53,15 @@ public final class AdventureTravelClientDriver {
                 layer(mc,1);stage("GARAGE_MODULES",14);return;
             }
             if(stage.equals("GARAGE_MODULES")) {require(mc.screen instanceof SpeederGarageScreen,"Native garage must be displayed");capture(mc,"adventure-garage-resumed.png");layer(mc,2);stage("GARAGE_SEAT",14);return;}
-            if(stage.equals("GARAGE_SEAT")) {require(mc.screen instanceof SpeederGarageScreen,"Native garage must remain displayed");capture(mc,"adventure-garage-seat.png");mc.player.closeContainer();stage("OPEN_TERMINAL",12);return;}
+            if(stage.equals("GARAGE_SEAT")) {require(mc.screen instanceof SpeederGarageScreen,"Native garage must remain displayed");capture(mc,"adventure-garage-seat.png");mc.player.closeContainer();stage(JOURNEY?"PACK_TABLE":"OPEN_TERMINAL",12);return;}
+            if(stage.equals("PACK_TABLE")) {mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player));stage("PACK",12);return;}
+            if(stage.equals("PACK")) {
+                if(packed==2) {mc.player.closeContainer();checkpoint(mc,"packed");stage("OPEN_TERMINAL",12);return;}
+                if(packed==1&&mc.player.containerMenu instanceof InventoryMenu) {mc.player.closeContainer();use(mc,AdventureRoute.table(role));stage("PACK_WAIT",12);return;}
+                if(packing==null)packing=new NativeCraftingDriver(net.minecraft.resources.ResourceLocation.parse(packed==0?"minecraft:crafting_table":"legacyoftheforce:saber_workshop"));
+                if(packing.step(mc,ticks)) {packingCrafts.add(packing.proof(mc));packing=null;packed++;ready=ticks+4;}return;
+            }
+            if(stage.equals("PACK_WAIT")) {if(mc.player.containerMenu instanceof CraftingMenu)stage("PACK",4);return;}
             if(stage.equals("OPEN_TERMINAL")) {use(mc,AdventureRoute.terminal(role));stage("DECODE",14);return;}
             if(stage.equals("DECODE")) {if(!(mc.player.containerMenu instanceof GalacticTerminalMenu menu))return;require(menu.atHome()&&!menu.known(),"Original locked destination expected");button(mc,"decode");stage("DECODED",14);return;}
             if(stage.equals("DECODED")) {
@@ -61,8 +71,9 @@ public final class AdventureTravelClientDriver {
             if(stage.equals("DEPART")) {button(mc,"depart");stage("ARRIVAL",14);return;}
             if(stage.equals("ARRIVAL")) {
                 if(!acknowledgements.contains("ARRIVAL")||!mc.level.dimension().equals(PlanetContent.ILUM))return;
-                checkpoint(mc,"arrival");mc.player.closeContainer();stage("PLACE",30+role*40);return;
+                checkpoint(mc,"arrival");mc.player.closeContainer();stage(JOURNEY?"JOURNEY":"PLACE",30+role*40);return;
             }
+            if(stage.equals("JOURNEY")) {if(AdventureJourneyClientDriver.step(mc,role,ticks)) {checkpoint(mc,"crystal_stage");stage("PLACE",30+role*40);}return;}
             if(stage.equals("PLACE")) {
                 capture(mc,"adventure-arrival.png");equipTerminal(mc);var hit=findPlacement(mc);portable=hit.getBlockPos().relative(hit.getDirection());
                 mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,hit);stage("PLACED",16);return;
@@ -77,12 +88,12 @@ public final class AdventureTravelClientDriver {
             }
             if(stage.equals("HOME")) {
                 if(!acknowledgements.contains("PASS")||!mc.level.dimension().equals(Level.OVERWORLD))return;checkpoint(mc,"returned");
-                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putInt("garageCaptureVersion",2);proof.putString("scope","preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);
-                proof.putIntArray("terminal",new int[]{portable.getX(),portable.getY(),portable.getZ()});AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-travel-client.nbt"),proof,1048576);
-                stage="PASS";LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CLIENT_PASS pid={}",ProcessHandle.current().pid());mc.stop();
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putInt("garageCaptureVersion",2);proof.putString("scope",JOURNEY?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);proof.put("packingCrafts",packingCrafts);
+                proof.putIntArray("terminal",new int[]{portable.getX(),portable.getY(),portable.getZ()});AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-"+(JOURNEY?"journey":"travel")+"-client.nbt"),proof,1048576);
+                stage="PASS";LegacyOfTheForce.LOGGER.info("ADVENTURE_{}_CLIENT_PASS pid={}",JOURNEY?"JOURNEY":"TRAVEL",ProcessHandle.current().pid());mc.stop();
             }
         } catch(Exception failure) {
-            LegacyOfTheForce.LOGGER.error("ADVENTURE_TRAVEL_CLIENT_FAILED stage={}",stage,failure);stage="FAILED";mc.stop();
+            NativeWalkingDriver.stop(mc);LegacyOfTheForce.LOGGER.error("ADVENTURE_{}_CLIENT_FAILED stage={}",JOURNEY?"JOURNEY":"TRAVEL",stage,failure);stage="FAILED";mc.stop();
         }
     }
     private static void use(Minecraft mc,BlockPos pos) {mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos),Direction.NORTH,pos,false));}

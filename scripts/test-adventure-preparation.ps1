@@ -1,8 +1,8 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
 if(Test-Path -LiteralPath $world) { throw 'Fresh isolated run required; preserve prior worlds.' }
-if($Mode -eq 'Travel') {
+if($Mode -ne 'Prep') {
     $source=Join-Path $repoPath "run-adventure-$PreparationRun/world"
     if(-not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-preparation-server.nbt'))) { throw 'Stopped native preparation proof required.' }
     $active=Get-CimInstance Win32_Process -Filter "Name='java.exe'" | Where-Object { $_.CommandLine -like "*run-adventure-$PreparationRun*" }
@@ -12,11 +12,11 @@ if($Mode -eq 'Travel') {
     try { $null=$lockStream.ReadByte() } finally { $lockStream.Dispose() }
     New-Item -ItemType Directory -Path (Split-Path -Parent $world) | Out-Null
     Copy-Item -LiteralPath $source -Destination $world -Recurse
-    $prefix=Join-Path $repoPath ".tools/adventure-travel-$Run"
+    $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
 $validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} else {'adventureTravel'}
-$artifact=if($Mode -eq 'Prep') {'preparation'} else {'travel'}
-$marker=if($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_TRAVEL'}
+$artifact=if($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
+$marker=if($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
 if($LASTEXITCODE -ne 0) { throw 'Native client preparation failed.' }
 $launch=Get-Content -LiteralPath (Join-Path $repoPath '.tools/travel-network-launch.json') -Raw | ConvertFrom-Json
@@ -54,6 +54,7 @@ tutorialStep:none
         $program="$prefix-client$index-args.txt";$template.Replace('ForceTesterTwo',$name) | Set-Content -LiteralPath $program -Encoding utf8NoBOM
         $argsList=[Collections.Generic.List[string]]::new();foreach($arg in $launch.arguments) { $argsList.Add([string]$arg) }
         $main=$argsList.IndexOf('net.neoforged.devlaunch.Main');if($main -lt 0) { throw 'Unexpected native launcher.' }
+        if($Mode -eq 'Journey') { $argsList.Insert($main,'-Dlotf.validation.adventureJourney=true') }
         $argsList.Insert($main,'-Xms256M');$argsList.Insert($main,'-Xmx1536M');$argsList.Insert($main,"-Dlotf.validation.$validationFlag=true");$argsList[$argsList.Count-1]='@'+$program.Replace('\','\\')
         $ci=[Diagnostics.ProcessStartInfo]::new();$ci.FileName=Join-Path $repoPath ".tools/java-client-$suffix/bin/java.exe"
         foreach($arg in $argsList) { $ci.ArgumentList.Add($arg) }
@@ -63,7 +64,7 @@ tutorialStep:none
         $clients.Add(@{Process=$client;Out=$client.StandardOutput.ReadToEndAsync();Err=$client.StandardError.ReadToEndAsync();Profile=$profile;Name=$name})
         Write-Output "STARTED: native $name PID=$($client.Id)"
     }
-    $deadline=(Get-Date).AddSeconds(660)
+    $deadline=(Get-Date).AddSeconds($(if($Mode -eq 'Journey') {1860} else {660}))
     while(-not $runner.HasExited -and (Get-Date) -lt $deadline) {
         $snapshot=Server-Text
         if($snapshot -match "$($marker)_SERVER_FAILED") { throw 'Native adventure server verification failed; inspect logs.' }

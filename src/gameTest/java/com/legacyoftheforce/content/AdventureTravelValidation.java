@@ -53,14 +53,14 @@ public final class AdventureTravelValidation {
     @SubscribeEvent public static void start(ServerStartedEvent event) throws Exception {
         if(!Boolean.getBoolean("lotf.validation.adventureTravel"))return;var server=event.getServer();var root=server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
         require(server.isDedicatedServer()&&root.getParent().getFileName().toString().startsWith("run-adventure-"),"Isolated dedicated continuation required");
-        require(server.overworld().getDifficulty()==Difficulty.NORMAL&&!Files.exists(root.resolve("validation/adventure-travel-server.nbt")),"Fresh normal-difficulty continuation required");
+        require(server.overworld().getDifficulty()==Difficulty.NORMAL&&!Files.exists(root.resolve("validation/adventure-"+(AdventureJourneyValidation.enabled()?"journey":"travel")+"-server.nbt")),"Fresh normal-difficulty continuation required");
         SESSIONS.put(server,new Session(server,root));
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent event) {SESSIONS.remove(event.getServer());}
     @SubscribeEvent public static void tick(ServerTickEvent.Post event) {
         var server=event.getServer();var s=SESSIONS.get(server);if(s==null||Set.of("PASS","FAILED").contains(s.stage))return;
         try {
-            require(server.overworld().getGameTime()-s.started<6000,"Native continuation exceeded 300 server seconds");
+            require(server.overworld().getGameTime()-s.started<(AdventureJourneyValidation.enabled()?36000:6000),"Native continuation exceeded its bounded deadline");
             if(s.stage.equals("WAIT")) {
                 for(var name:AdventureRoute.NAMES)if(server.getPlayerList().getPlayerByName(name)==null)return;
                 require(server.getPlayerList().getPlayerCount()==2,"Exactly two genuine clients required");
@@ -87,9 +87,10 @@ public final class AdventureTravelValidation {
             }
             if(s.tracks.stream().anyMatch(t->t.revision!=3))return;
             var actors=new ListTag();for(var t:s.tracks)actors.add(t.proof);
-            var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope","preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("preparationPid",s.preparation.getLong("pid"));proof.put("actors",actors);
-            AtomicNbtFile.write(s.root.resolve("validation/adventure-travel-server.nbt"),proof,1048576);s.stage="PASS";
-            for(var t:s.tracks)feedback(t.actor,"PASS");LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_SERVER_PASS pid={}",ProcessHandle.current().pid());
-        } catch(Exception failure) {s.stage="FAILED";LegacyOfTheForce.LOGGER.error("ADVENTURE_TRAVEL_SERVER_FAILED",failure);}
+            var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope",AdventureJourneyValidation.enabled()?"preparation_then_crystal_journey":"preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("preparationPid",s.preparation.getLong("pid"));proof.put("actors",actors);
+            if(AdventureJourneyValidation.enabled())require(Files.isRegularFile(s.root.resolve("validation/adventure-crystal-stage.nbt")),"Real crystal stage required before journey proof");
+            AtomicNbtFile.write(s.root.resolve("validation/adventure-"+(AdventureJourneyValidation.enabled()?"journey":"travel")+"-server.nbt"),proof,1048576);s.stage="PASS";
+            for(var t:s.tracks)feedback(t.actor,"PASS");LegacyOfTheForce.LOGGER.info("ADVENTURE_{}_SERVER_PASS pid={}",AdventureJourneyValidation.enabled()?"JOURNEY":"TRAVEL",ProcessHandle.current().pid());
+        } catch(Exception failure) {s.stage="FAILED";LegacyOfTheForce.LOGGER.error("ADVENTURE_{}_SERVER_FAILED",AdventureJourneyValidation.enabled()?"JOURNEY":"TRAVEL",failure);}
     }
 }

@@ -88,6 +88,7 @@ public final class IlumBossGameTests {
         var tests = new ArrayList<>(Arrays.stream(BossKind.values()).map(kind -> new TestFunction("boss_dedicated", "bosses." + kind.path, "legacyoftheforce:empty", 900, 0L, true, helper -> {
             try { battle(helper, kind); } catch (Exception failure) { throw new RuntimeException(failure); }
         })).toList());
+        tests.add(new TestFunction("boss_dedicated","bosses.lifecycle","legacyoftheforce:empty",1200,0L,true,helper -> { try { lifecycle(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.safety","legacyoftheforce:empty",500,0L,true,helper -> { try { safety(helper); } catch (Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.loot","legacyoftheforce:empty",1200,0L,true,helper -> { try { lootRecovery(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.boundary","legacyoftheforce:empty",400,0L,true,helper -> { try { boundary(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
@@ -103,6 +104,82 @@ public final class IlumBossGameTests {
 
     private static void battle(GameTestHelper helper, BossKind kind) throws Exception {
         var fixture=fixture(helper,kind,2,List.of(),true);ready(helper,fixture,()->battle(helper,kind,fixture,true));
+    }
+    private static final class LifeCase {
+        final String mode;final Fixture fixture;int stage;long after;IlumBossEntity boss;
+        net.minecraft.nbt.CompoundTag before;byte[] journal;final List<UUID> drops=new ArrayList<>();
+        LifeCase(String mode,Fixture fixture) { this.mode=mode;this.fixture=fixture; }
+    }
+    private static void lifecycle(GameTestHelper helper) throws Exception {
+        var cases=new ArrayList<LifeCase>();
+        for(String mode:List.of("DEATH_DROP","DEATH_KEEP","DIMENSION","LOGOUT")) cases.add(new LifeCase(mode,fixture(helper,BossKind.GUARDIAN,1)));
+        var proofs=new net.minecraft.nbt.ListTag();var root=helper.getLevel().getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
+        helper.onEachTick(()-> {
+            try {
+                for(var c:cases) {
+                    if(c.stage==4) continue;var f=c.fixture;var actor=f.players.getFirst();var server=actor.server;var service=BossArenaService.forServer(server);
+                    var path=root.resolve("data/legacyoftheforce/bosses/loot/"+actor.getUUID()+".nbt");
+                    if(c.stage==0) {
+                        if(!f.level.entityManager.areEntitiesLoaded(new ChunkPos(f.altar).toLong()) || !f.level.isPositionEntityTicking(f.altar.north(3))) continue;
+                        actor.getInventory().setItem(0,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND,7));
+                        var tile=(BossAltarEntity)f.level.getBlockEntity(f.altar);tile.publish(UUID.randomUUID(),true);new VerifiedChunkSaveBarrier().persist(f.level,Set.of(f.altar));
+                        var initialActor=actor;var loot=new BossLootService(server,path.getParent(),(a,t)->a==initialActor && t==tile,ignored->{});
+                        helper.assertTrue(loot.collect(actor,tile),"Real fixture lot must be collected before the arena");
+                        c.before=new VerifiedPlayerSaveBarrier().persist(actor);c.journal=java.nio.file.Files.readAllBytes(path);
+                        helper.assertTrue(service.challenge(actor,f.altar,BossKind.GUARDIAN),"Real active arena required");
+                        c.boss=f.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(f.altar)).getFirst();c.stage=1;
+                    } else if(c.stage==1 && c.boss.phase()>0) {
+                        if(c.mode.startsWith("DEATH")) {
+                            var rules=f.level.getGameRules();boolean previous=rules.getBoolean(GameRules.RULE_KEEPINVENTORY);
+                            try {
+                                rules.getRule(GameRules.RULE_KEEPINVENTORY).set(c.mode.equals("DEATH_KEEP"),server);
+                                helper.assertTrue(actor.hurt(actor.damageSources().genericKill(),Float.MAX_VALUE) && !actor.isAlive(),"Native player death must occur");
+                                for(var item:f.level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,BossArenaService.bounds(f.altar).inflate(2))) c.drops.add(item.getUUID());
+                                var replacement=server.getPlayerList().respawn(actor,false,net.minecraft.world.entity.Entity.RemovalReason.KILLED);
+                                helper.assertTrue(replacement!=actor && replacement.isAlive(),"Native PlayerList must replace the dead body");f.players.set(0,replacement);
+                            } finally { rules.getRule(GameRules.RULE_KEEPINVENTORY).set(previous,server); }
+                        } else if(c.mode.equals("DIMENSION")) {
+                            var destination=server.overworld();int y=destination.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,8000,8000);
+                            server.getPlayerList().op(actor.getGameProfile());
+                            try { actor.teleportTo(destination,8000.5,y,8000.5,0,0); }
+                            finally { server.getPlayerList().deop(actor.getGameProfile()); }
+                            helper.assertTrue(actor.serverLevel()==destination,"Fixture operator transition must actually leave Ilum");destination.getChunkSource().move(actor);
+                        } else server.getPlayerList().remove(actor);
+                        c.stage=2;c.after=helper.getTick()+BossConfig.RESET_DELAY.get()+5;
+                    } else if(c.stage==2 && helper.getTick()>=c.after) {
+                        helper.assertTrue(c.boss.isRemoved() && f.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(f.altar)).isEmpty(),"Abandoned arena must reset without a victory: "+c.mode);
+                        if(c.mode.equals("LOGOUT")) {
+                            var replacement=new ServerPlayer(server,f.level,actor.getGameProfile(),ClientInformation.createDefault());
+                            var connection=new Connection(PacketFlow.SERVERBOUND);var channel=new EmbeddedChannel(connection);
+                            server.getPlayerList().placeNewPlayer(connection,replacement,CommonListenerCookie.createInitial(actor.getGameProfile(),false));
+                            f.channels.getFirst().finishAndReleaseAll();f.channels.set(0,channel);f.players.set(0,replacement);actor=replacement;f.level.getChunkSource().move(actor);
+                        }
+                        BossLifecycle.loot(server).recover(actor);BossLifecycle.loot(server).recover(actor);
+                        helper.assertTrue(java.util.Arrays.equals(c.journal,java.nio.file.Files.readAllBytes(path)),"Closed journal cannot change on lifecycle recovery");
+                        helper.assertTrue(actor.getData(BossContent.LOOT_RECEIPT.get()).tag().equals(c.before.getCompound("neoforge:attachments").getCompound("legacyoftheforce:boss_loot_receipt")),"Receipt must survive native respawn/dimension/login");
+                        boolean drop=c.mode.equals("DEATH_DROP");var items=new net.minecraft.nbt.ListTag();
+                        var entities=new net.minecraft.nbt.ListTag();
+                        for(var id:c.drops) {
+                            helper.assertTrue(f.level.getEntity(id) instanceof net.minecraft.world.entity.item.ItemEntity,"Native death drop must remain present");
+                            var item=(net.minecraft.world.entity.item.ItemEntity)f.level.getEntity(id);items.add(item.getItem().save(f.level.registryAccess()));entities.add(item.saveWithoutId(new net.minecraft.nbt.CompoundTag()));
+                        }
+                        for(var expected:Map.of(net.minecraft.world.item.Items.DIAMOND,7,BossContent.RELIC.get(),1,com.legacyoftheforce.speeder.SpeederContent.ENERGY_CELL.get(),4).entrySet()) {
+                            int ground=c.drops.stream().map(f.level::getEntity).map(i->(net.minecraft.world.entity.item.ItemEntity)i).filter(i->i.getItem().is(expected.getKey())).mapToInt(i->i.getItem().getCount()).sum();
+                            helper.assertTrue(actor.getInventory().countItem(expected.getKey())==(drop ? 0 : expected.getValue()) && ground==(drop ? expected.getValue() : 0),"Vanilla death policy preserves aggregate item totals");
+                        }
+                        var progress=new ProgressService().get(actor.getUUID()).orElseThrow();helper.assertTrue(progress.totalXpEarned()==0 && progress.alignmentTenths()==0,"Abandonment never awards boss XP or alignment");
+                        var tile=(BossAltarEntity)f.level.getBlockEntity(f.altar);helper.assertTrue(tile.isEmpty() && tile.pendingClaim()==null,"Abandonment must not create a second shared lot");
+                        var proof=new net.minecraft.nbt.CompoundTag();proof.putString("mode",c.mode);proof.putUUID("owner",actor.getUUID());proof.putUUID("encounter",c.boss.getUUID());proof.putLong("altar",f.altar.asLong());proof.put("before",c.before);proof.put("native",new VerifiedPlayerSaveBarrier().persist(actor));proof.put("ground",items);proof.put("groundEntities",entities);
+                        proof.put("journal",AtomicNbtFile.read(path,262144));proof.put("arena",AtomicNbtFile.read(root.resolve("data/legacyoftheforce/bosses/arenas/"+BossArenaService.arenaId(f.level,f.altar,BossKind.GUARDIAN)+".nbt"),16384));
+                        new VerifiedChunkSaveBarrier().persist(f.level,Set.of(f.altar));proof.put("altarNative",nativeAltar(f.level,f.altar));proofs.add(proof);c.stage=4;cleanup(f);
+                    }
+                }
+                if(cases.stream().allMatch(c->c.stage==4)) {
+                    var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.put("cases",proofs);AtomicNbtFile.write(root.resolve("validation/boss-lifecycle.nbt"),proof,2097152);
+                    helper.getLevel().getServer().sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=LIFECYCLE cases=4"));helper.succeed();
+                }
+            } catch(Exception failure) { for(var c:cases) if(c.stage!=4) cleanup(c.fixture);throw new RuntimeException(failure); }
+        });
     }
     private static final class LootCrash extends Error {}
     private static void loading(GameTestHelper helper) throws Exception {

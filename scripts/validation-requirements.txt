@@ -1,0 +1,2 @@
+# Native framebuffer verification (available in the tested primary runtime).
+Pillow==13.0.0

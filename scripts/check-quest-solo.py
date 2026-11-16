@@ -6,6 +6,7 @@ import json
 import struct
 from pathlib import Path
 from read_nbt import load
+from PIL import Image
 spec = importlib.util.spec_from_file_location('ilum', Path(__file__).with_name('check-ilum-worlds.py'))
 ilum = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ilum)
@@ -14,6 +15,13 @@ CHECKPOINT = 'legacyoftheforce:save_checkpoint'
 
 def knowledge(player):
     return player['neoforge:attachments'][KNOWLEDGE]
+
+def panel_frame(path):
+    with Image.open(path) as image:
+        assert image.width * image.height <= 4_000_000, 'Unexpected framebuffer budget'
+        rgb = image.convert('RGB')
+        count = sum(n for n, color in rgb.getcolors(rgb.width * rgb.height) if color == (20, 35, 50))
+        assert count > rgb.width * rgb.height // 4, 'Expected the actual journal panel, not a previous world frame'
 
 def frames(profile, recovered):
     names = ['quest-known.png', 'quest-scrolled.png']
@@ -25,6 +33,7 @@ def frames(profile, recovered):
         assert len(data) > 1000 and data[:8] == b'\x89PNG\r\n\x1a\n'
         width, height = struct.unpack('>II', data[16:24])
         assert width >= 640 and height >= 400
+        panel_frame(profile / f'screenshots/{name}')
         hashes.append(hashlib.sha256(data).hexdigest())
     assert len(set(hashes)) == len(names), 'Frames must reflect distinct screens/scroll positions'
     return names
@@ -40,7 +49,7 @@ def verify(repo, run):
     proof = load(world / f'validation/{name}.nbt')
     assert client['schemaVersion'] == proof['schemaVersion'] == 1
     assert client['pid'] == proof['pid'] == result['pid']
-    assert client['recovered'] == recovered and client['nativeJournalScreen'] == 1
+    assert client['recovered'] == recovered and client['nativeJournalScreen'] == 1 and client['frameCaptureVersion'] == 2
     owner = ilum.uid(client['owner'])
     saved = load(world / f'playerdata/{owner}.dat')
     embedded = load(world / 'level.dat')['Data']['Player']

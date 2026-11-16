@@ -64,7 +64,8 @@ public final class QuestSoloValidation {
                     session.holocron=new BlockPos(box.minX()+3,box.minY()+2,box.minZ()+4);
                     require(level.getBlockState(session.holocron).is(QuestContent.HOLOCRON.get()),"Natural holocron must exist");
                     session.site=start.createTag(net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext.fromLevel(level),chunk.getPos());
-                    actor.teleportTo(level,session.holocron.getX()+.5,session.holocron.getY()-1,session.holocron.getZ()-1.5,0,10);
+                    actor.teleportTo(level,session.holocron.getX()+.5,session.holocron.getY()-1,session.holocron.getZ()-1.5,Set.of(),0,10);
+                    actor.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);actor.resetFallDistance();actor.setOnGround(true);
                     session.stage="DISCOVER";
                 }
                 return;
@@ -74,8 +75,8 @@ public final class QuestSoloValidation {
             if(!state.holocrons().contains(QuestContent.ECHO)) return;
             require(state.revision()==1&&!state.visitedIlum()&&state.crystal()==null,"Exactly one discovery and no invented other milestone");
             if(session.stage.equals("DISCOVER")) {
-                var level=server.overworld();int x=session.holocron.getX()+32,z=session.holocron.getZ();int y=level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,x,z);
-                actor.teleportTo(level,x+.5,y,z+.5,0,0); // Reopening must work without the nearby block or an item.
+                var level=server.overworld();int x=session.holocron.getX()+32,z=session.holocron.getZ();level.getChunk(x>>4,z>>4);int y=level.getHeight(Heightmap.Types.MOTION_BLOCKING,x,z);
+                actor.teleportTo(level,x+.5,y,z+.5,Set.of(),0,0);actor.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);actor.resetFallDistance();actor.setOnGround(true); // Reopening must work without the nearby block or an item.
                 session.stage="DISTANT";
             }
             if(!(actor.containerMenu instanceof QuestJournalMenu)) return;

@@ -18,22 +18,29 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
-/** Test-only native client: production commands/use packets, S2C menu observation and framebuffer captures. */
+/** Test-only solo/network client: native inputs, S2C menus and framebuffers; never calls a server directly. */
 @EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
 public final class QuestSoloClientDriver {
+    private static final boolean NETWORK=Boolean.getBoolean("lotf.validation.questNetwork");
+    private static final String PREFIX=NETWORK?"QUEST_NETWORK":"QUEST_SOLO";
+    private static boolean serverPassed,privateChecked,connected;
+    private static ListTag privateLines;
     private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.questSoloRecover");
     private static final long STARTED=System.nanoTime();
     private static long ticks,ready;private static int commands,itemUses;private static String stage="START";
     private static ListTag emptyLines,knownLines;private static BlockPos source;private static boolean backedUp;
     private static void require(boolean value,String message) { if(!value) throw new IllegalStateException(message); }
+    @SubscribeEvent public static void feedback(net.neoforged.neoforge.client.event.ClientChatReceivedEvent.System event) {
+        if(NETWORK&&event.getMessage().getString().equals("LOTF_QUEST_NETWORK_PASS")) serverPassed=true;
+    }
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
-        if(!Boolean.getBoolean("lotf.validation.questSolo")) return;
+        if(!NETWORK&&!Boolean.getBoolean("lotf.validation.questSolo")) return;
         var mc=Minecraft.getInstance();ticks++;
         if(stage.equals("PASS")||stage.equals("FAILED")) { mc.stop();return; }
         try {
             require((System.nanoTime()-STARTED)/1_000_000_000L<240,"Solo quest client timed out");
-            require(mc.gameDirectory.toPath().toAbsolutePath().normalize().getFileName().toString().startsWith("run-quest-client-solo-"),"Isolated client profile required");
-            if(!backedUp&&mc.screen instanceof BackupConfirmScreen confirm
+            require(mc.gameDirectory.toPath().toAbsolutePath().normalize().getFileName().toString().startsWith(NETWORK?"run-quest-network-client-":"run-quest-client-solo-"),"Isolated client profile required");
+            if(!NETWORK&&!backedUp&&mc.screen instanceof BackupConfirmScreen confirm
                     &&(confirm.getTitle().getString().equals(Component.translatable("selectWorld.backupQuestion.experimental").getString())
                     ||confirm.getTitle().getString().equals(Component.translatable("selectWorld.backupQuestion.customized").getString()))) {
                 String label=Component.translatable("selectWorld.backupJoinConfirmButton").getString();
@@ -42,7 +49,9 @@ public final class QuestSoloClientDriver {
             }
             var root=mc.gameDirectory.toPath();var world=root.resolve("saves/QuestValidation");
             require(!Files.exists(world.resolve("validation/quest-solo-failed.nbt")),"Integrated validator failed; preserve evidence");
+            require(!connected||mc.getConnection()!=null,"Native connection closed before completing the client proof");
             if(mc.player==null||mc.level==null||mc.gameMode==null||mc.getConnection()==null) return;
+            connected=true;
             require(mc.player.isAlive(),"Owner must stay alive");
             if(stage.equals("START")) { stage="WARM";ready=ticks+40;return; }
             if(stage.equals("WARM")) {
@@ -51,15 +60,26 @@ public final class QuestSoloClientDriver {
             if(stage.equals("EMPTY")) {
                 if(!(mc.player.containerMenu instanceof QuestJournalMenu menu)||!(mc.screen instanceof QuestJournalScreen)) return;
                 require(menu.lines().stream().anyMatch(l->l.key().equals("quest.legacyoftheforce.find_echo")),"Fresh client must receive only an empty collection");
-                emptyLines=lines(menu);capture(mc,"quest-empty.png");stage="CLOSE_EMPTY";ready=ticks+12;return;
+                emptyLines=lines(menu);stage="CLOSE_EMPTY";ready=ticks+80;return;
             }
-            if(stage.equals("CLOSE_EMPTY")) { if(ticks<ready) return;mc.player.closeContainer();stage="USE";ready=ticks+20;return; }
+            if(stage.equals("CLOSE_EMPTY")) { if(ticks<ready) return;capture(mc,"quest-empty.png");mc.player.closeContainer();stage="USE";ready=ticks+20;return; }
             if(stage.equals("USE")) {
                 if(ticks<ready) return;source=findSource(mc);if(source==null) return;
+                if(NETWORK&&mc.player.getGameProfile().getName().equals("QuestReader")&&!privateChecked) {
+                    command(mc);stage="PEER_EMPTY";return;
+                }
                 require(mc.player.distanceToSqr(Vec3.atCenterOf(source))<16,"Use must be within native reach");
                 mc.player.getInventory().selected=0;
                 mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(source),Direction.NORTH,source,false));
                 itemUses++;stage="KNOWN";return;
+            }
+            if(stage.equals("PEER_EMPTY")) {
+                if(!(mc.player.containerMenu instanceof QuestJournalMenu menu)||!(mc.screen instanceof QuestJournalScreen)) return;
+                require(menu.lines().stream().anyMatch(l->l.key().equals("quest.legacyoftheforce.find_echo")),"Peer must still receive an empty collection after the other owner discovers");
+                privateLines=lines(menu);stage="CLOSE_PRIVATE";ready=ticks+20;return;
+            }
+            if(stage.equals("CLOSE_PRIVATE")) {
+                if(ticks<ready) return;capture(mc,"quest-peer-private.png");mc.player.closeContainer();privateChecked=true;stage="USE";ready=ticks+20;return;
             }
             if(stage.equals("KNOWN")) {
                 if(!(mc.player.containerMenu instanceof QuestJournalMenu menu)||!(mc.screen instanceof QuestJournalScreen)) return;
@@ -82,24 +102,24 @@ public final class QuestSoloClientDriver {
             if(stage.equals("VERIFY_REOPEN")) {
                 if(!(mc.player.containerMenu instanceof QuestJournalMenu menu)||!(mc.screen instanceof QuestJournalScreen)) return;
                 verifyKnown(menu);require(lines(menu).equals(knownLines),"Reopening must retain the same personal guide");
-                if(!Files.exists(world.resolve("validation/"+(RECOVER?"quest-solo-recovered.nbt":"quest-solo-server.nbt")))) return;
+                if(NETWORK?!serverPassed:!Files.exists(world.resolve("validation/"+(RECOVER?"quest-solo-recovered.nbt":"quest-solo-server.nbt")))) return;
                 for(String file:List.of("quest-known.png","quest-scrolled.png")) if(!Files.isRegularFile(root.resolve("screenshots/"+file))||Files.size(root.resolve("screenshots/"+file))==0) return;
                 var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());
-                proof.putBoolean("recovered",RECOVER);proof.put("knownLines",knownLines);if(emptyLines!=null) proof.put("emptyLines",emptyLines);
+                proof.putBoolean("network",NETWORK);proof.putBoolean("recovered",RECOVER);if(privateLines!=null) proof.put("privateLines",privateLines);proof.put("knownLines",knownLines);if(emptyLines!=null) proof.put("emptyLines",emptyLines);
                 proof.putInt("commands",commands);proof.putInt("itemUses",itemUses);proof.put("Inventory",mc.player.getInventory().save(new ListTag()));
-                proof.putString("dimension",mc.level.dimension().location().toString());proof.putBoolean("nativeJournalScreen",true);
-                AtomicNbtFile.write(root.resolve("validation/quest-solo-client.nbt"),proof,262144);
-                stage="PASS";LegacyOfTheForce.LOGGER.info("QUEST_SOLO_CLIENT_PASS recover={} pid={}",RECOVER,ProcessHandle.current().pid());mc.stop();
+                proof.putString("dimension",mc.level.dimension().location().toString());proof.putBoolean("nativeJournalScreen",true);proof.putInt("frameCaptureVersion",2);
+                AtomicNbtFile.write(root.resolve("validation/"+(NETWORK?"quest-network-client.nbt":"quest-solo-client.nbt")),proof,262144);
+                stage="PASS";LegacyOfTheForce.LOGGER.info(PREFIX+"_CLIENT_PASS recover={} pid={}",RECOVER,ProcessHandle.current().pid());mc.stop();
             }
         } catch(Exception failure) {
-            String failedStage=stage;stage="FAILED";LegacyOfTheForce.LOGGER.error("QUEST_SOLO_CLIENT_FAILED stage={} ticks={}",failedStage,ticks,failure);
-            try { var proof=new CompoundTag();proof.putString("error",failure.toString());AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/quest-solo-client-failed.nbt"),proof,16384); }
+            String failedStage=stage;stage="FAILED";LegacyOfTheForce.LOGGER.error(PREFIX+"_CLIENT_FAILED stage={} ticks={}",failedStage,ticks,failure);
+            try { var proof=new CompoundTag();proof.putString("error",failure.toString());AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/"+(NETWORK?"quest-network-client-failed.nbt":"quest-solo-client-failed.nbt")),proof,16384); }
             catch(Exception ignored) {} mc.stop();
         }
     }
     private static void command(Minecraft mc) { mc.getConnection().sendCommand("lotf journal");commands++; }
     private static void capture(Minecraft mc,String name) {
-        Screenshot.grab(mc.gameDirectory,name,mc.getMainRenderTarget(),message->LegacyOfTheForce.LOGGER.info("QUEST_SOLO_CAPTURE {}",name));
+        Screenshot.grab(mc.gameDirectory,name,mc.getMainRenderTarget(),message->LegacyOfTheForce.LOGGER.info(PREFIX+"_CAPTURE {}",name));
     }
     private static ListTag lines(QuestJournalMenu menu) {
         var lines=new ListTag();for(var line:menu.lines()) { var tag=new CompoundTag();tag.putString("key",line.key());tag.putInt("status",line.status());lines.add(tag); }return lines;

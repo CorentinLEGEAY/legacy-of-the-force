@@ -1,2 +1,2 @@
-/** Internal quests module; gameplay implementation pending its roadmap ticket. */
+/** Optional data-driven holocron guidance and durable personal knowledge; no RPG reward authority. */
 package com.legacyoftheforce.quests;

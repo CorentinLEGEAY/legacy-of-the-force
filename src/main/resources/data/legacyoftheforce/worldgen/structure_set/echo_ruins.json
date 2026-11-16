@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:echo_ruin",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 192851,
+    "spacing": 32,
+    "separation": 16,
+    "spread_type": "linear"
+  }
+}

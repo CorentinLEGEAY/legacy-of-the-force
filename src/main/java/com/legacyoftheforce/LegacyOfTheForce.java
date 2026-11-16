@@ -43,6 +43,9 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.register(bosses);
         com.legacyoftheforce.core.api.WorldProtectionHooks.register(bosses);
         com.legacyoftheforce.planets.PlanetContent.register(modBus);
+        com.legacyoftheforce.quests.QuestContent.register(modBus);
+        NeoForge.EVENT_BUS.register(new com.legacyoftheforce.quests.QuestLifecycle());
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.quests.QuestCatalog::register);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());
         com.legacyoftheforce.speeder.SpeederContent.register(modBus);

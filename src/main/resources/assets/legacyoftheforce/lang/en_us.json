@@ -290,5 +290,17 @@
   "boss.legacyoftheforce.inventory_full": "Make room for all the shared loot first.",
   "boss.legacyoftheforce.collected": "Shared loot collected into your inventory.",
   "boss.legacyoftheforce.loot_pending": "Loot recovery pending: data retained. Contact the administrator.",
-  "boss.legacyoftheforce.fluid_locked": "Fluids are locked while this area is protected."
+  "boss.legacyoftheforce.fluid_locked": "Fluids are locked while this area is protected.",
+  "block.legacyoftheforce.ilum_holocron": "Frozen Echo Holocron",
+  "quest.legacyoftheforce.journal": "Echo Journal",
+  "quest.legacyoftheforce.optional": "These clues are optional. Explore freely: quests never lock Force progression, travel or bosses. Reopen the journal to refresh milestones.",
+  "quest.legacyoftheforce.find_echo": "Look for a small mossy stone ruin on the Overworld surface. Read its purple and copper cube. Knowledge remains accessible through /lotf journal, even without the item.",
+  "quest.legacyoftheforce.unavailable": "Journal unavailable: unsupported data or unverified save. Nothing was consumed. Retry later; check the logs if this persists.",
+  "quest.legacyoftheforce.more": "Further knowledge is retained. Extended collection filtering will be added later.",
+  "quest.legacyoftheforce.echo.title": "An Echo in the Stone",
+  "quest.legacyoftheforce.echo.origin": "An unnamed traveller's archive — 'Beneath the snow, a light awaits those who listen. Take what you need; let others choose their path.'",
+  "quest.legacyoftheforce.echo.clue": "To Ilum: craft coordinates with a compass, paper, an amethyst shard and lapis. At a terminal (IGI/CRC/III: iron, glass, copper, redstone), decode them; it displays the fare. Bring the second terminal for your return. On Ilum, find a stone-brick mine entrance: its stairs descend beneath blue ice. Bring an iron pickaxe; each crystal keeps its identity. Duels are optional. Install it at a saber workshop to continue your adventure.",
+  "quest.legacyoftheforce.echo.read": "Read the Frozen Echo holocron.",
+  "quest.legacyoftheforce.echo.travel": "Visit Ilum, with or without this clue.",
+  "quest.legacyoftheforce.echo.collect": "Acquire an identified Ilum crystal; one already installed in your saber also counts. No item consumption or alignment reward."
 }

@@ -290,5 +290,17 @@
   "boss.legacyoftheforce.inventory_full": "Il faut assez de place pour tout le butin partagé.",
   "boss.legacyoftheforce.collected": "Butin partagé récupéré dans votre inventaire.",
   "boss.legacyoftheforce.loot_pending": "Reprise du butin en attente : données conservées. Contactez l'administrateur.",
-  "boss.legacyoftheforce.fluid_locked": "Les fluides sont verrouillés tant que cette zone est protégée."
+  "boss.legacyoftheforce.fluid_locked": "Les fluides sont verrouillés tant que cette zone est protégée.",
+  "block.legacyoftheforce.ilum_holocron": "Holocron de l'écho gelé",
+  "quest.legacyoftheforce.journal": "Journal des échos",
+  "quest.legacyoftheforce.optional": "Ces pistes sont facultatives. Explore librement : aucune quête ne verrouille la Force, les voyages ou les boss. Rouvre le journal pour actualiser les jalons.",
+  "quest.legacyoftheforce.find_echo": "Cherche une petite ruine de pierre moussue à la surface de l'Overworld. Lis son cube violet et cuivré. La connaissance restera consultable avec /lotf journal, même sans l'objet.",
+  "quest.legacyoftheforce.unavailable": "Journal indisponible : données inconnues ou sauvegarde non vérifiée. Rien n'a été consommé. Réessaie plus tard ; consulte les logs si le problème persiste.",
+  "quest.legacyoftheforce.more": "D'autres connaissances sont conservées. Le filtre de collection étendue sera ajouté ultérieurement.",
+  "quest.legacyoftheforce.echo.title": "Un écho dans la roche",
+  "quest.legacyoftheforce.echo.origin": "Archive d'un voyageur anonyme — « Sous la neige, une lumière attend celui qui écoute. Prends ce dont tu as besoin ; laisse les autres choisir leur voie. »",
+  "quest.legacyoftheforce.echo.clue": "Vers Ilum : fabrique les coordonnées avec boussole, papier, éclat d'améthyste et lapis. Au terminal (IGI/CRC/III : fer, verre, cuivre, redstone), décode-les ; il annonce le coût. Emporte le second terminal pour rentrer. Cherche sur Ilum une entrée de mine en briques de pierre : son escalier descend sous la glace bleue. Pioche en fer requise ; le cristal garde sa propre identité. Les duels sont facultatifs. À l'atelier sabre, installe-le pour poursuivre ton aventure.",
+  "quest.legacyoftheforce.echo.read": "Lire l'holocron de l'écho gelé.",
+  "quest.legacyoftheforce.echo.travel": "Visiter Ilum, avec ou sans cette piste.",
+  "quest.legacyoftheforce.echo.collect": "Récupérer un cristal identifié d'Ilum ; un cristal déjà installé dans ton sabre compte aussi. Aucune consommation ni récompense d'alignement."
 }

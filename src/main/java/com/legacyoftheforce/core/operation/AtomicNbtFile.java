@@ -9,6 +9,15 @@ import net.minecraft.nbt.NbtIo;
 
 /** Bounded, version-agnostic file primitive. Callers validate their own envelope. */
 public final class AtomicNbtFile {
+    // Bounded stripes avoid an unbounded path cache. Reentrant monitors also protect read-back.
+    // Internal readers must not continuously race Windows target replacement.
+    private static final Object[] FILE_LOCKS = new Object[64];
+    static { java.util.Arrays.setAll(FILE_LOCKS, ignored -> new Object()); }
+    private static Object lock(Path file) {
+        var normalized = file.toAbsolutePath().normalize().toString();
+        if (System.getProperty("os.name").startsWith("Windows")) normalized = normalized.toLowerCase(java.util.Locale.ROOT);
+        return FILE_LOCKS[Math.floorMod(normalized.hashCode(), FILE_LOCKS.length)];
+    }
     private static final int[] REPLACE_RETRY_MILLIS={2,8,20};
     @FunctionalInterface interface RetryPause { void pause(int retry) throws IOException; }
     private AtomicNbtFile() {}
@@ -28,12 +37,18 @@ public final class AtomicNbtFile {
         }
     }
     public static CompoundTag read(Path file, int maxBytes) throws IOException {
+        synchronized (lock(file)) { return readLocked(file, maxBytes); }
+    }
+    private static CompoundTag readLocked(Path file, int maxBytes) throws IOException {
         if (Files.isSymbolicLink(file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)
                 || Files.size(file) > maxBytes) throw new IOException("Unsafe NBT file: " + file.getFileName());
         try { return NbtIo.readCompressed(file, NbtAccounter.create(maxBytes)); }
         catch (RuntimeException malformed) { throw new IOException("Invalid or oversized NBT", malformed); }
     }
     public static void write(Path file, CompoundTag value, int maxBytes) throws IOException {
+        synchronized (lock(file)) { writeLocked(file, value, maxBytes); }
+    }
+    private static void writeLocked(Path file, CompoundTag value, int maxBytes) throws IOException {
         if (value.sizeInBytes() > maxBytes) throw new IOException("NBT payload exceeds budget");
         var parent = file.toAbsolutePath().normalize().getParent();
         Files.createDirectories(parent);

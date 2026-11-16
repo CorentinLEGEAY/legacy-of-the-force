@@ -12,6 +12,12 @@ def verify(repo,run):
     assert digest==result['jarSha256']==hashlib.sha256((root/'mods'/jar.name).read_bytes()).hexdigest().upper()
     with zipfile.ZipFile(jar) as archive:
         names=archive.namelist();assert not any(any(t in f for t in ('GameTests','ClientDriver','Validation')) for f in names)
+        test_root=repo/'src/gameTest/java'
+        test_stems=[p.relative_to(test_root).with_suffix('').as_posix() for p in test_root.rglob('*.java')]
+        assert not any(name==stem+'.class' or name.startswith(stem+'$') for name in names for stem in test_stems), 'Test-only class distributed'
+        assert 'com/legacyoftheforce/quests/QuestLifecycle.class' in names
+        assert json.loads(archive.read('data/legacyoftheforce/quests/echo_of_ilum.json'))['rewards']=={'xp':0,'alignmentTenths':0}
+        assert json.loads(archive.read('data/legacyoftheforce/worldgen/structure/echo_ruin.json'))['type']=='legacyoftheforce:echo_ruin'
         config=json.loads(archive.read('legacyoftheforce.mixins.json'));assert config['required'] and config['injectors']['defaultRequire']==1 and len(config['mixins'])==3
         for mixin in config['mixins']: assert config['package'].replace('.','/')+'/'+mixin+'.class' in names
         assert 'config="legacyoftheforce.mixins.json"' in archive.read('META-INF/neoforge.mods.toml').decode()
@@ -19,6 +25,7 @@ def verify(repo,run):
     for phase in (1,2):
         log=(repo/f'.tools/packaged-{run}-phase{phase}.log').read_text(encoding='utf-8-sig')
         assert 'mods folder locator' in log and 'Legacy of the Force 0.1.0-dev (legacyoftheforce)' in log and 'infrastructure loaded' in log
+        assert 'Loaded 1 optional quest guides' in log
         assert f'LOTF_JAR_FLOW_PASS_{phase}' in log and 'Reward journal recovered; profiles synchronized.' in log and 'All dimensions are saved' in log
         assert 'MixinApplyError' not in log and 'InvalidInjectionException' not in log and "'/legacyoftheforce:ilum" in log
         if result.get('mixinVerbose'):

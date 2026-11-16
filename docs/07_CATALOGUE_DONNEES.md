@@ -132,3 +132,8 @@ Journal `data/legacyoftheforce/travel/<owner>.nbt` schéma1≤262144octets : own
 - Recette/plan impossible → refus avec motif sans consommation d'objets.
 - Ne pas accepter un UUID fourni par un client comme preuve de propriété.
 - Les tables de loot/recettes/worldgen réels doivent utiliser les systèmes data-driven de Minecraft quand c'est possible.
+
+### Guide optionnel P4-04
+`quests/echo_of_ilum.json` schéma1 : clés title/origin/clue, steps (id,text,condition HOLOCRON/ILUM/CRYSTAL), repeatable=false, dependencies=[], rewards={xp:0,alignmentTenths:0}. Ce premier interpréteur refuse dépendances/répétitions/récompenses inconnues ; il ne prétend pas gérer les futurs PNJ/factions. Catalogue≤32, fichier≤8192caractères,8étapes par guide. Erreur : catalogue inactif, connaissance conservée. Textes FR/EN distribués ; un datapack ajoutant des clés doit fournir sa localisation client.
+Attachment `legacyoftheforce:quest_knowledge` schéma1≤16384octets : revision long non négatif, holocrons≤32IDs canoniques uniques≤128caractères, visitedIlum booléen, crystal UUID non nul optionnel. Champs inconnus retenus ; schéma futur intact/inactif. Identité du premier cristal possédé conservée, pas une revendication de propriété exclusive. Aucun inventaire ou alignement parallèle.
+Worldgen `echo_ruin` et placement `echo_ruins` (spacing32/separation16/salt192851) en données ; une pièce7×5×7 confinée au chunk, schéma1, un holocron. Géométrie originale, textures Minecraft de cuivre/améthyste/pierre ; pas d’asset extrait d’un tiers. Journal minimal texte avec coches et navigation, sans dépendre uniquement de la couleur ; filtres avancés/marqueurs restent P7.

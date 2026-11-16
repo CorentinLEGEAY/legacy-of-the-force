@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "title": "quest.legacyoftheforce.echo.title",
+  "origin": "quest.legacyoftheforce.echo.origin",
+  "clue": "quest.legacyoftheforce.echo.clue",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "echo",
+      "condition": "HOLOCRON",
+      "text": "quest.legacyoftheforce.echo.read"
+    },
+    {
+      "id": "journey",
+      "condition": "ILUM",
+      "text": "quest.legacyoftheforce.echo.travel"
+    },
+    {
+      "id": "crystal",
+      "condition": "CRYSTAL",
+      "text": "quest.legacyoftheforce.echo.collect"
+    }
+  ]
+}

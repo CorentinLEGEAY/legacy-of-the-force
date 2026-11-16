@@ -9,7 +9,24 @@ import net.minecraft.nbt.NbtIo;
 
 /** Bounded, version-agnostic file primitive. Callers validate their own envelope. */
 public final class AtomicNbtFile {
+    private static final int[] REPLACE_RETRY_MILLIS={2,8,20};
+    @FunctionalInterface interface RetryPause { void pause(int retry) throws IOException; }
     private AtomicNbtFile() {}
+    static void replace(Path source,Path target,RetryPause pause) throws IOException {
+        for(int retry=0;;retry++) {
+            try { Files.move(source,target,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);return; }
+            catch(AccessDeniedException denied) {
+                if(retry>=REPLACE_RETRY_MILLIS.length) throw denied;
+                pause.pause(retry);
+            }
+        }
+    }
+    private static void pauseReplacement(int retry) throws IOException {
+        try { Thread.sleep(REPLACE_RETRY_MILLIS[retry]); }
+        catch(InterruptedException interrupted) {
+            Thread.currentThread().interrupt();var failure=new java.io.InterruptedIOException("Atomic NBT replacement interrupted");failure.initCause(interrupted);throw failure;
+        }
+    }
     public static CompoundTag read(Path file, int maxBytes) throws IOException {
         if (Files.isSymbolicLink(file) || !Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)
                 || Files.size(file) > maxBytes) throw new IOException("Unsafe NBT file: " + file.getFileName());
@@ -25,7 +42,7 @@ public final class AtomicNbtFile {
         try {
             NbtIo.writeCompressed(value, temporary);
             try (var channel = FileChannel.open(temporary, StandardOpenOption.WRITE)) { channel.force(true); }
-            Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            replace(temporary,file,AtomicNbtFile::pauseReplacement);
             if (!read(file, maxBytes).equals(value)) throw new IOException("NBT read-back differs");
         } finally { Files.deleteIfExists(temporary); }
     }

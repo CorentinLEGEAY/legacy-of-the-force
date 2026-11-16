@@ -88,6 +88,7 @@ public final class IlumBossGameTests {
         var tests = new ArrayList<>(Arrays.stream(BossKind.values()).map(kind -> new TestFunction("boss_dedicated", "bosses." + kind.path, "legacyoftheforce:empty", 900, 0L, true, helper -> {
             try { battle(helper, kind); } catch (Exception failure) { throw new RuntimeException(failure); }
         })).toList());
+        tests.add(new TestFunction("boss_dedicated","bosses.health","legacyoftheforce:empty",500,0L,true,helper -> { try { health(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.fluids","legacyoftheforce:empty",900,0L,true,helper -> { try { fluids(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.lifecycle","legacyoftheforce:empty",1200,0L,true,helper -> { try { lifecycle(helper); } catch(Exception failure) { throw new RuntimeException(failure); } }));
         tests.add(new TestFunction("boss_dedicated","bosses.safety","legacyoftheforce:empty",500,0L,true,helper -> { try { safety(helper); } catch (Exception failure) { throw new RuntimeException(failure); } }));
@@ -105,6 +106,40 @@ public final class IlumBossGameTests {
 
     private static void battle(GameTestHelper helper, BossKind kind) throws Exception {
         var fixture=fixture(helper,kind,2,List.of(),true);ready(helper,fixture,()->battle(helper,kind,fixture,true));
+    }
+    private static void health(GameTestHelper helper) throws Exception {
+        var f=fixture(helper,BossKind.GUARDIAN,3);ready(helper,f,()-> {
+            var originalHealth=BossConfig.HEALTH.get();var originalExtra=BossConfig.GROUP_HEALTH.get();
+            try {
+                BossConfig.HEALTH.set(Double.NaN);BossConfig.GROUP_HEALTH.set(Double.POSITIVE_INFINITY);
+                helper.assertTrue(BossConfig.health(1)==220 && BossConfig.health(2)==297,"Non-finite runtime configuration must yield finite defaults");
+                BossConfig.HEALTH.set(1024d);BossConfig.GROUP_HEALTH.set(1d);
+                var first=f.players.getFirst();var service=BossArenaService.forServer(first.server);
+                helper.assertTrue(service.challenge(first,f.altar,BossKind.GUARDIAN) && service.challenge(f.players.get(1),f.altar,BossKind.GUARDIAN),"Two native initial participants required");
+                var boss=f.level.getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(f.altar)).getFirst();var phase=new int[]{0};var after=new long[]{0};
+                helper.onEachTick(()-> {
+                    try {
+                        if(phase[0]==0 && boss.phase()>0) {
+                            helper.assertTrue(((net.minecraft.world.entity.ai.attributes.RangedAttribute)net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH.value()).getMaxValue()==1024,"Pinned native cap must remain unchanged globally");
+                            helper.assertTrue(boss.getMaxHealth()==1024 && boss.getHealth()==1024 && boss.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue()==1024,"Two-player scaling must store a bounded native base, not just rely on sanitizing getValue");
+                            helper.assertTrue(boss.hurt(first.damageSources().playerAttack(first),128) && boss.getHealth()==896,"Damage remains native and unscaled");
+                            helper.assertTrue(service.challenge(f.players.get(2),f.altar,BossKind.GUARDIAN),"Third native participant must join late");
+                            helper.assertTrue(boss.getHealth()==896 && boss.getMaxHealth()==1024,"Late join cannot heal or inflate the boss");phase[0]=1;after[0]=helper.getTick()+20;
+                        } else if(phase[0]==1 && helper.getTick()>=after[0]) {
+                            helper.assertTrue(boss.getHealth()==896 && boss.getMaxHealth()==1024 && boss.phase()==1,"Health/phase must remain stable after the late join");
+                            new VerifiedEntitySaveBarrier().persist(boss);
+                            var raw=new VerifiedEntitySaveBarrier().read(f.level,boss.chunkPosition()).orElseThrow();
+                            var nativeBoss=raw.getList("Entities",net.minecraft.nbt.Tag.TAG_COMPOUND).stream().map(t->(net.minecraft.nbt.CompoundTag)t).filter(t->t.hasUUID("UUID") && t.getUUID("UUID").equals(boss.getUUID())).findFirst().orElseThrow();
+                            var proof=new net.minecraft.nbt.CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("altar",f.altar.asLong());proof.putUUID("encounter",boss.getUUID());proof.putInt("initialParticipants",2);proof.putInt("lateParticipants",1);proof.putDouble("base",1024);proof.putDouble("extra",1);proof.putDouble("nativeMaximum",boss.getMaxHealth());proof.put("nativeBoss",nativeBoss.copy());proof.putBoolean("invalidConfigFallback",true);
+                            var players=new net.minecraft.nbt.ListTag();for(var actor:f.players) players.add(new VerifiedPlayerSaveBarrier().persist(actor));proof.put("players",players);
+                            AtomicNbtFile.write(first.server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("validation/boss-health.nbt"),proof,524288);
+                            BossConfig.HEALTH.set(originalHealth);BossConfig.GROUP_HEALTH.set(originalExtra);cleanup(f);phase[0]=2;
+                            helper.succeed();first.server.sendSystemMessage(net.minecraft.network.chat.Component.literal("BOSS_GAME_TEST_PASS kind=HEALTH cap=1024 lateJoinWithoutHealing=true"));
+                        }
+                    } catch(Exception failure) { BossConfig.HEALTH.set(originalHealth);BossConfig.GROUP_HEALTH.set(originalExtra);cleanup(f);throw new RuntimeException(failure); }
+                });
+            } catch(Exception failure) { BossConfig.HEALTH.set(originalHealth);BossConfig.GROUP_HEALTH.set(originalExtra);cleanup(f);throw failure; }
+        });
     }
     private static void fluidAim(ServerPlayer actor,BlockPos pos) {
         var delta=net.minecraft.world.phys.Vec3.atCenterOf(pos).subtract(actor.getEyePosition());

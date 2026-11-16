@@ -14,14 +14,14 @@ public final class BossConfig {
     private static final java.util.Map<BossAttack, AttackValues> ATTACKS = new java.util.EnumMap<>(BossAttack.class);
     static {
         var b = new ModConfigSpec.Builder();
-        HEALTH = b.defineInRange("ilum.health", 220d, 40, 10000); DAMAGE = b.defineInRange("ilum.baseDamage", 5d, 1, 40);
+        HEALTH = b.defineInRange("ilum.health", 220d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH); DAMAGE = b.defineInRange("ilum.baseDamage", 5d, 1, 40);
         MIN_DAMAGE = b.defineInRange("rewards.minimumContributionDamage", 2d, .1, 100);
         XP = b.defineInRange("ilum.rewardXp", 800, 1, 100000);
         REWARD_COOLDOWN = b.defineInRange("rewards.perPlayerBossCooldownTicks", 72000, 1200, 1728000);
         ARENA_COOLDOWN = b.defineInRange("arena.respawnCooldownTicks", 12000, 200, 1728000);
         RESET_DELAY = b.defineInRange("arena.noPlayersResetTicks", 100, 40, 1200);
         WINDUP = b.defineInRange("combat.minimumWindupTicks", 16, 10, 100);
-        MAX_PLAYERS = b.defineInRange("arena.maximumParticipants", 4, 1, 16);
+        MAX_PLAYERS = b.defineInRange("arena.maximumParticipants", 4, 1, BossHealthRules.MAX_PARTICIPANTS);
         SPEED = b.defineInRange("combat.movementSpeed", .24d, .05, .5); ENERGY_REGEN = b.defineInRange("combat.energyRegenerationPerTick", .3d, .05, 2);
         GROUP_HEALTH = b.defineInRange("combat.extraHealthPerAdditionalParticipant", .35d, 0, 1);
         ICE_SPEED = b.defineInRange("ice.projectileSpeed", .28d, .05, .6); ICE_HEALTH = b.defineInRange("ice.health", 10d, 1, 40);
@@ -37,6 +37,15 @@ public final class BossConfig {
                     b.defineInRange(key + "range", a.range, 1, 12), b.defineInRange(key + "damageMultiplier", a.damage, 0, 4), b.defineInRange(key + "energy", a.energy, 0, 100)));
         }
         SPEC = b.build();
+    }
+    private static final java.util.concurrent.atomic.AtomicBoolean INVALID_HEALTH_REPORTED=new java.util.concurrent.atomic.AtomicBoolean();
+    static double health(int participants) {
+        double base=HEALTH.get(),extra=GROUP_HEALTH.get();
+        if(!Double.isFinite(base) || !Double.isFinite(extra)) {
+            if(INVALID_HEALTH_REPORTED.compareAndSet(false,true)) com.legacyoftheforce.LegacyOfTheForce.LOGGER.warn("Non-finite boss health configuration; using safe default for the invalid value");
+            if(!Double.isFinite(base)) base=220;if(!Double.isFinite(extra)) extra=.35;
+        }
+        return BossHealthRules.scaled(Math.clamp(base,BossHealthRules.MIN_HEALTH,BossHealthRules.MAX_HEALTH),Math.clamp(extra,0,1),participants);
     }
     static int windup(BossAttack attack) { return Math.max(WINDUP.get(), ATTACKS.get(attack).windup.get()); }
     static int cooldown(BossAttack attack) { return ATTACKS.get(attack).cooldown.get(); }

@@ -53,7 +53,7 @@ public final class IlumBossEntity extends PathfinderMob implements Enemy, ForceI
         }
     }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) { super.defineSynchedData(builder); builder.define(PHASE, 0); builder.define(ATTACK, 0); builder.define(WINDUP, 0); }
-    void bind(BlockPos pos) { altar = pos.immutable(); cooldown = BossConfig.INTRO.get(); getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.HEALTH.get()); getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(BossConfig.SPEED.get()); setHealth(getMaxHealth()); }
+    void bind(BlockPos pos) { altar = pos.immutable(); cooldown = BossConfig.INTRO.get(); getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.health(1)); getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(BossConfig.SPEED.get()); setHealth(getMaxHealth()); }
     boolean join(ServerPlayer actor) {
         if (!valid(actor) || altar == null || !BossArenaService.bounds(altar).contains(actor.position())) return false;
         if (!contributors.containsKey(actor.getUUID()) && contributors.size() >= BossConfig.MAX_PLAYERS.get()) return false;
@@ -95,7 +95,7 @@ public final class IlumBossEntity extends PathfinderMob implements Enemy, ForceI
         if (cooldown > 0) {
             cooldown--;
             if (phase() == 0 && cooldown == 0) {
-                scaled = true; getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.HEALTH.get() * (1 + BossConfig.GROUP_HEALTH.get() * (actors.size() - 1))); setHealth(getMaxHealth()); entityData.set(PHASE, 1);
+                scaled = true; getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.health(actors.size())); setHealth(getMaxHealth()); entityData.set(PHASE, 1);
             }
             return;
         }

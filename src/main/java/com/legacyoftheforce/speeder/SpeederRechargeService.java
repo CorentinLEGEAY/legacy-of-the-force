@@ -114,7 +114,7 @@ public final class SpeederRechargeService {
             applyPayment(actor, after); probe.reached(Checkpoint.PAYMENT_DURABLE);
             record = advance(record, Phase.PAID); probe.reached(Checkpoint.PAID); finish(actor, record); return recycle ? Result.RECYCLED : paint ? Result.PAINTED : repair ? Result.REPAIRED : Result.CHARGED;
         } catch (IOException | RuntimeException failure) {
-            LegacyOfTheForce.LOGGER.error("Speeder recharge retained: {}", failure.getMessage());
+            LegacyOfTheForce.LOGGER.error("Speeder recharge retained ({}): durable journal preserved",failure.getClass().getName(),failure);
             try { recover(actor); }
             catch (IOException | RuntimeException unresolved) { if (actor.connection != null) actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("message.legacyoftheforce.recharge_pending")); }
             return Result.PENDING;

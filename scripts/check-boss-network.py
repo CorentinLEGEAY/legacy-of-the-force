@@ -17,21 +17,38 @@ def saber(player):
     assert len(found)==1 and found[0]['active']==1
     return found[0]
 
-def verify(repo,run):
-    world=repo/f'run-boss-{run}/world';prefix=repo/f'.tools/boss-network-{run}';result=json.loads(Path(str(prefix)+'-result.json').read_text(encoding='utf-8-sig'))
-    assert result['observed'] and result['serverExitCode']==0 and len(result['clients'])==2 and all(c['exitCode']==0 for c in result['clients'])
+def verify(repo,run,solo=False):
+    n=1 if solo else 2
+    if solo:
+        world=repo/f'run-boss-client-solo-{run}/saves/BossValidation';prefix=repo/f'.tools/boss-solo-{run}'
+        result=json.loads(Path(str(prefix)+'-result.json').read_text(encoding='utf-8-sig'))
+        assert result['exitCode']==0 and not result['forced'] and not result['recover']
+        result['clients']=[{'profile':result['profile'],'pid':result['pid'],'name':'ForceTesterSolo'}]
+        log=Path(str(prefix)+'-console.log').read_text(encoding='utf-8-sig')
+    else:
+        world=repo/f'run-boss-{run}/world';prefix=repo/f'.tools/boss-network-{run}';result=json.loads(Path(str(prefix)+'-result.json').read_text(encoding='utf-8-sig'))
+        assert result['observed'] and result['serverExitCode']==0 and len(result['clients'])==2 and all(c['exitCode']==0 for c in result['clients'])
+        log=Path(str(prefix)+'-server.log').read_text(encoding='utf-8-sig')
     proof=load(world/'validation/boss-network-server.nbt');assert proof['schemaVersion']==1
-    log=Path(str(prefix)+'-server.log').read_text(encoding='utf-8-sig')
-    assert 'BOSS_NETWORK_SERVER_PASS clients=2 battles=2' in log and 'All dimensions are saved' in log and 'BOSS_NETWORK_SERVER_FAILED' not in log and 'Boss arenas paused' not in log
-    initial={ilum.uid(p['UUID']):p for p in proof['initialPlayers']};players={ilum.uid(p['owner']):p for p in proof['players']};assert len(initial)==len(players)==2 and initial.keys()==players.keys()
-    assert len({p['endpoint'] for p in players.values()})==2 and all(p['endpoint'].startswith('/127.0.0.1:') for p in players.values())
+    assert f'BOSS_NETWORK_SERVER_PASS clients={n} battles=2' in log and 'All dimensions are saved' in log and 'BOSS_NETWORK_SERVER_FAILED' not in log and 'Boss arenas paused' not in log
+    initial={ilum.uid(p['UUID']):p for p in proof['initialPlayers']};players={ilum.uid(p['owner']):p for p in proof['players']};assert len(initial)==len(players)==n and initial.keys()==players.keys()
+    if solo:
+        assert proof['solo']==1 and proof['serverClass']=='net.minecraft.client.server.IntegratedServer' and all(p['memoryConnection']==1 for p in players.values())
+    else:
+        assert len({p['endpoint'] for p in players.values()})==2 and all(p['endpoint'].startswith('/127.0.0.1:') for p in players.values())
     relics=cells=revisions=0;client_pids=set();client_clicks=0;crystals=set();sabers=set();clients={}
     for launch in result['clients']:
-        client=load(Path(launch['profile'])/'validation/boss-network-client.nbt');assert client['schemaVersion']==1 and client['pid']==launch['pid'] and client['pid']!=proof['serverPid']
+        client=load(Path(launch['profile'])/'validation/boss-network-client.nbt');assert client['schemaVersion']==1 and client['pid']==launch['pid'] and (client['pid']==proof['serverPid'] if solo else client['pid']!=proof['serverPid'])
         client_log=(Path(launch['profile'])/'logs/latest.log').read_text(encoding='utf-8-sig');assert 'BOSS_NETWORK_CLIENT_PASS' in client_log and 'BOSS_NETWORK_CLIENT_FAILED' not in client_log
         client_pids.add(client['pid']);identity=ilum.uid(client['lastPlayer']['owner']);assert identity in players and players[identity]['name']==launch['name'];clients[identity]=client
         native=players[identity]['native'];saved=load(world/f'playerdata/{identity}.dat');origin=initial[identity]
         assert saved['Inventory']==native['Inventory']==client['lastPlayer']['Inventory']
+        if solo:
+            embedded=load(world/'level.dat')['Data']['Player']
+            assert ilum.uid(embedded['UUID'])==identity and embedded['Inventory']==saved['Inventory']
+            assert embedded['Dimension']==saved['Dimension'] and loot_receipt(embedded)==loot_receipt(saved)
+            assert embedded['neoforge:attachments']['legacyoftheforce:save_checkpoint']==saved['neoforge:attachments']['legacyoftheforce:save_checkpoint']==native['neoforge:attachments']['legacyoftheforce:save_checkpoint']
+            for key in ('totalXpEarned','alignmentTenths','level'): assert profile(embedded)[key]==profile(saved)[key]
         assert native['Dimension']==saved['Dimension']==client['lastPlayer']['dimension']=='legacyoftheforce:ilum' and native['playerGameType']==saved['playerGameType']==0
         assert profile(origin)['level']==15 and profile(origin)['totalXpEarned']==proof['initialXp'] and profile(origin)['alignmentTenths']==0
         assert profile(saved)['totalXpEarned']==profile(native)['totalXpEarned']==proof['initialXp']+1600 and profile(saved)['alignmentTenths']==profile(native)['alignmentTenths']==0
@@ -45,7 +62,7 @@ def verify(repo,run):
         if receipt['revision']:
             journal=load(world/f'data/legacyoftheforce/bosses/loot/{identity}.nbt');assert journal['phase']=='DONE' and ilum.uid(journal['owner'])==identity and journal['operation']==receipt['operation'] and journal['after']['receipt']==receipt
         assert client['attacks']>0 and client['guards']>0;client_clicks+=client['menuClicks']
-    assert len(client_pids)==len(clients)==len(sabers)==len(crystals)==2 and relics==2 and cells==8 and revisions==2 and client_clicks>=2
+    assert len(client_pids)==len(clients)==len(sabers)==len(crystals)==n and relics==2 and cells==8 and revisions==2 and client_clicks>=2
     assert [b['kind'] for b in proof['battles']]==['GUARDIAN','FROST_LORD'];reports=[];claims=set()
     for index,battle in enumerate(proof['battles']):
         encounter=ilum.uid(battle['encounter']);kind=battle['kind'];assert {1,2,3}<=set(battle['phases']) and battle['ice']==battle['signature']==1 and battle['iceHits']+battle['iceForces']>0
@@ -79,7 +96,7 @@ def verify(repo,run):
         assert all(state(a+dx,b+5,c+dz)=='minecraft:sea_lantern' for dx in (2,8) for dz in (2,8))
         assert state(a+5,b+6,c+5)==('minecraft:quartz_bricks' if index==0 else 'minecraft:deepslate_bricks')
         assert all(ilum.uid(e['UUID'])!=encounter for dx in (-1,0,1) for dz in (-1,0,1) for e in boss.entity_chunk(world,x//16+dx,z//16+dz) if 'UUID' in e)
-        reports.append({'kind':kind,'contributors':2,'parries':battle['parries'],'paidCounters':battle['counters'],'iceHits':battle['iceHits']})
+        reports.append({'kind':kind,'contributors':n,'parries':battle['parries'],'paidCounters':battle['counters'],'iceHits':battle['iceHits'],'iceCounters':battle['iceForces']})
     assert len(claims)==2 and not list((world/'data/legacyoftheforce/bosses/victories').glob('*.nbt'))
     return {'nativeClients':len(clients),'serverPid':proof['serverPid'],'clientPids':sorted(client_pids),'battles':reports,'personalXpDelta':1600,'netAlignment':0,'sharedRelics':relics,'sharedCells':cells,'pendingVictories':0}
 

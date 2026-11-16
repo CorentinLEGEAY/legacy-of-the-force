@@ -27,6 +27,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 /** Observes genuine socket clients. Only initialization/between-duel placement and supplies are fixtures. */
 @EventBusSubscriber(modid="legacyoftheforce")
 public final class BossNetworkValidation {
+    private static final boolean SOLO=Boolean.getBoolean("lotf.validation.bossSolo"), RECOVER=Boolean.getBoolean("lotf.validation.bossSoloRecover");
+    private static final List<String> NAMES=SOLO ? List.of("ForceTesterSolo") : List.of("ForceTesterOne","ForceTesterTwo");
     private static final Map<MinecraftServer,Session> SESSIONS=new IdentityHashMap<>();
     private record Site(BlockPos altar,CompoundTag generated) {}
     private static final class Session {
@@ -39,7 +41,10 @@ public final class BossNetworkValidation {
     private static void require(boolean value,String message) { if(!value) throw new IllegalStateException(message); }
     @SubscribeEvent public static void start(ServerStartedEvent event) {
         if(!Boolean.getBoolean("lotf.validation.bossNetwork")) return;var server=event.getServer();var root=server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
-        require(root.getParent().getFileName().toString().startsWith("run-boss-"),"Isolated boss world required");require(!Files.exists(root.resolve("validation/boss-network-server.nbt")),"Preserve existing proof");
+        require(SOLO ? root.getFileName().toString().equals("BossValidation") && root.getParent().getParent().getFileName().toString().startsWith("run-boss-client-solo-") : root.getParent().getFileName().toString().startsWith("run-boss-"),"Isolated boss world required");
+        require(!SOLO || server.getClass().getName().equals("net.minecraft.client.server.IntegratedServer"),"Native integrated server required");
+        require(Files.exists(root.resolve("validation/boss-network-server.nbt"))==RECOVER,"Preserve existing proof / recovery requires stopped solo proof");
+        require(!Files.exists(root.resolve("validation/boss-solo-recovered.nbt")),"Preserve recovery proof");
         for(var level:server.getAllLevels()) level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false,server); // Isolate boss combat, including the wait for the slower client's boot.
         SESSIONS.put(server,new Session(server,root));
     }
@@ -50,15 +55,29 @@ public final class BossNetworkValidation {
         try {
             long now=server.overworld().getGameTime();require(now-s.started<12000,"Network boss scenario exceeded 600 server seconds");
             if(s.stage.equals("WAITING")) {
-                for(String name:List.of("ForceTesterOne","ForceTesterTwo")) if(server.getPlayerList().getPlayerByName(name)==null) return;
-                require(server.getPlayerList().getPlayerCount()==2,"Exactly two native clients required");
-                for(String name:List.of("ForceTesterOne","ForceTesterTwo")) {
-                    var actor=server.getPlayerList().getPlayerByName(name);var address=actor.connection.getConnection().getRemoteAddress();require(address instanceof InetSocketAddress socket && socket.getAddress().isLoopbackAddress(),"Real loopback sockets required");s.players.add(actor);initialize(actor,s);
+                for(String name:NAMES) if(server.getPlayerList().getPlayerByName(name)==null) return;
+                require(server.getPlayerList().getPlayerCount()==NAMES.size(),"Exact native player count required");
+                for(String name:NAMES) {
+                    var actor=server.getPlayerList().getPlayerByName(name);var address=actor.connection.getConnection().getRemoteAddress();require(SOLO ? actor.connection.getConnection().isMemoryConnection() : address instanceof InetSocketAddress socket && socket.getAddress().isLoopbackAddress(),"Expected native connection required");s.players.add(actor);if(!RECOVER) initialize(actor,s);
                 }
-                require(!s.players.get(0).connection.getConnection().getRemoteAddress().equals(s.players.get(1).connection.getConnection().getRemoteAddress()),"Distinct client sockets required");
-                place(server,s);s.stage="FIGHT";return;
+                if(!SOLO) require(!s.players.get(0).connection.getConnection().getRemoteAddress().equals(s.players.get(1).connection.getConnection().getRemoteAddress()),"Distinct client sockets required");
+                if(RECOVER) { s.stage="RECOVER";s.ready=now+100; } else { place(server,s);s.stage="FIGHT"; } return;
             }
             for(var actor:s.players) require(actor.isAlive() && server.getPlayerList().getPlayer(actor.getUUID())==actor && actor.connection.isAcceptingMessages(),"Both original clients must remain alive and connected");
+            if(s.stage.equals("RECOVER")) {
+                if(now<s.ready) return;
+                var original=AtomicNbtFile.read(s.root.resolve("validation/boss-network-server.nbt"),1048576);
+                var expected=original.getList("players",Tag.TAG_COMPOUND).getCompound(0);var actor=s.players.getFirst();
+                require(actor.getUUID().equals(expected.getUUID("owner")),"Native owner identity must survive reload");
+                var nativePlayer=new VerifiedPlayerSaveBarrier().persist(actor);var before=expected.getCompound("native");
+                require(nativePlayer.getList("Inventory",Tag.TAG_COMPOUND).equals(before.getList("Inventory",Tag.TAG_COMPOUND)),"Reload preserves exact inventory");
+                for(String key:List.of("legacyoftheforce:player_progress","legacyoftheforce:boss_loot_receipt")) {
+                    var a=nativePlayer.getCompound("neoforge:attachments").getCompound(key);var b=before.getCompound("neoforge:attachments").getCompound(key);
+                    for(String field: key.endsWith("player_progress") ? List.of("totalXpEarned","alignmentTenths","level") : List.of("schemaVersion","revision","operation")) require(Objects.equals(a.get(field),b.get(field)),"Reload preserves "+key+"/"+field);
+                }
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putLong("previousPid",original.getLong("serverPid"));proof.putUUID("owner",actor.getUUID());proof.put("native",nativePlayer);
+                AtomicNbtFile.write(s.root.resolve("validation/boss-solo-recovered.nbt"),proof,1048576);s.stage="PASS";LegacyOfTheForce.LOGGER.info("BOSS_SOLO_RECOVERY_PASS");return;
+            }
             if(s.stage.equals("FIGHT")) {
                 if(s.boss==null) {
                     var found=level(server).getEntitiesOfClass(IlumBossEntity.class,BossArenaService.bounds(s.site.altar),b->b.kind()==BossKind.values()[s.index]);
@@ -70,7 +89,7 @@ public final class BossNetworkValidation {
                 var signature=s.index==0 ? BossAttack.HEAVY : BossAttack.NOVA;
                 if(s.oldAttack==signature && s.oldWindup>0 && s.boss.windup()==0) s.signature=true;
                 s.oldAttack=s.boss.attack();s.oldWindup=s.boss.windup();
-                if(s.victory!=null) { require(s.credited.size()==2,"Both clients must qualify under the real contribution window");s.stage="COLLECT";s.ready=now+100; }
+                if(s.victory!=null) { require(s.credited.size()==NAMES.size(),"Both clients must qualify under the real contribution window");s.stage="COLLECT";s.ready=now+100; }
                 return;
             }
             if(s.stage.equals("COLLECT")) {
@@ -82,15 +101,15 @@ public final class BossNetworkValidation {
                 return;
             }
             if(s.stage.equals("SETTLE") && now>=s.ready) {
-                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("serverPid",ProcessHandle.current().pid());proof.putLong("initialXp",s.initialXp);proof.put("battles",s.battles);proof.put("initialPlayers",s.initialPlayers);
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("serverPid",ProcessHandle.current().pid());proof.putString("serverClass",server.getClass().getName());proof.putBoolean("solo",SOLO);proof.putLong("initialXp",s.initialXp);proof.put("battles",s.battles);proof.put("initialPlayers",s.initialPlayers);
                 var players=new ListTag();int relics=0,cells=0;
                 for(var actor:s.players) {
                     var progress=new ProgressService().get(actor.getUUID()).orElseThrow();require(progress.totalXpEarned()==s.initialXp+1600 && progress.alignmentTenths()==0,"Both native boss rewards must apply exactly once");
                     relics+=actor.getInventory().countItem(BossContent.RELIC.get());cells+=actor.getInventory().countItem(com.legacyoftheforce.speeder.SpeederContent.ENERGY_CELL.get());
-                    var p=new CompoundTag();p.putUUID("owner",actor.getUUID());p.putString("name",actor.getGameProfile().getName());p.putString("endpoint",actor.connection.getConnection().getRemoteAddress().toString());p.put("native",new VerifiedPlayerSaveBarrier().persist(actor));players.add(p);
+                    var p=new CompoundTag();p.putUUID("owner",actor.getUUID());p.putString("name",actor.getGameProfile().getName());p.putBoolean("memoryConnection",actor.connection.getConnection().isMemoryConnection());p.putString("endpoint",actor.connection.getConnection().getRemoteAddress().toString());p.put("native",new VerifiedPlayerSaveBarrier().persist(actor));players.add(p);
                 }
                 require(relics==2 && cells==8,"Two shared victories grant two relics and eight cells total");proof.put("players",players);AtomicNbtFile.write(s.root.resolve("validation/boss-network-server.nbt"),proof,1048576);
-                s.stage="PASS";LegacyOfTheForce.LOGGER.info("BOSS_NETWORK_SERVER_PASS clients=2 battles=2");
+                s.stage="PASS";LegacyOfTheForce.LOGGER.info("BOSS_NETWORK_SERVER_PASS clients={} battles=2",NAMES.size());
             }
         } catch(Exception failure) {
             try {

@@ -178,3 +178,5 @@ Quests ne dépend d’aucune classe interne de planets/lightsaber/RPG. Le port c
 Le journal est un snapshot serveur borné, transporté par le menu étendu NeoForge natif (≤48lignes de clés≤128caractères). Aucun bouton serveur n’accorde de progression ; navigation locale seulement. `/lotf journal` est limité en fréquence et ne requiert ni objet ni proximité ; la découverte initiale exige bloc réel, proximité et permission mayUseContainer.
 
 Reload des guides : un nouveau snapshot utilise une seule image immuable du catalogue. Définitions absentes/invalides : information d'archive indisponible, IDs personnels conservés, clic sans nouvelle découverte. Aucun menu déjà ouvert ne devient autorité de progression ; rouvrir actualise les textes et jalons. Protocole et preuve native qc2 : validation/P4-04.md.
+
+DurableOperationStore partage également AtomicNbtFile pour lecture et publication des enveloppes de journal (budget262144, phases et validation conservées). Il ne possède plus une seconde voie de renommage direct sans reprises. Refus permanent : journal antérieur conservé, coordinateur métier suspendu/récupérable.

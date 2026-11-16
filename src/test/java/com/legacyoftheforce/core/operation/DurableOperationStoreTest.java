@@ -13,6 +13,28 @@ import static org.junit.jupiter.api.Assertions.*;
 class DurableOperationStoreTest {
     @TempDir Path directory;
 
+    @Test @org.junit.jupiter.api.condition.EnabledOnOs(org.junit.jupiter.api.condition.OS.WINDOWS)
+    void lockedNativeJournalRetainsItsPhaseAndResumesAfterRelease() throws IOException {
+        var store = new DurableOperationStore(directory, 4);
+        var id = UUID.randomUUID();
+        var original = store.prepare(id, payload());
+        byte[] bytes = Files.readAllBytes(directory.resolve(id + ".nbt"));
+        try (var held = java.nio.channels.FileChannel.open(directory.resolve(id + ".nbt"),
+                java.nio.file.StandardOpenOption.READ, com.sun.nio.file.ExtendedOpenOption.NOSHARE_DELETE)) {
+            assertThrows(java.nio.file.AccessDeniedException.class,
+                    () -> store.transition(id, OperationPhase.PREPARED, OperationPhase.HELD, payload()));
+            assertEquals(original, store.read(id));
+            assertArrayEquals(bytes, Files.readAllBytes(directory.resolve(id + ".nbt")));
+            try (var files = Files.list(directory)) { assertEquals(1, files.count()); }
+        }
+        var reopened = new DurableOperationStore(directory, 4);
+        var held = reopened.transition(id, OperationPhase.PREPARED, OperationPhase.HELD, payload());
+        assertEquals(held, reopened.read(id));
+        reopened.transition(id, OperationPhase.HELD, OperationPhase.CLOSED, payload());
+        reopened.removeClosed(id);
+        assertTrue(reopened.list().isEmpty());
+    }
+
     private CompoundTag payload() {
         var payload = new CompoundTag(); payload.putString("block", "minecraft:stone"); return payload;
     }

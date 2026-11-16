@@ -1,18 +1,13 @@
 package com.legacyoftheforce.core.operation;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
-import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
 
 /**
@@ -60,7 +55,7 @@ public final class DurableOperationStore {
         var file = path(id);
         if (Files.isSymbolicLink(file) || Files.size(file) > MAX_BYTES) throw new IOException("Unsafe journal entry");
         final CompoundTag tag;
-        try { tag = NbtIo.readCompressed(file, NbtAccounter.create(MAX_BYTES)); }
+        try { tag = AtomicNbtFile.read(file, MAX_BYTES); }
         catch (RuntimeException invalid) { throw new IOException("Invalid or oversized operation NBT", invalid); }
         if (!tag.hasUUID("operationId") || !tag.getUUID("operationId").equals(id)
                 || !tag.contains("schemaVersion", Tag.TAG_INT) || !tag.contains("phase", Tag.TAG_STRING)
@@ -102,14 +97,7 @@ public final class DurableOperationStore {
         if (tag.sizeInBytes() > MAX_BYTES) throw new IOException("Operation payload exceeds limit");
         var destination = path(entry.id());
         if (Files.isSymbolicLink(destination)) throw new IOException("Journal entry cannot be a symbolic link");
-        var temporary = Files.createTempFile(directory, entry.id() + "-", ".tmp");
-        try {
-            NbtIo.writeCompressed(tag, temporary);
-            try (var channel = FileChannel.open(temporary, StandardOpenOption.WRITE)) { channel.force(true); }
-            // Fail closed if the filesystem cannot atomically replace a journal record.
-            Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        } finally {
-            Files.deleteIfExists(temporary);
-        }
+        // Share bounded Windows retries, internal reader coordination and verified atomic publication.
+        AtomicNbtFile.write(destination, tag, MAX_BYTES);
     }
 }

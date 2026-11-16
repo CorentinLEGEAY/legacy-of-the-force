@@ -19,3 +19,5 @@ Premier démarrage : canal de pierre/eau de fixture via console, propagation nat
 - JAR0.1.0-dev SHA256 **6BF4F6E2575BC5B3170D5BE5CD6704B025C4C3569458706816BDE617E5FBDAB9**. Hash identique au JAR installé, metadata/config/FR/EN valides et aucun GameTests/Validation/ClientDriver distribué. Sauvegardes de toutes dimensions et aucun échec d'injection. Rapports/logs/résultats restent sous .tools.
 
 Limites : pas de nouveau client sur cette installation, ni de certification d'autres versions NeoForge, OS ou modpacks. Les vrais clients dédiés/solo de développement ont leurs preuves distinctes dans P4-03_FLUIDS.md ; le test de distribution ne les remplace pas. V1.0 toujours EN COURS.
+
+Régression core du16novembre : jarcp1 vérifie le JAR F1F94340A2CE2BE9775962530E6E8324FDE974DAAE2B17F722ACAD2EB82FCBDC après mutualisation du journal atomique. Deux JVM2328/4456, sorties0, mixins requis/Ilum/fluides/reprise et zéro harnais distribués : check-packaged-server PASS.

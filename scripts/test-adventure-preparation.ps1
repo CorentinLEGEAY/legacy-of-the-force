@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel)
 $ErrorActionPreference='Stop'
 if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
@@ -6,7 +6,7 @@ if(Test-Path -LiteralPath $world) { throw 'Fresh isolated run required; preserve
 if($Mode -ne 'Prep') {
     $source=Join-Path $repoPath "run-adventure-$PreparationRun/world"
     if(-not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-preparation-server.nbt'))) { throw 'Stopped native preparation proof required.' }
-    if($Mode -eq 'Recovery' -and -not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-personalization-stage.nbt'))) { throw 'Completed paid route required before recovery.' }
+    if($Mode -in @('Recovery','Progress','ProgressRecovery') -and -not (Test-Path -LiteralPath (Join-Path $source 'validation/adventure-personalization-stage.nbt'))) { throw 'Completed paid route required before recovery.' }
     $active=Get-CimInstance Win32_Process -Filter "Name='java.exe'" | Where-Object { $_.CommandLine -like "*run-adventure-$PreparationRun*" }
     if($active) { throw 'Source world still has an active JVM.' }
     $sourceLock=Join-Path $source 'session.lock'
@@ -16,9 +16,9 @@ if($Mode -ne 'Prep') {
     Copy-Item -LiteralPath $source -Destination $world -Recurse
     $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} else {'adventureTravel'}
-$artifact=if($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
-$marker=if($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} else {'adventureTravel'}
+$artifact=if($Mode -eq 'ProgressRecovery') {'progress-recovery'} elseif($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
+$marker=if($Mode -eq 'ProgressRecovery') {'ADVENTURE_PROGRESS_RECOVERY'} elseif($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
 if($LASTEXITCODE -ne 0) { throw 'Native client preparation failed.' }
 $launch=Get-Content -LiteralPath (Join-Path $repoPath '.tools/travel-network-launch.json') -Raw | ConvertFrom-Json

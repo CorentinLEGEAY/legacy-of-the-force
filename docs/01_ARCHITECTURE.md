@@ -163,3 +163,5 @@ L'atlas personnel est un attachment immuable copié à la mort. Le journal atomi
 - https://docs.neoforged.net/docs/1.21.1/items/datacomponents/
 - https://docs.neoforged.net/docs/1.21.1/datastorage/attachments/
 - https://docs.neoforged.net/docs/1.21.1/networking/
+
+P4-03 : checkpoints du coordinateur d'arène via consommateur package-private, no-op par défaut. Seize vrais kills/reprises des publications/victoires vérifiés ; la reprise distingue absence d'intention (reset sans récompense) et intention durable (règlement idempotent). Un fichier joueur encore ancien est restauré par le checkpoint RPG avant le contrôle final, sans répéter les gains. Preuves/protocole et limites OS : validation/P4-03_ARENA_CRASH.md.

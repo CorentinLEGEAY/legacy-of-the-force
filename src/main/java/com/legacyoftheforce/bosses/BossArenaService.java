@@ -23,6 +23,9 @@ import net.neoforged.neoforge.common.NeoForge;
 /** One server-thread authority. Native entities/containers remain the only world writers. */
 public final class BossArenaService {
     private static final Map<MinecraftServer, BossArenaService> SERVICES = new IdentityHashMap<>();
+    enum Checkpoint { SPAWN_INTENT, SPAWN_MEMORY, SPAWN_DURABLE, ACTIVE, VICTORY_PREPARED, SETTLING,
+        REWARD_GRANTED, REWARDS_DURABLE, LOOT_MEMORY, LOOT_DURABLE, LOOT_STAGED, COOLDOWN, EVENT, COMMITTED, CLOSED, REMOVED }
+    private final java.util.function.Consumer<Checkpoint> checkpoints;
     private final MinecraftServer server;
     private final PlayerProgressService progress;
     private final Path root;
@@ -32,9 +35,14 @@ public final class BossArenaService {
     private final DurableOperationStore victories;
     private boolean ready = true;
     public static BossArenaService forServer(MinecraftServer server) { return SERVICES.get(server); }
-    public static void start(MinecraftServer server, PlayerProgressService progress) throws IOException { SERVICES.put(server, new BossArenaService(server, progress)); }
+    public static void start(MinecraftServer server, PlayerProgressService progress) throws IOException { start(server,progress,ignored->{}); }
+    static void start(MinecraftServer server,PlayerProgressService progress,java.util.function.Consumer<Checkpoint> checkpoints) throws IOException { SERVICES.put(server,new BossArenaService(server,progress,checkpoints)); }
     public static void stop(MinecraftServer server) { SERVICES.remove(server); }
     BossArenaService(MinecraftServer server, PlayerProgressService progress) throws IOException {
+        this(server,progress,ignored->{});
+    }
+    private BossArenaService(MinecraftServer server,PlayerProgressService progress,java.util.function.Consumer<Checkpoint> checkpoints) throws IOException {
+        this.checkpoints=Objects.requireNonNull(checkpoints);
         this.server = server; this.progress = progress; root = server.getWorldPath(LevelResource.ROOT).resolve("data/legacyoftheforce/bosses");
         victories = new DurableOperationStore(root.resolve("victories"), 128);
         for (var entry : victories.list()) validateVictory(entry);
@@ -119,10 +127,10 @@ public final class BossArenaService {
             boss.setPos(center.getX() + .5, center.getY(), center.getZ() + .5);
             if (!actor.level().noCollision(boss, boss.getBoundingBox())) { feedback(actor, "space"); return false; }
             UUID encounter = UUID.randomUUID(); boss.setUUID(encounter); boss.bind(pos); boss.join(actor);
-            record.putUUID("encounter", encounter); record.putUUID("boot", boot); record.putString("state", "SPAWNING"); record.remove("lootOwners"); save(id, record);
+            record.putUUID("encounter", encounter); record.putUUID("boot", boot); record.putString("state", "SPAWNING"); record.remove("lootOwners"); save(id, record);checkpoints.accept(Checkpoint.SPAWN_INTENT);
             if (!actor.serverLevel().addFreshEntity(boss)) throw new IOException("Boss publication refused");
-            new VerifiedEntitySaveBarrier().persist(boss);
-            record.putString("state", "ACTIVE"); save(id, record); feedback(actor, "challenge"); return true;
+            checkpoints.accept(Checkpoint.SPAWN_MEMORY);new VerifiedEntitySaveBarrier().persist(boss);checkpoints.accept(Checkpoint.SPAWN_DURABLE);
+            record.putString("state", "ACTIVE"); save(id, record);checkpoints.accept(Checkpoint.ACTIVE); feedback(actor, "challenge"); return true;
         } catch (IOException | RuntimeException failure) { fail(failure); feedback(actor, "pending"); return false; }
     }
     public void logout(UUID player) { nextInteraction.remove(player); }
@@ -148,8 +156,8 @@ public final class BossArenaService {
             payload.putLong("arenaReadyAt", now() + BossConfig.ARENA_COOLDOWN.get());
             var eligible = new ListTag(); for (UUID player : boss.eligibleParticipants()) eligible.add(StringTag.valueOf(player.toString())); payload.put("eligible", eligible);
             victories.prepare(boss.getUUID(), payload);
-            prepared = true;
-            var tag = arena(boss.serverLevel(), boss.altar(), boss.kind()); tag.putString("state", "SETTLING"); save(arenaId(boss.serverLevel(), boss.altar(), boss.kind()), tag);
+            prepared = true;checkpoints.accept(Checkpoint.VICTORY_PREPARED);
+            var tag = arena(boss.serverLevel(), boss.altar(), boss.kind()); tag.putString("state", "SETTLING"); save(arenaId(boss.serverLevel(), boss.altar(), boss.kind()), tag);checkpoints.accept(Checkpoint.SETTLING);
             settle(victories.read(boss.getUUID()));
             return true;
         } catch (IOException failure) { fail(failure); return prepared; }
@@ -188,39 +196,39 @@ public final class BossArenaService {
                 UUID player = UUID.fromString(id.getAsString());
                 var status = progress.bossRewardStatus(player, entry.id());
                 if (status == BossRewardStatus.PENDING) {
-                    progress.awardBoss(player, new BossReward(entry.id(), kind.id().toString(), kind.category, p.getInt("xp"), p.getInt("rewardCooldown")));
+                    progress.awardBoss(player, new BossReward(entry.id(), kind.id().toString(), kind.category, p.getInt("xp"), p.getInt("rewardCooldown")));checkpoints.accept(Checkpoint.REWARD_GRANTED);
                     status = progress.bossRewardStatus(player, entry.id());
                 }
                 if (status == BossRewardStatus.PENDING) return;
                 if (status == BossRewardStatus.AWARDED) awarded.add(StringTag.valueOf(player.toString()));
             }
-            p.put("awarded", awarded); entry = victories.transition(entry.id(), OperationPhase.PREPARED, OperationPhase.HELD, p);
+            p.put("awarded", awarded); entry = victories.transition(entry.id(), OperationPhase.PREPARED, OperationPhase.HELD, p);checkpoints.accept(Checkpoint.REWARDS_DURABLE);
         }
         if (entry.phase().equals("HELD")) {
             if (!(level.getBlockEntity(pos) instanceof BossAltarEntity altar) || !altar.supported()
                     || !level.getBlockState(pos).is(kind == BossKind.GUARDIAN ? BossContent.JEDI_ALTAR.get() : BossContent.SITH_ALTAR.get())) return;
             if (!entry.id().equals(altar.lootVictory())) {
                 if (!altar.isEmpty()) return;
-                altar.publish(entry.id(), !p.getList("awarded", Tag.TAG_STRING).isEmpty());
-                new VerifiedChunkSaveBarrier().persist(level, Set.of(pos));
+                altar.publish(entry.id(), !p.getList("awarded", Tag.TAG_STRING).isEmpty());checkpoints.accept(Checkpoint.LOOT_MEMORY);
+                new VerifiedChunkSaveBarrier().persist(level, Set.of(pos));checkpoints.accept(Checkpoint.LOOT_DURABLE);
             }
-            entry = victories.transition(entry.id(), OperationPhase.HELD, OperationPhase.DESTINATION_STAGED, p);
+            entry = victories.transition(entry.id(), OperationPhase.HELD, OperationPhase.DESTINATION_STAGED, p);checkpoints.accept(Checkpoint.LOOT_STAGED);
         }
         if (entry.phase().equals("DESTINATION_STAGED")) {
             var tag = arena(level, pos, kind);
             if (tag.getUUID("encounter").equals(entry.id())) {
-                tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", p.getLong("arenaReadyAt")); tag.put("lootOwners", p.getList("awarded", Tag.TAG_STRING).copy()); save(arenaId(level, pos, kind), tag);
+                tag.putString("state", "COOLDOWN"); tag.putLong("readyAt", p.getLong("arenaReadyAt")); tag.put("lootOwners", p.getList("awarded", Tag.TAG_STRING).copy()); save(arenaId(level, pos, kind), tag);checkpoints.accept(Checkpoint.COOLDOWN);
             }
             var ids = new HashSet<UUID>();
             for (var raw : p.getList("awarded", Tag.TAG_STRING)) {
                 UUID player = UUID.fromString(raw.getAsString()); ids.add(player); var actor = server.getPlayerList().getPlayer(player);
                 if (actor != null) NeoForge.EVENT_BUS.post(new KyberMilestone(player, entry.id(), actor.level().dimension(), now(), KyberMilestone.Kind.BOSS_VICTORY));
             }
-            NeoForge.EVENT_BUS.post(new BossDefeated(entry.id(), arenaId(level, pos, kind), kind.id(), ids));
-            entry = victories.transition(entry.id(), OperationPhase.DESTINATION_STAGED, OperationPhase.COMMITTED, p);
+            NeoForge.EVENT_BUS.post(new BossDefeated(entry.id(), arenaId(level, pos, kind), kind.id(), ids));checkpoints.accept(Checkpoint.EVENT);
+            entry = victories.transition(entry.id(), OperationPhase.DESTINATION_STAGED, OperationPhase.COMMITTED, p);checkpoints.accept(Checkpoint.COMMITTED);
         }
-        if (entry.phase().equals("COMMITTED")) entry = victories.transition(entry.id(), OperationPhase.COMMITTED, OperationPhase.CLOSED, p);
-        if (entry.phase().equals("CLOSED")) victories.removeClosed(entry.id());
+        if (entry.phase().equals("COMMITTED")) { entry = victories.transition(entry.id(), OperationPhase.COMMITTED, OperationPhase.CLOSED, p);checkpoints.accept(Checkpoint.CLOSED); }
+        if (entry.phase().equals("CLOSED")) { victories.removeClosed(entry.id());checkpoints.accept(Checkpoint.REMOVED); }
     }
     private void fail(Exception failure) { ready = false; LegacyOfTheForce.LOGGER.error("Boss arenas paused; durable data retained for recovery", failure); }
 }

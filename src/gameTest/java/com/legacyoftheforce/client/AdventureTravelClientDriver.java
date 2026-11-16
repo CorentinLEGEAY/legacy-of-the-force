@@ -1,0 +1,107 @@
+package com.legacyoftheforce.client;
+
+import com.legacyoftheforce.LegacyOfTheForce;
+import com.legacyoftheforce.content.AdventureRoute;
+import com.legacyoftheforce.core.operation.AtomicNbtFile;
+import com.legacyoftheforce.planets.*;
+import java.util.*;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.core.*;
+import net.minecraft.nbt.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.*;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.*;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.*;
+
+/** Native UI, placement and menu buttons on the same legitimate inventories after restart. */
+@EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
+public final class AdventureTravelClientDriver {
+    private static final long STARTED=System.nanoTime();
+    private static final Set<String> acknowledgements=new HashSet<>();
+    private static final ListTag checkpoints=new ListTag();
+    private static String stage="WAIT";private static long ticks,ready;private static int role;private static boolean connected;private static BlockPos portable;
+    private static void require(boolean valid,String message) {if(!valid)throw new IllegalStateException(message);}
+    private static void stage(String next,int delay) {stage=next;ready=ticks+delay;LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CLIENT_STAGE {}",next);}
+    @SubscribeEvent public static void feedback(ClientChatReceivedEvent.System event) {
+        if(!Boolean.getBoolean("lotf.validation.adventureTravel"))return;String message=event.getMessage().getString();
+        if(message.startsWith("LOTF_ADVENTURE_TRAVEL_"))acknowledgements.add(message.substring("LOTF_ADVENTURE_TRAVEL_".length()));
+    }
+    @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
+        if(!Boolean.getBoolean("lotf.validation.adventureTravel"))return;var mc=Minecraft.getInstance();ticks++;
+        if(stage.equals("PASS")||stage.equals("FAILED")) {mc.stop();return;}
+        try {
+            require((System.nanoTime()-STARTED)/1_000_000_000L<300,"Native continuation deadline exceeded in "+stage);
+            require(mc.gameDirectory.toPath().toAbsolutePath().normalize().getFileName().toString().startsWith("run-adventure-client-"),"Isolated native continuation profile required");
+            require(!connected||mc.getConnection()!=null,"Connection lost before continuation proof");
+            if(mc.player==null||mc.level==null||mc.gameMode==null||mc.getConnection()==null)return;connected=true;
+            require(mc.player.isAlive(),"Original owner must remain alive");if(ticks<ready)return;
+            if(stage.equals("WAIT")) {
+                if(!acknowledgements.contains("READY"))return;role=AdventureRoute.NAMES.indexOf(mc.player.getGameProfile().getName());require(role>=0,"Original native owner required");
+                checkpoint(mc,"resumed");use(mc,AdventureRoute.terminal(role));stage("DECODE",14);return;
+            }
+            if(stage.equals("DECODE")) {if(!(mc.player.containerMenu instanceof GalacticTerminalMenu menu))return;require(menu.atHome()&&!menu.known(),"Original locked destination expected");button(mc,"decode");stage("DECODED",14);return;}
+            if(stage.equals("DECODED")) {
+                if(!acknowledgements.contains("DECODED"))return;var menu=(GalacticTerminalMenu)mc.player.containerMenu;
+                require(menu.known()&&!menu.credit()&&menu.cost()==2,"Decoded native coordinates expected");checkpoint(mc,"decoded");stage("DEPART",60);return;
+            }
+            if(stage.equals("DEPART")) {button(mc,"depart");stage("ARRIVAL",14);return;}
+            if(stage.equals("ARRIVAL")) {
+                if(!acknowledgements.contains("ARRIVAL")||!mc.level.dimension().equals(PlanetContent.ILUM))return;
+                checkpoint(mc,"arrival");mc.player.closeContainer();stage("PLACE",30+role*40);return;
+            }
+            if(stage.equals("PLACE")) {
+                capture(mc,"adventure-arrival.png");equipTerminal(mc);var hit=findPlacement(mc);portable=hit.getBlockPos().relative(hit.getDirection());
+                mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,hit);stage("PLACED",16);return;
+            }
+            if(stage.equals("PLACED")) {
+                require(mc.level.getBlockState(portable).is(PlanetContent.TERMINAL.get())&&mc.player.getInventory().countItem(PlanetContent.TERMINAL_ITEM.get())==0,"Portable terminal must be placed through native interaction");
+                checkpoint(mc,"portable");mc.getConnection().sendCommand("lotf_adventure_travel placed "+portable.getX()+" "+portable.getY()+" "+portable.getZ());stage("OPEN_RETURN",12);return;
+            }
+            if(stage.equals("OPEN_RETURN")) {if(!acknowledgements.contains("PLACED"))return;use(mc,portable);stage("RETURN",14);return;}
+            if(stage.equals("RETURN")) {
+                if(!(mc.player.containerMenu instanceof GalacticTerminalMenu menu))return;require(menu.atIlum()&&menu.credit(),"Native prepaid return expected");capture(mc,"adventure-return.png");button(mc,"return");stage("HOME",16);return;
+            }
+            if(stage.equals("HOME")) {
+                if(!acknowledgements.contains("PASS")||!mc.level.dimension().equals(Level.OVERWORLD))return;checkpoint(mc,"returned");
+                var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putString("scope","preparation_then_travel_only");proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.put("checkpoints",checkpoints);
+                proof.putIntArray("terminal",new int[]{portable.getX(),portable.getY(),portable.getZ()});AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-travel-client.nbt"),proof,1048576);
+                stage="PASS";LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CLIENT_PASS pid={}",ProcessHandle.current().pid());mc.stop();
+            }
+        } catch(Exception failure) {
+            LegacyOfTheForce.LOGGER.error("ADVENTURE_TRAVEL_CLIENT_FAILED stage={}",stage,failure);stage="FAILED";mc.stop();
+        }
+    }
+    private static void use(Minecraft mc,BlockPos pos) {mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos),Direction.NORTH,pos,false));}
+    private static void button(Minecraft mc,String key) {
+        var label=Component.translatable("travel.legacyoftheforce."+key).getString();var button=mc.screen.children().stream().filter(w->w instanceof Button b&&b.getMessage().getString().equals(label)).map(w->(Button)w).findFirst().orElseThrow();
+        require(button.active&&button.visible,"Native travel button must be usable: "+key);button.onPress();
+    }
+    private static void equipTerminal(Minecraft mc) {
+        require(mc.player.containerMenu instanceof InventoryMenu,"Native inventory required before portable placement");
+        for(int i=0;i<mc.player.containerMenu.slots.size();i++) {var slot=mc.player.containerMenu.getSlot(i);if(slot.container!=mc.player.getInventory()||!slot.getItem().is(PlanetContent.TERMINAL_ITEM.get()))continue;
+            int nativeIndex=mc.player.getInventory().items.indexOf(slot.getItem());if(nativeIndex<0||nativeIndex>8) {mc.gameMode.handleInventoryMouseClick(0,i,8,ClickType.SWAP,mc.player);nativeIndex=8;}mc.player.getInventory().selected=nativeIndex;return;}
+        throw new IllegalStateException("Crafted portable terminal is missing");
+    }
+    private static BlockHitResult findPlacement(Minecraft mc) {
+        for(var mutable:BlockPos.betweenClosed(mc.player.blockPosition().offset(-2,-2,-2),mc.player.blockPosition().offset(2,1,2))) {
+            var support=mutable.immutable();if(mc.level.getBlockState(support).getCollisionShape(mc.level,support).isEmpty())continue;
+            for(var face:Direction.values()) {
+                var pos=support.relative(face);var state=mc.level.getBlockState(pos);
+                if((!state.isAir()&&!state.is(Blocks.SNOW))||mc.level.players().stream().anyMatch(p->new AABB(pos).intersects(p.getBoundingBox()))||!mc.player.canInteractWithBlock(pos,0))continue;
+                return new BlockHitResult(Vec3.atCenterOf(support).add(Vec3.atLowerCornerOf(face.getNormal()).scale(.5)),face,support,false);
+            }
+        }
+        throw new IllegalStateException("No supported portable placement in native reach");
+    }
+    private static void checkpoint(Minecraft mc,String name) {
+        var tag=new CompoundTag();tag.putString("stage",name);tag.putString("dimension",mc.level.dimension().location().toString());tag.put("Inventory",mc.player.getInventory().save(new ListTag()));tag.putDouble("x",mc.player.getX());tag.putDouble("y",mc.player.getY());tag.putDouble("z",mc.player.getZ());checkpoints.add(tag);
+    }
+    private static void capture(Minecraft mc,String name) {Screenshot.grab(mc.gameDirectory,name,mc.getMainRenderTarget(),message->LegacyOfTheForce.LOGGER.info("ADVENTURE_TRAVEL_CAPTURE {}",name));}
+}

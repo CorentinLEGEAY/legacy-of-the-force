@@ -2,6 +2,7 @@ package com.legacyoftheforce.quests;
 
 import com.legacyoftheforce.LegacyOfTheForce;
 import com.legacyoftheforce.core.operation.*;
+import com.legacyoftheforce.core.api.HolocronDiscovered;
 import com.legacyoftheforce.lightsaber.*;
 import com.mojang.authlib.GameProfile;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -32,6 +33,8 @@ public final class QuestDedicatedTests {
             try { journey(helper); } catch (Exception e) { throw new RuntimeException(e); }
         }), new TestFunction("quest_dedicated", "quests.reload", "legacyoftheforce:empty", 600, 0L, true, helper -> {
             try { reload(helper); } catch (Exception e) { throw new RuntimeException(e); }
+        }), new TestFunction("quest_dedicated", "quests.lifecycle", "legacyoftheforce:empty", 1200, 0L, true, helper -> {
+            try { lifecycle(helper); } catch (Exception e) { throw new RuntimeException(e); }
         }));
     }
     private record Site(BlockPos pos, CompoundTag start) {}
@@ -124,4 +127,54 @@ public final class QuestDedicatedTests {
         AtomicNbtFile.write(world.resolve("validation/quest-reload.nbt"), result, 262144); leave(players, channels);
         LegacyOfTheForce.LOGGER.info("QUEST_NATIVE_PASS kind=RELOAD pid={}", ProcessHandle.current().pid()); helper.succeed();
     }
+    private static void lifecycle(GameTestHelper helper) throws Exception {
+        var server=helper.getLevel().getServer();var level=server.overworld();var site=locate(helper,level,"legacyoftheforce:echo_ruin",3,2,4);
+        var chunk=new ChunkPos(site.pos());level.getChunkSource().addRegionTicket(TicketType.FORCED,chunk,3,chunk);
+        var players=new ArrayList<ServerPlayer>();var channels=new ArrayList<EmbeddedChannel>();
+        for(int i=0;i<3;i++) players.add(join(level,new GameProfile(UUID.randomUUID(),"EchoLife"+UUID.randomUUID().toString().substring(0,7)),site.pos(),channels,true));
+        helper.startSequence().thenWaitUntil(()->helper.assertTrue(level.isPositionEntityTicking(site.pos())&&level.entityManager.areEntitiesLoaded(chunk.toLong()),"Wait for real lifecycle chunk"))
+            .thenExecute(()-> {
+                try {
+                    var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putIntArray("site",new int[]{site.pos().getX(),site.pos().getY(),site.pos().getZ()});
+                    var deaths=new ListTag();
+                    for(int index=0;index<2;index++) {
+                        boolean keep=index==1;var actor=players.get(index);
+                        helper.assertTrue(QuestLifecycle.discover(actor,site.pos()),"Native discovery must precede death");actor.closeContainer();
+                        actor.getInventory().setItem(0,new ItemStack(Items.EMERALD,3));
+                        var before=new VerifiedPlayerSaveBarrier().persist(actor);var knowledge=actor.getData(QuestContent.KNOWLEDGE.get());
+                        for(int warm=0;warm<61;warm++) actor.tick();
+                        var rules=level.getGameRules();boolean previous=rules.getBoolean(GameRules.RULE_KEEPINVENTORY);
+                        try {
+                            rules.getRule(GameRules.RULE_KEEPINVENTORY).set(keep,server);
+                            helper.assertTrue(actor.hurt(actor.damageSources().genericKill(),Float.MAX_VALUE)&&!actor.isAlive(),"Real death must occur");
+                            var replacement=server.getPlayerList().respawn(actor,false,net.minecraft.world.entity.Entity.RemovalReason.KILLED);players.set(index,replacement);
+                            helper.assertTrue(replacement!=actor&&replacement.isAlive()&&replacement.getUUID().equals(actor.getUUID()),"Native respawn replaces the body under the same owner");
+                            helper.assertTrue(replacement.getData(QuestContent.KNOWLEDGE.get()).equals(knowledge),"Knowledge and revision must survive death under either inventory rule");
+                            helper.assertTrue(replacement.getInventory().countItem(Items.EMERALD)==(keep?3:0),"Quest must preserve vanilla death inventory policy");
+                            var result=new CompoundTag();result.putBoolean("keepInventory",keep);result.put("before",before);result.put("after",new VerifiedPlayerSaveBarrier().persist(replacement));deaths.add(result);
+                        } finally { rules.getRule(GameRules.RULE_KEEPINVENTORY).set(previous,server); }
+                    }
+                    proof.put("deaths",deaths);
+                    if(System.getProperty("os.name").startsWith("Windows")) {
+                        var actor=players.get(2);var before=new VerifiedPlayerSaveBarrier().persist(actor);var notifications=new ArrayList<HolocronDiscovered>();
+                        java.util.function.Consumer<HolocronDiscovered> listener=e->{if(e.playerId.equals(actor.getUUID()))notifications.add(e);};net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(listener);
+                        try {
+                            var file=server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve(actor.getUUID()+".dat");
+                            try(var held=java.nio.channels.FileChannel.open(file,java.nio.file.StandardOpenOption.READ,com.sun.nio.file.ExtendedOpenOption.NOSHARE_DELETE)) {
+                                helper.assertTrue(!QuestLifecycle.discover(actor,site.pos()),"Native sharing refusal must not acknowledge the discovery");
+                                helper.assertTrue(actor.getData(QuestContent.KNOWLEDGE.get()).view().orElseThrow().holocrons().isEmpty()&&notifications.isEmpty(),"No knowledge/event may be confirmed after failed persistence");
+                                helper.assertTrue(new VerifiedPlayerSaveBarrier().read(actor).getCompound("neoforge:attachments").getCompound("legacyoftheforce:quest_knowledge").equals(before.getCompound("neoforge:attachments").getCompound("legacyoftheforce:quest_knowledge")),"Previous native knowledge remains readable");
+                            }
+                            helper.assertTrue(QuestLifecycle.observe(actor,QuestContent.ECHO)&&notifications.size()==1,"After closing the handle one server reconciliation persists and notifies");
+                            proof.put("refusedBefore",before);proof.put("retriedAfter",new VerifiedPlayerSaveBarrier().persist(actor));proof.putBoolean("nativeSharingRefusal",true);
+                        } finally { net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener); }
+                    }
+                    new VerifiedChunkSaveBarrier().persist(level,Set.of(site.pos()));
+                    AtomicNbtFile.write(server.getWorldPath(LevelResource.ROOT).resolve("validation/quest-lifecycle.nbt"),proof,262144);
+                    leave(players,channels);level.getChunkSource().removeRegionTicket(TicketType.FORCED,chunk,3,chunk);
+                    LegacyOfTheForce.LOGGER.info("QUEST_NATIVE_PASS kind=LIFECYCLE pid={}",ProcessHandle.current().pid());helper.succeed();
+                } catch(Exception e) { throw new RuntimeException(e); }
+            });
+    }
+
 }

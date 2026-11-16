@@ -302,5 +302,6 @@
   "quest.legacyoftheforce.echo.clue": "To Ilum: craft coordinates with a compass, paper, an amethyst shard and lapis. At a terminal (IGI/CRC/III: iron, glass, copper, redstone), decode them; it displays the fare. Bring the second terminal for your return. On Ilum, find a stone-brick mine entrance: its stairs descend beneath blue ice. Bring an iron pickaxe; each crystal keeps its identity. Duels are optional. Install it at a saber workshop to continue your adventure.",
   "quest.legacyoftheforce.echo.read": "Read the Frozen Echo holocron.",
   "quest.legacyoftheforce.echo.travel": "Visit Ilum, with or without this clue.",
-  "quest.legacyoftheforce.echo.collect": "Acquire an identified Ilum crystal; one already installed in your saber also counts. No item consumption or alignment reward."
+  "quest.legacyoftheforce.echo.collect": "Acquire an identified Ilum crystal; one already installed in your saber also counts. No item consumption or alignment reward.",
+  "quest.legacyoftheforce.archive_unavailable": "Some archives are unavailable. Recorded discoveries are preserved. Try again once the archives are restored."
 }

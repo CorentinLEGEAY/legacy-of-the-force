@@ -302,5 +302,6 @@
   "quest.legacyoftheforce.echo.clue": "Vers Ilum : fabrique les coordonnées avec boussole, papier, éclat d'améthyste et lapis. Au terminal (IGI/CRC/III : fer, verre, cuivre, redstone), décode-les ; il annonce le coût. Emporte le second terminal pour rentrer. Cherche sur Ilum une entrée de mine en briques de pierre : son escalier descend sous la glace bleue. Pioche en fer requise ; le cristal garde sa propre identité. Les duels sont facultatifs. À l'atelier sabre, installe-le pour poursuivre ton aventure.",
   "quest.legacyoftheforce.echo.read": "Lire l'holocron de l'écho gelé.",
   "quest.legacyoftheforce.echo.travel": "Visiter Ilum, avec ou sans cette piste.",
-  "quest.legacyoftheforce.echo.collect": "Récupérer un cristal identifié d'Ilum ; un cristal déjà installé dans ton sabre compte aussi. Aucune consommation ni récompense d'alignement."
+  "quest.legacyoftheforce.echo.collect": "Récupérer un cristal identifié d'Ilum ; un cristal déjà installé dans ton sabre compte aussi. Aucune consommation ni récompense d'alignement.",
+  "quest.legacyoftheforce.archive_unavailable": "Certaines archives sont indisponibles. Les découvertes déjà enregistrées sont conservées. Réessaie lorsque les archives seront rétablies."
 }

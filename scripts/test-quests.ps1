@@ -1,10 +1,10 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='quest1',[switch]$OnlyLifecycle)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='quest1',[switch]$OnlyLifecycle,[switch]$OnlyCatalog)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$runPath=Join-Path $repoPath "run-quests-$Run"
 if(Test-Path -LiteralPath (Join-Path $runPath 'world')) { throw 'Use a fresh isolated run; preserve previous worlds.' }
 New-Item -ItemType Directory -Path $runPath -Force | Out-Null
 'eula=true' | Set-Content -LiteralPath (Join-Path $runPath 'eula.txt') -Encoding ascii
-foreach($phase in $(if($OnlyLifecycle) { @('LIFECYCLE') } else { @('JOURNEY','RELOAD') })) {
+foreach($phase in $(if($OnlyCatalog) { @('CATALOG') } elseif($OnlyLifecycle) { @('LIFECYCLE') } else { @('JOURNEY','RELOAD') })) {
     $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID).Path
     foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-quest-test-server.ps1'),'-Run',$Run)) { $info.ArgumentList.Add($arg) }
     $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true

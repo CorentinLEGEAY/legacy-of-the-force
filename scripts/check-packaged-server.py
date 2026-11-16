@@ -21,7 +21,9 @@ def verify(repo,run):
         config=json.loads(archive.read('legacyoftheforce.mixins.json'));assert config['required'] and config['injectors']['defaultRequire']==1 and len(config['mixins'])==3
         for mixin in config['mixins']: assert config['package'].replace('.','/')+'/'+mixin+'.class' in names
         assert 'config="legacyoftheforce.mixins.json"' in archive.read('META-INF/neoforge.mods.toml').decode()
-        for language in ('fr_fr','en_us'): assert json.loads(archive.read(f'assets/legacyoftheforce/lang/{language}.json'))['boss.legacyoftheforce.fluid_locked']
+        for language in ('fr_fr','en_us'):
+            language_data=json.loads(archive.read(f'assets/legacyoftheforce/lang/{language}.json'))
+            assert language_data['boss.legacyoftheforce.fluid_locked'] and language_data['quest.legacyoftheforce.archive_unavailable']
     for phase in (1,2):
         log=(repo/f'.tools/packaged-{run}-phase{phase}.log').read_text(encoding='utf-8-sig')
         assert 'mods folder locator' in log and 'Legacy of the Force 0.1.0-dev (legacyoftheforce)' in log and 'infrastructure loaded' in log

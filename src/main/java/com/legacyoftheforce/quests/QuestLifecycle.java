@@ -59,7 +59,10 @@ public final class QuestLifecycle {
     public static boolean discover(ServerPlayer actor, BlockPos pos) {
         if (!request(actor) || !actor.serverLevel().hasChunkAt(pos) || !actor.canInteractWithBlock(pos, 4)
                 || !actor.serverLevel().getBlockState(pos).is(QuestContent.HOLOCRON.get())
-                || !PROTECTION.mayUseContainer(actor, actor.serverLevel(), pos) || !QuestCatalog.definitions().containsKey(QuestContent.ECHO)) return false;
+                || !PROTECTION.mayUseContainer(actor, actor.serverLevel(), pos)) return false;
+        if (!QuestCatalog.definitions().containsKey(QuestContent.ECHO)) {
+            actor.displayClientMessage(Component.translatable("quest.legacyoftheforce.archive_unavailable"), false); return false;
+        }
         if (!observe(actor, QuestContent.ECHO)) return false;
         show(actor); return true;
     }
@@ -103,8 +106,11 @@ public final class QuestLifecycle {
         var lines = new ArrayList<QuestJournalMenu.Line>(); var view = state.view();
         if (view.isEmpty()) return List.of(new QuestJournalMenu.Line("quest.legacyoftheforce.unavailable", 0));
         lines.add(new QuestJournalMenu.Line("quest.legacyoftheforce.optional", 0));
-        var entries = QuestCatalog.definitions().entrySet().stream().filter(entry -> view.get().holocrons().contains(entry.getKey())).sorted(Map.Entry.comparingByKey()).toList();
-        if (entries.isEmpty()) lines.add(new QuestJournalMenu.Line("quest.legacyoftheforce.find_echo", 0));
+        var definitions = QuestCatalog.definitions();
+        boolean missing = view.get().holocrons().stream().anyMatch(id -> !definitions.containsKey(id));
+        if (missing || !definitions.containsKey(QuestContent.ECHO)) lines.add(new QuestJournalMenu.Line("quest.legacyoftheforce.archive_unavailable", 0));
+        var entries = definitions.entrySet().stream().filter(entry -> view.get().holocrons().contains(entry.getKey())).sorted(Map.Entry.comparingByKey()).toList();
+        if (view.get().holocrons().isEmpty() && definitions.containsKey(QuestContent.ECHO)) lines.add(new QuestJournalMenu.Line("quest.legacyoftheforce.find_echo", 0));
         for (var entry : entries) {
             var definition = entry.getValue();
             if (lines.size() + 3 + definition.steps().size() > 47) { lines.add(new QuestJournalMenu.Line("quest.legacyoftheforce.more", 0)); break; }

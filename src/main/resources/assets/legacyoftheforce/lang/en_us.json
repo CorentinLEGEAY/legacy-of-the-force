@@ -303,5 +303,11 @@
   "quest.legacyoftheforce.echo.read": "Read the Frozen Echo holocron.",
   "quest.legacyoftheforce.echo.travel": "Visit Ilum, with or without this clue.",
   "quest.legacyoftheforce.echo.collect": "Acquire an identified Ilum crystal; one already installed in your saber also counts. No item consumption or alignment reward.",
-  "quest.legacyoftheforce.archive_unavailable": "Some archives are unavailable. Recorded discoveries are preserved. Try again once the archives are restored."
+  "quest.legacyoftheforce.archive_unavailable": "Some archives are unavailable. Recorded discoveries are preserved. Try again once the archives are restored.",
+  "command.legacyoftheforce.orientation": "Orientation: %s",
+  "alignment.legacyoftheforce.dark": "Dark",
+  "alignment.legacyoftheforce.dark_leaning": "Dark leaning",
+  "alignment.legacyoftheforce.neutral": "Neutral",
+  "alignment.legacyoftheforce.light_leaning": "Light leaning",
+  "alignment.legacyoftheforce.light": "Light"
 }

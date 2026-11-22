@@ -303,5 +303,11 @@
   "quest.legacyoftheforce.echo.read": "Lire l'holocron de l'écho gelé.",
   "quest.legacyoftheforce.echo.travel": "Visiter Ilum, avec ou sans cette piste.",
   "quest.legacyoftheforce.echo.collect": "Récupérer un cristal identifié d'Ilum ; un cristal déjà installé dans ton sabre compte aussi. Aucune consommation ni récompense d'alignement.",
-  "quest.legacyoftheforce.archive_unavailable": "Certaines archives sont indisponibles. Les découvertes déjà enregistrées sont conservées. Réessaie lorsque les archives seront rétablies."
+  "quest.legacyoftheforce.archive_unavailable": "Certaines archives sont indisponibles. Les découvertes déjà enregistrées sont conservées. Réessaie lorsque les archives seront rétablies.",
+  "command.legacyoftheforce.orientation": "Orientation : %s",
+  "alignment.legacyoftheforce.dark": "Obscur confirmé",
+  "alignment.legacyoftheforce.dark_leaning": "Tendance obscure",
+  "alignment.legacyoftheforce.neutral": "Neutre",
+  "alignment.legacyoftheforce.light_leaning": "Tendance lumineuse",
+  "alignment.legacyoftheforce.light": "Lumineux confirmé"
 }

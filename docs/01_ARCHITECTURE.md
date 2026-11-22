@@ -180,3 +180,5 @@ Le journal est un snapshot serveur borné, transporté par le menu étendu NeoFo
 Reload des guides : un nouveau snapshot utilise une seule image immuable du catalogue. Définitions absentes/invalides : information d'archive indisponible, IDs personnels conservés, clic sans nouvelle découverte. Aucun menu déjà ouvert ne devient autorité de progression ; rouvrir actualise les textes et jalons. Protocole et preuve native qc2 : validation/P4-04.md.
 
 DurableOperationStore partage également AtomicNbtFile pour lecture et publication des enveloppes de journal (budget262144, phases et validation conservées). Il ne possède plus une seconde voie de renommage direct sans reprises. Refus permanent : journal antérieur conservé, coordinateur métier suspendu/récupérable.
+
+P1-03 : AlignmentThresholds est une valeur immuable pure de core.api. ServerConfig valide ensemble les quatre seuils de présentation ; ProgressCommands classe uniquement sur le serveur et transmet une clé de traduction imbriquée dans le message vanilla. Aucun nouveau paquet, champ de sauvegarde ou writer RPG ; PowerRequirement garde ses bornes propres indépendantes.

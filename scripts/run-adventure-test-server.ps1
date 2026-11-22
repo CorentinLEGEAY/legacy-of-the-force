@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery')][string]$Mode='Prep', [switch]$Duel)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery')][string]$Mode='Prep', [switch]$Duel)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$runPath=Join-Path $repoPath "run-adventure-$Run"
 New-Item -ItemType Directory -Path $runPath -Force | Out-Null
@@ -22,10 +22,19 @@ if((Get-Content -LiteralPath (Join-Path $runPath 'server.properties')) -notconta
 if($Mode -ne 'Prep') {
     (Get-Content -LiteralPath (Join-Path $runPath 'server.properties')).Replace('difficulty=peaceful','difficulty=normal') | Set-Content -LiteralPath (Join-Path $runPath 'server.properties') -Encoding ascii
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} else {'adventureTravel'}
 $journeyFlag=if($Mode -eq 'Journey') { "systemProperty 'lotf.validation.adventureJourney', 'true'" } else {''}
 $duelFlag=if($Duel) { "systemProperty 'lotf.validation.adventureDuel', 'true'" } else {''}
 $init=Join-Path $repoPath '.tools/adventure-server.init.gradle'
+if($Mode -in @('Rewards','RewardsRecovery')) {
+    $fixtureConfig=Join-Path $runPath 'world/serverconfig';New-Item -ItemType Directory -Path $fixtureConfig -Force | Out-Null
+    @'
+[rpg]
+alignmentThresholds = [-100, -10, 10, 100]
+[rpg.farm]
+windowTicks = 7200
+'@ | Set-Content -LiteralPath (Join-Path $fixtureConfig 'legacyoftheforce-server.toml') -Encoding ascii
+}
 @"
 gradle.projectsEvaluated {
     rootProject.neoForge.runs.named('server') {

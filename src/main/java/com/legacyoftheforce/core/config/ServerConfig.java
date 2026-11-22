@@ -23,6 +23,7 @@ public final class ServerConfig {
     public static final ModConfigSpec.DoubleValue FARM_XP_MULTIPLIER;
     public static final ModConfigSpec.IntValue FARM_CELL_SIZE;
     public static final ModConfigSpec.IntValue FORCE_CREDIT_WINDOW_TICKS;
+    public static final ModConfigSpec.ConfigValue<java.util.List<Integer>> ALIGNMENT_THRESHOLDS;
     public static final ModConfigSpec.DoubleValue FORCE_CREDIT_MIN_DISTANCE;
     static {
         var builder = new ModConfigSpec.Builder();
@@ -33,6 +34,9 @@ public final class ServerConfig {
         MAX_ENERGY = builder.defineInRange("rpg.maxEnergy", 100.0, 1.0, 1_000_000.0);
         ENERGY_REGEN_PER_SECOND = builder.defineInRange("rpg.energyRegenPerSecond", 2.0, 0.0, 1000.0);
         DEATH_ENERGY_FRACTION = builder.defineInRange("rpg.deathEnergyFraction", 1.0, 0.0, 1.0);
+        ALIGNMENT_THRESHOLDS = builder.comment("Presentation only, in tenths: dark, dark leaning, light leaning, light. Strictly ordered around zero.")
+                .define("rpg.alignmentThresholds", java.util.List.of(-500, -200, 200, 500),
+                        com.legacyoftheforce.core.api.AlignmentThresholds::validList);
         PASSIVE_XP = builder.defineInRange("rpg.passiveXp", 1, 0, 1_000_000);
         HOSTILE_XP = builder.defineInRange("rpg.hostileXp", 5, 0, 1_000_000);
         ELITE_XP = builder.defineInRange("rpg.eliteXp", 40, 0, 1_000_000);

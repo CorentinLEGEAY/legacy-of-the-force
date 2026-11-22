@@ -102,3 +102,6 @@ Recettes JSON : deux terminaux pour fer5/cuivre2/verre1/redstone1 ; carte pour b
 - Le niveau 100 est un objectif de long terme, pas atteignable en quelques heures de ferme à mobs.
 - Un boss n'est pas une source infinie de ±25 instantanément.
 - Les meilleurs véhicules restent soumis à la taille, au poids, à la consommation et aux collisions.
+
+## Présentation de l’alignement — P1-03
+Dans `[rpg]` du fichier `config/legacyoftheforce-server.toml` (surcharge native possible dans le `serverconfig` du monde), `alignmentThresholds = [-500, -200, 200, 500]` donne les quatre frontières en dixièmes. Liste complète validée : exactement quatre entiers, −1000≤obscur<tendance obscure<0<tendance lumineuse<lumineux≤1000. Côté obscur, la frontière est incluse dans la bande la plus sombre ; côté lumineux, elle est incluse dans la bande la plus lumineuse. Les bandes de présentation n’ajustent jamais les gains confirmés, le score, les prérequis d’un pouvoir ni le cristal. `/lotf profile` affiche l’orientation en FR/EN ; défauts identiques à RPG-03. Config incorrecte : NeoForge corrige la liste entière aux défauts, sans réécrire les profils. Preuves de chargement TOML et affichage natif : validation/P1-02-03_NATIVE.md.

@@ -75,6 +75,8 @@ Avec JAVA_HOME configuré, les commandes standard `./gradlew.bat build` (Windows
 
 Le smoke utilise exclusivement `127.0.0.1:25575`, un monde isolé conservé entre lancements, et vérifie démarrage + arrêt + sauvegarde. Les configurations de dev ne remplacent pas un serveur de production authentifié.
 
+Profil : `/lotf profile` affiche aussi l’orientation calculée par le serveur. Dans la section `[rpg]` de `config/legacyoftheforce-server.toml`, `alignmentThresholds = [-500, -200, 200, 500]` règle les quatre seuils de présentation en dixièmes (obscur confirmé/tendance obscure/tendance lumineuse/lumineux confirmé). Garder quatre entiers strictement ordonnés autour de zéro ; une liste invalide est corrigée intégralement aux défauts par NeoForge. Une surcharge par monde est possible sous `world/serverconfig/legacyoftheforce-server.toml`. Cela ne change ni le score sauvegardé, ni les conditions des pouvoirs, ni la couleur du cristal.
+
 Profil : `/lotf profile`. Test administrateur : `/lotf debug spend_energy 50`. Diagnostic de protocole : `/lotf_probe 1` (sonde client, vérifiée par le serveur). Procédures et limites dans `docs/validation/`.
 
 Les récompenses RPG disposent d'un journal de reprise et de reçus durables sous le dossier du monde `data/legacyoftheforce/rewards`. Sauvegarder ce dossier avec le monde et les profils joueur. En cas d'erreur de stockage, les actions de progression concernées sont suspendues et les données conservées ; `/lotf rpg recover` (administrateur) réessaie la récupération après correction du problème. Voir `docs/validation/P1_RPG_REPRISE.md`.

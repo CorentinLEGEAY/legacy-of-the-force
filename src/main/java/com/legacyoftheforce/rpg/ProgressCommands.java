@@ -13,9 +13,14 @@ public final class ProgressCommands {
                     var player = context.getSource().getPlayerOrException();
                     var snapshot = player.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot();
                     ProgressEvents.sync(player);
+                    var band = com.legacyoftheforce.core.api.AlignmentBand.of(snapshot.alignmentTenths(),
+                            com.legacyoftheforce.core.api.AlignmentThresholds.fromList(
+                                    com.legacyoftheforce.core.config.ServerConfig.ALIGNMENT_THRESHOLDS.get()));
                     context.getSource().sendSuccess(() -> Component.translatable("command.legacyoftheforce.profile",
                             snapshot.level(), snapshot.xpInLevel(), snapshot.forceEnergy(),
                             snapshot.maxForceEnergy(), snapshot.alignmentTenths() / 10.0), false);
+                    context.getSource().sendSuccess(() -> Component.translatable("command.legacyoftheforce.orientation",
+                            Component.translatable("alignment.legacyoftheforce." + band.name().toLowerCase(java.util.Locale.ROOT))), false);
                     return 1;
                 }))
                 .then(Commands.literal("debug").requires(source -> source.hasPermission(2))

@@ -8,7 +8,7 @@ import net.minecraft.nbt.*;
 /** Bounded proof of an exact transfer, including opaque stack components. */
 record BossLootTransaction(CompoundTag tag) {
     enum Phase { PREPARED, DELIVERED, DONE, ABORTED }
-    record View(UUID owner, UUID operation, UUID victory, BlockPos altar, Phase phase, CompoundTag before, CompoundTag after, ListTag loot) {}
+    record View(UUID owner, UUID operation, UUID victory, BlockPos altar, Phase phase, CompoundTag before, CompoundTag after, ListTag loot, net.minecraft.resources.ResourceLocation dimension) {}
     BossLootTransaction { tag=tag.copy(); }
     @Override public CompoundTag tag() { return tag.copy(); }
     static BossLootTransaction prepare(UUID owner, UUID operation, UUID victory, BlockPos altar, CompoundTag before, CompoundTag after, ListTag loot) {
@@ -16,14 +16,20 @@ record BossLootTransaction(CompoundTag tag) {
         tag.putString("dimension","legacyoftheforce:ilum");tag.putString("phase",Phase.PREPARED.name());tag.put("before",before.copy());tag.put("after",after.copy());tag.put("loot",loot.copy());
         var result=new BossLootTransaction(tag);result.view();return result;
     }
+    static BossLootTransaction prepare(UUID owner, UUID operation, UUID victory, BlockPos altar, CompoundTag before, CompoundTag after, ListTag loot, net.minecraft.resources.ResourceLocation dimension) {
+        if (dimension.equals(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:ilum"))) return prepare(owner, operation, victory, altar, before, after, loot);
+        var tag = prepare(owner, operation, victory, altar, before, after, loot).tag(); tag.putInt("schemaVersion", 2); tag.putString("dimension", dimension.toString());
+        var result = new BossLootTransaction(tag); result.view(); return result;
+    }
     static void image(CompoundTag image) {
         if (!image.getAllKeys().equals(Set.of("Inventory","receipt")) || !image.contains("Inventory",Tag.TAG_LIST) || !image.contains("receipt",Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Invalid loot player image");
         var list=image.getList("Inventory",Tag.TAG_COMPOUND);if (!list.equals(image.get("Inventory"))) throw new IllegalArgumentException("Invalid inventory list");
         NativeInventoryImage.validate(list);new BossLootReceipt(image.getCompound("receipt")).stamp().orElseThrow();
     }
     View view() {
-        if (tag.sizeInBytes()>262144 || !tag.contains("schemaVersion",Tag.TAG_INT) || tag.getInt("schemaVersion")!=1 || !tag.hasUUID("owner") || !tag.hasUUID("operation") || !tag.hasUUID("victory")
-                || !tag.contains("altar",Tag.TAG_LONG) || !tag.getString("dimension").equals("legacyoftheforce:ilum") || !tag.contains("phase",Tag.TAG_STRING)
+        if (tag.sizeInBytes()>262144 || !tag.contains("schemaVersion",Tag.TAG_INT) || (tag.getInt("schemaVersion")!=1 && tag.getInt("schemaVersion")!=2) || !tag.hasUUID("owner") || !tag.hasUUID("operation") || !tag.hasUUID("victory")
+                || !tag.contains("altar",Tag.TAG_LONG) || !tag.contains("dimension",Tag.TAG_STRING) || !BossKind.supportedDimension(net.minecraft.resources.ResourceLocation.tryParse(tag.getString("dimension")))
+                || tag.getInt("schemaVersion")==1 && !tag.getString("dimension").equals("legacyoftheforce:ilum") || !tag.contains("phase",Tag.TAG_STRING)
                 || !tag.contains("before",Tag.TAG_COMPOUND) || !tag.contains("after",Tag.TAG_COMPOUND) || !tag.contains("loot",Tag.TAG_LIST)) throw new IllegalArgumentException("Unsupported loot journal");
         var before=tag.getCompound("before");var after=tag.getCompound("after");image(before);image(after);
         UUID operation=tag.getUUID("operation");var receipt=new BossLootReceipt(before.getCompound("receipt"));
@@ -40,7 +46,7 @@ record BossLootTransaction(CompoundTag tag) {
         // Armor and offhand cannot be used as destination space or altered by collection.
         if (!nonMain(before).equals(nonMain(after))) throw new IllegalArgumentException("Loot changed equipped items");
         var pos=BlockPos.of(tag.getLong("altar"));if (pos.getY()<-64 || pos.getY()>=320 || Math.abs((long)pos.getX())>29999984 || Math.abs((long)pos.getZ())>29999984) throw new IllegalArgumentException("Invalid altar location");
-        return new View(tag.getUUID("owner"),operation,tag.getUUID("victory"),pos,Phase.valueOf(tag.getString("phase")),before.copy(),after.copy(),loot.copy());
+        return new View(tag.getUUID("owner"),operation,tag.getUUID("victory"),pos,Phase.valueOf(tag.getString("phase")),before.copy(),after.copy(),loot.copy(),net.minecraft.resources.ResourceLocation.parse(tag.getString("dimension")));
     }
     private static ListTag nonMain(CompoundTag image) { var result=new ListTag();for(var value:image.getList("Inventory",Tag.TAG_COMPOUND)) if ((((CompoundTag)value).getByte("Slot")&255)>=100) result.add(value.copy());return result; }
     private static Map<CompoundTag,Integer> counts(ListTag list,boolean mainOnly) {

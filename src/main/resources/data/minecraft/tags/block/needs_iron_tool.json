@@ -3,6 +3,8 @@
   "values": [
     "legacyoftheforce:ilum_crystal_cluster",
     "legacyoftheforce:tatooine_crystal_cluster",
-    "legacyoftheforce:tatooine_silica_ore"
+    "legacyoftheforce:tatooine_silica_ore",
+    "legacyoftheforce:tatooine_jedi_altar",
+    "legacyoftheforce:tatooine_sith_altar"
   ]
 }

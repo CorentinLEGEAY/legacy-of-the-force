@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SGS",
+    "RER",
+    "SGS"
+  ],
+  "key": {
+    "S": {
+      "item": "legacyoftheforce:tatooine_silica"
+    },
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "E": {
+      "item": "legacyoftheforce:engine_standard"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:engine_racer",
+    "count": 1
+  }
+}

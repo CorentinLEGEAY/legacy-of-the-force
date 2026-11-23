@@ -33,19 +33,20 @@ public final class BossLootService {
     BossLootService(MinecraftServer server,Path directory,BiPredicate<ServerPlayer,BossAltarEntity> access,Probe probe) { this.server=server;this.directory=directory;this.access=access;this.probe=probe; }
     public boolean collect(ServerPlayer actor,BossAltarEntity altar) {
         if (actor.server!=server || !server.isSameThread() || !actor.isAlive() || actor.isFakePlayer() || actor.isCreative() || actor.isSpectator() || actor.isPassenger()
-                || altar.getLevel()!=actor.level() || actor.level().getBlockEntity(altar.getBlockPos())!=altar || !actor.level().dimension().location().toString().equals("legacyoftheforce:ilum") || !actor.canInteractWithBlock(altar.getBlockPos(),0)) return false;
+                || altar.getLevel()!=actor.level() || actor.level().getBlockEntity(altar.getBlockPos())!=altar || !BossKind.supportedDimension(actor.level().dimension().location()) || !actor.canInteractWithBlock(altar.getBlockPos(),0)) return false;
         if (!actor.containerMenu.getCarried().isEmpty()) { feedback(actor,"clear_cursor");return false; }
         long now=server.overworld().getGameTime();
         if(now<nextCollect.getOrDefault(actor.getUUID(),0L) || nextCollect.size()>=1024 && !nextCollect.containsKey(actor.getUUID())) return false;
         nextCollect.put(actor.getUUID(),now+10);
         try {
             recover(actor);
+            if (!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)) return false;
             if (!altar.supported() || altar.pendingClaim()!=null || altar.isEmpty() || altar.lootVictory()==null || !access.test(actor,altar)) return false;
             var before=image(actor);BossLootTransaction.image(before);var preview=new Inventory(actor);preview.load(before.getList("Inventory",Tag.TAG_COMPOUND));
             if (!preview.save(new ListTag()).equals(before.get("Inventory"))) throw new IOException("Unsupported inventory round trip");
             for(int slot=0;slot<altar.getContainerSize();slot++) if(!insert(preview,altar.getItem(slot).copy())) { feedback(actor,"inventory_full");return false; }
             UUID operation=UUID.randomUUID();var after=new CompoundTag();after.put("Inventory",preview.save(new ListTag()));after.put("receipt",actor.getData(BossContent.LOOT_RECEIPT.get()).next(operation).tag());
-            var record=BossLootTransaction.prepare(actor.getUUID(),operation,altar.lootVictory(),altar.getBlockPos(),before,after,altar.lootItems());
+            var record=BossLootTransaction.prepare(actor.getUUID(),operation,altar.lootVictory(),altar.getBlockPos(),before,after,altar.lootItems(),actor.level().dimension().location());
             persistPlayer(actor,before);write(record);probe.reached(Checkpoint.PREPARED);
             altar.lockClaim(operation);probe.reached(Checkpoint.LOCK_MEMORY);persistAltar(altar);probe.reached(Checkpoint.LOCK_DURABLE);
             apply(actor,after);probe.reached(Checkpoint.PLAYER_DURABLE);
@@ -105,7 +106,7 @@ public final class BossLootService {
         altar.unlockClaim(value.operation());probe.reached(Checkpoint.UNLOCK_MEMORY);persistAltar(altar);probe.reached(Checkpoint.UNLOCK_DURABLE);
     }
     private BossAltarEntity altar(BossLootTransaction.View value) throws IOException {
-        var level=server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:ilum")));
+        var level=server.getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION,value.dimension()));
         if(level==null) throw new IOException("Loot dimension unavailable");
         level.getChunkAt(value.altar());return level.getBlockEntity(value.altar()) instanceof BossAltarEntity tile ? tile : null;
     }

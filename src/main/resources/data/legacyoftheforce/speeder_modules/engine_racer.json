@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "family": "engine",
+  "mass": 2.8,
+  "thrust": 34,
+  "lift": 16,
+  "capacity": 0,
+  "stability": 0.08,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 9
+    },
+    {
+      "item": "legacyoftheforce:tatooine_silica",
+      "count": 1
+    }
+  ]
+}

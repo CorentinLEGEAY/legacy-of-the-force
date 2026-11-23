@@ -122,11 +122,11 @@ def terrain():
                 'ambient': [{'type': 'minecraft:bat', 'weight': 5, 'minCount': 1, 'maxCount': 2}]}})
     write(DATA / 'worldgen/configured_feature/tatooine_landscape.json', {'type': NS + 'tatooine_landscape', 'config': {'spire_chance': 9, 'cactus_attempts': 2}})
     write(DATA / 'worldgen/placed_feature/tatooine_landscape.json', {'feature': NS + 'tatooine_landscape', 'placement': []})
-    names = ['tatooine_crystal_mine', 'tatooine_settlement', 'tatooine_wreck']
+    names = ['tatooine_crystal_mine', 'tatooine_settlement', 'tatooine_wreck', 'tatooine_jedi_temple', 'tatooine_sith_sanctum']
     for kind, name in enumerate(names):
         write(DATA / f'worldgen/structure/{name}.json', {'type': NS + 'tatooine_site', 'site_kind': kind, 'biomes': [NS + name for name in biomes],
             'spawn_overrides': {}, 'step': 'surface_structures', 'terrain_adaptation': 'none'})
-    write(DATA / 'worldgen/structure_set/tatooine_expeditions.json', {'structures': [{'structure': NS + name, 'weight': weight} for name, weight in zip(names, [2, 2, 1])],
+    write(DATA / 'worldgen/structure_set/tatooine_expeditions.json', {'structures': [{'structure': NS + name, 'weight': weight} for name, weight in zip(names, [2, 2, 1, 1, 1])],
         'placement': {'type': 'minecraft:random_spread', 'salt': 741928, 'spacing': 14, 'separation': 7, 'spread_type': 'linear'}})
 
 
@@ -166,6 +166,69 @@ def loot_and_resources():
         'result': {'id': NS + 'tatooine_coordinates', 'count': 1}})
 
 
+def desert_boss_assets():
+    for name, base, dark in [('tatooine_wandering_knight', (186, 161, 121), False), ('tatooine_desert_exile', (92, 70, 60), True)]:
+        image = Image.new('RGB', (16, 16))
+        for y in range(16):
+            for x in range(16):
+                grain = ((x * 5 + y * 11) % 9) - 4
+                seam = -18 if x in (1, 14) or y in (2, 13) else 0
+                image.putpixel((x, y), tuple(max(0, min(255, c + grain + seam)) for c in base))
+        draw = ImageDraw.Draw(image)
+        draw.line((3, 4, 12, 4), fill=(137, 103, 66) if not dark else (159, 101, 65))
+        draw.rectangle((6, 11, 9, 12), outline=(196, 167, 104))
+        image.save(texture_path('entity/' + name))
+    for name, dark in [('tatooine_jedi_altar', False), ('tatooine_sith_altar', True)]:
+        texture = NS + 'item/navigation/tatooine'
+        write(ASSETS / f'models/block/{name}.json', {'parent': 'minecraft:block/block', 'textures': {'metal': texture, 'particle': texture},
+            'elements': [cube([1, 0, 1], [15, 3, 15], 'metal'), cube([3, 3, 3], [13, 9, 13], 'metal'),
+                         cube([2, 9, 2], [14, 11, 14], 'metal'), cube([5 if dark else 6, 11, 6], [11 if dark else 10, 15, 10], 'metal')]})
+        write(ASSETS / f'blockstates/{name}.json', {'variants': {'': {'model': NS + 'block/' + name}}})
+    instrument = json.loads((ASSETS / 'models/item/tatooine_coordinates.json').read_text(encoding='utf-8'))
+    relic = {'textures': instrument['textures'], 'display': instrument['display'], 'elements': [
+        cube([4, 1, 4], [12, 3, 12], 'metal'), cube([5, 3, 5], [11, 11, 11], 'metal'), cube([3, 11, 3], [13, 13, 13], 'metal'),
+        cube([6, 13, 6], [10, 15, 10], 'face')]}
+    write(ASSETS / 'models/item/tatooine_boss_relic.json', relic)
+    update_tag(ROOT / 'data/minecraft/tags/block/mineable/pickaxe.json', [NS + 'tatooine_jedi_altar', NS + 'tatooine_sith_altar'])
+    update_tag(ROOT / 'data/minecraft/tags/block/needs_iron_tool.json', [NS + 'tatooine_jedi_altar', NS + 'tatooine_sith_altar'])
+    # Racing engine trades lift and stability for propulsion; it is not a universal upgrade.
+    write(DATA / 'speeder_modules/engine_racer.json', {'schemaVersion': 1, 'family': 'engine', 'mass': 2.8, 'thrust': 34, 'lift': 16,
+        'capacity': 0, 'stability': .08, 'connectors': ['up', 'down', 'north', 'south', 'east', 'west'],
+        'salvage': [{'item': 'minecraft:iron_nugget', 'count': 9}, {'item': NS + 'tatooine_silica', 'count': 1}]})
+    write(DATA / 'recipe/engine_racer.json', {'type': 'minecraft:crafting_shaped', 'category': 'misc', 'pattern': ['SGS', 'RER', 'SGS'],
+        'key': {'S': {'item': NS + 'tatooine_silica'}, 'G': {'item': 'minecraft:gold_ingot'}, 'R': {'item': 'minecraft:redstone'}, 'E': {'item': NS + 'engine_standard'}},
+        'result': {'id': NS + 'engine_racer', 'count': 1}})
+    standard = json.loads((ASSETS / 'models/item/engine_standard.json').read_text(encoding='utf-8'))
+    standard['elements'] = [cube([2, 3, 2], [14, 6, 14], 'gunmetal'), cube([3, 6, 3], [13, 11, 13], 'alloy'),
+        cube([5, 4, 0], [11, 10, 3], 'edge'), cube([5.5, 5, -.1], [10.5, 9, .5], 'indicator'),
+        cube([4, 4, 13], [12, 10, 16], 'copper')]
+    for x in [2, 4, 6, 8, 10, 12]:
+        standard['elements'].append(cube([x, 10.5, 4], [x + .7, 14, 12], 'edge'))
+    for z in [3, 6, 9, 12]:
+        standard['elements'].append(cube([1, 6, z], [3, 12, z + .5], 'copper'))
+        standard['elements'].append(cube([13, 6, z], [15, 12, z + .5], 'copper'))
+    write(ASSETS / 'models/item/engine_racer.json', standard)
+    notes = Image.new('RGB', (32, 32), (173, 143, 100))
+    draw = ImageDraw.Draw(notes)
+    draw.rectangle((2, 2, 29, 29), outline=(78, 60, 42), width=2)
+    draw.rectangle((5, 5, 26, 26), fill=(223, 202, 156))
+    for y in [9, 13, 17, 21]:
+        draw.line((8, y, 22 if y != 17 else 17, y), fill=(98, 80, 52), width=1)
+    draw.line((4, 2, 4, 29), fill=(94, 71, 50), width=2)
+    notes.save(texture_path('item/navigation/tatooine_notes'))
+    write(ASSETS / 'models/item/tatooine_field_notes.json', {'parent': 'minecraft:block/block',
+        'textures': {'paper': NS + 'item/navigation/tatooine_notes', 'particle': NS + 'item/navigation/tatooine_notes'},
+        'elements': [cube([2, 1, 2], [14, 3, 14], 'paper'), cube([1, 0, 1], [15, 1, 15], 'paper'), cube([1, 3, 1], [15, 4, 15], 'paper')],
+        'display': instrument['display']})
+    write(DATA / 'recipe/tatooine_field_notes.json', {'type': 'minecraft:crafting_shapeless', 'category': 'misc',
+        'ingredients': [{'item': item} for item in ['minecraft:paper', 'minecraft:charcoal', 'minecraft:sandstone']],
+        'result': {'id': NS + 'tatooine_field_notes', 'count': 1}})
+    chest_path = DATA / 'loot_table/chests/tatooine_expedition.json'
+    chest = json.loads(chest_path.read_text(encoding='utf-8'))
+    chest['pools'].append({'rolls': 1, 'entries': [{'type': 'minecraft:item', 'name': NS + 'tatooine_field_notes'}, {'type': 'minecraft:empty'}]})
+    write(chest_path, chest)
+
+
 def language():
     for lang in ['fr_fr', 'en_us']:
         path = ASSETS / f'lang/{lang}.json'
@@ -183,6 +246,32 @@ def language():
             content[f'item.legacyoftheforce.{key}_coordinates'] = f'Coordonnées : {name}' if french else f'{name} coordinates'
         content['block.legacyoftheforce.tatooine_crystal_cluster'] = 'Formation de kyber des dunes' if french else 'Dune kyber formation'
         content['block.legacyoftheforce.tatooine_silica_ore'] = 'Grès à silice de Tatooine' if french else 'Tatooine silica sandstone'
+        content.update({
+            'entity.legacyoftheforce.tatooine_wandering_knight': 'Chevalier Errant' if french else 'Wandering Knight',
+            'entity.legacyoftheforce.tatooine_desert_exile': 'Exilé du Désert' if french else 'Desert Exile',
+            'block.legacyoftheforce.tatooine_jedi_altar': 'Autel du Chevalier Errant' if french else 'Wandering Knight altar',
+            'block.legacyoftheforce.tatooine_sith_altar': 'Autel de l’Exilé du Désert' if french else 'Desert Exile altar',
+            'item.legacyoftheforce.tatooine_boss_relic': 'Relique des dunes' if french else 'Dune relic',
+            'item.legacyoftheforce.engine_racer': 'Moteur de course de Tatooine' if french else 'Tatooine racing engine',
+            'travel.legacyoftheforce.heat_warning': 'Le soleil vous fatigue : couvrez votre tête ou cherchez de l’ombre.' if french else 'The sun is wearing you down: cover your head or find shade.',
+            'item.legacyoftheforce.tatooine_field_notes': 'Carnet d’expédition : Tatooine' if french else 'Tatooine expedition notes',
+            'entity.legacyoftheforce.arena_ice': 'Objet d’arène' if french else 'Arena object',
+            'boss.legacyoftheforce.step_inside': 'Entrez dans l’arène avant de lancer l’épreuve.' if french else 'Step inside the arena before starting the trial.',
+        })
+        notes = [
+            ('Les entrées des mines se repèrent dans les plateaux de grès. Leur escalier descend vers une formation jaune rare.', 'Look for mine entrances in sandstone plateaus. Their stairs descend to a rare yellow formation.'),
+            ('Le Chevalier Errant riposte après une frappe gardée. Déplacer ou briser son couvert de grès ouvre sa défense.', 'The Wandering Knight counters a guarded hit. Moving or breaking his sandstone cover opens his defense.'),
+            ('L’Exilé annonce ses rafales et sa tempête. Mettez un pilier entre vous et le danger ; déplacer ses pierres brise sa concentration.', 'The Exile signals gusts and storms. Put a pillar between yourself and danger; moving his stones breaks his focus.'),
+            ('L’anneau de sable laisse son centre libre et peut être sauté. Au soleil, un couvre-chef, l’ombre ou l’eau limitent la fatigue.', 'The sand ring leaves a safe center and can be jumped. Head coverings, shade or water limit sun fatigue.'),
+            ('La silice entre dans le moteur de course : plus de propulsion, moins de portance. Les épaves peuvent contenir une carte vers Endor.', 'Silica is used in racing engines: more thrust, less lift. Wrecks can hold an Endor chart.'),
+        ]
+        for index, (fr, en) in enumerate(notes):
+            content[f'notes.legacyoftheforce.tatooine.{index}'] = fr if french else en
+        attacks = [('sidestep', 'Pas de côté', 'Sidestep'), ('riposte', 'Riposte', 'Riposte'), ('vault', 'Bond offensif', 'Vaulting strike'),
+                   ('crosscut', 'Croisé des dunes', 'Dune crosscut'), ('sand_gust', 'Rafale de sable', 'Sand gust'), ('repulse', 'Poussée frontale', 'Frontal repulse'),
+                   ('sandstorm', 'Tempête localisée', 'Focused sandstorm'), ('sand_ring', 'Anneau des sables', 'Sand ring')]
+        for key, fr, en in attacks:
+            content['boss.legacyoftheforce.attack.' + key] = fr if french else en
         content['travel.legacyoftheforce.help'] = (
             'Choisissez une destination et décodez sa carte. Posez un terminal à la base et emportez-en un second. Le départ finance le retour : posez le terminal transporté sur place pour revenir. Une destination indisponible ne permet pas le départ.'
             if french else 'Select a destination and decode its chart. Place one terminal at home and carry another. Departure prepays the return: place the carried terminal on site to go home. Unavailable destinations cannot be travelled to.')
@@ -193,5 +282,6 @@ if __name__ == '__main__':
     instruments()
     terrain()
     loot_and_resources()
+    desert_boss_assets()
     language()
     print('Authored navigation and Tatooine resources generated; runtime verification remains pending.')

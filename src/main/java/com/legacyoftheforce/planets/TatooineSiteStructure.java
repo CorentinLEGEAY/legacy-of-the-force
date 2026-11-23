@@ -10,7 +10,7 @@ import net.minecraft.world.level.levelgen.structure.*;
 /** Compact mines, settlements and wrecks on surveyed terrain; no runtime rebuilding. */
 public final class TatooineSiteStructure extends Structure {
     public static final MapCodec<TatooineSiteStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            settingsCodec(instance), Codec.intRange(0, 2).fieldOf("site_kind").forGetter(site -> site.kind)).apply(instance, TatooineSiteStructure::new));
+            settingsCodec(instance), Codec.intRange(0, 4).fieldOf("site_kind").forGetter(site -> site.kind)).apply(instance, TatooineSiteStructure::new));
     private final int kind;
     public TatooineSiteStructure(StructureSettings settings, int kind) { super(settings); this.kind = kind; }
     @Override protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {

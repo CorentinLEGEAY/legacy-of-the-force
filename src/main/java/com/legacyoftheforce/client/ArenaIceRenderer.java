@@ -14,6 +14,7 @@ public final class ArenaIceRenderer extends EntityRenderer<ArenaIceEntity> {
     @Override public ResourceLocation getTextureLocation(ArenaIceEntity ice) { return TextureAtlas.LOCATION_BLOCKS; }
     @Override public void render(ArenaIceEntity ice, float yaw, float partial, PoseStack poses, MultiBufferSource buffers, int light) {
         poses.pushPose(); poses.translate(-.475,0,-.475); poses.scale(.95f,.95f,.95f);
-        blocks.renderSingleBlock(Blocks.BLUE_ICE.defaultBlockState(), poses, buffers, light, OverlayTexture.NO_OVERLAY); poses.popPose(); super.render(ice,yaw,partial,poses,buffers,light);
+        var material = ice.material() == 1 ? Blocks.CHISELED_SANDSTONE : ice.material() == 2 ? Blocks.CHISELED_RED_SANDSTONE : Blocks.BLUE_ICE;
+        blocks.renderSingleBlock(material.defaultBlockState(), poses, buffers, light, OverlayTexture.NO_OVERLAY); poses.popPose(); super.render(ice,yaw,partial,poses,buffers,light);
     }
 }

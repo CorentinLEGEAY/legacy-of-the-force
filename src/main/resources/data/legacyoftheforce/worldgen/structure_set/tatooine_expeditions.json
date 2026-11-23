@@ -11,6 +11,14 @@
     {
       "structure": "legacyoftheforce:tatooine_wreck",
       "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:tatooine_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:tatooine_sith_sanctum",
+      "weight": 1
     }
   ],
   "placement": {

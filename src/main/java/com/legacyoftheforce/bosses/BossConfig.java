@@ -10,6 +10,11 @@ public final class BossConfig {
     public static final ModConfigSpec.IntValue ICE_LIFETIME, VULNERABILITY, CONTROL_IMMUNITY;
     public static final ModConfigSpec.IntValue INTRO, CREDIT_WINDOW;
     public static final ModConfigSpec.DoubleValue HIT_FRACTION;
+    public static final ModConfigSpec.DoubleValue KNIGHT_HEALTH, EXILE_HEALTH, DESERT_DAMAGE, DESERT_STEP, SAND_PUSH;
+    public static final ModConfigSpec.IntValue DESERT_XP, DESERT_COUNTER_WINDOW, SAND_DURATION, SAND_INTERVAL, SAND_WEAKNESS;
+    public static final ModConfigSpec.IntValue DESERT_MATERIALS;
+    public static final ModConfigSpec.IntValue DESERT_COVER_ENERGY;
+    public static final ModConfigSpec.IntValue DESERT_CRYSTAL_CHANCE;
     private record AttackValues(ModConfigSpec.IntValue windup, ModConfigSpec.IntValue cooldown, ModConfigSpec.DoubleValue range, ModConfigSpec.DoubleValue damage, ModConfigSpec.IntValue energy) {}
     private static final java.util.Map<BossAttack, AttackValues> ATTACKS = new java.util.EnumMap<>(BossAttack.class);
     static {
@@ -31,6 +36,19 @@ public final class BossConfig {
         CONTROL_IMMUNITY = b.defineInRange("combat.forceControlImmunityTicks", 80, 40, 400);
         INTRO = b.defineInRange("combat.introductionTicks", 40, 10, 200); CREDIT_WINDOW = b.defineInRange("rewards.contributionWindowTicks", 600, 100, 2400);
         HIT_FRACTION = b.defineInRange("combat.maximumHealthFractionLostPerHit", .25d, .05, .3);
+        KNIGHT_HEALTH = b.defineInRange("tatooine.knightHealth", 250d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        EXILE_HEALTH = b.defineInRange("tatooine.exileHealth", 270d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        DESERT_DAMAGE = b.defineInRange("tatooine.baseDamage", 5d, 1, 40);
+        DESERT_XP = b.defineInRange("tatooine.rewardXp", 1100, 1, 100000);
+        DESERT_MATERIALS = b.defineInRange("tatooine.rewardSilica", 3, 1, 16);
+        DESERT_COVER_ENERGY = b.defineInRange("tatooine.coverEnergy", 12, 4, 40);
+        DESERT_CRYSTAL_CHANCE = b.defineInRange("tatooine.expeditionCrystalChancePercent", 25, 0, 100);
+        DESERT_STEP = b.defineInRange("tatooine.stepDistance", 1.6d, .4, 2.5);
+        SAND_PUSH = b.defineInRange("tatooine.pushSpeed", .24d, .05, .4);
+        DESERT_COUNTER_WINDOW = b.defineInRange("tatooine.counterWindowTicks", 100, 20, 200);
+        SAND_DURATION = b.defineInRange("tatooine.stormDurationTicks", 60, 20, 100);
+        SAND_INTERVAL = b.defineInRange("tatooine.stormPulseTicks", 20, 15, 40);
+        SAND_WEAKNESS = b.defineInRange("tatooine.stormWeaknessTicks", 30, 0, 60);
         for (var a : BossAttack.values()) {
             String key = "attacks." + a.name().toLowerCase(java.util.Locale.ROOT) + ".";
             ATTACKS.put(a, new AttackValues(b.defineInRange(key + "windupTicks", a.windup, 10, 200), b.defineInRange(key + "cooldownTicks", a.cooldown, 10, 400),
@@ -48,6 +66,14 @@ public final class BossConfig {
         return BossHealthRules.scaled(Math.clamp(base,BossHealthRules.MIN_HEALTH,BossHealthRules.MAX_HEALTH),Math.clamp(extra,0,1),participants);
     }
     static int windup(BossAttack attack) { return Math.max(WINDUP.get(), ATTACKS.get(attack).windup.get()); }
+    static double health(BossKind kind, int participants) {
+        if (!kind.desert()) return health(participants);
+        double base = kind == BossKind.WANDERING_KNIGHT ? KNIGHT_HEALTH.get() : EXILE_HEALTH.get(), extra = GROUP_HEALTH.get();
+        return BossHealthRules.scaled(Double.isFinite(base) ? Math.clamp(base, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH) : 250,
+                Double.isFinite(extra) ? Math.clamp(extra, 0, 1) : .35, participants);
+    }
+    static int xp(BossKind kind) { return kind.desert() ? DESERT_XP.get() : XP.get(); }
+    static float damage(BossKind kind, BossAttack attack) { return kind.desert() ? (float)(DESERT_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : damage(attack); }
     static int cooldown(BossAttack attack) { return ATTACKS.get(attack).cooldown.get(); }
     static double range(BossAttack attack) { return ATTACKS.get(attack).range.get(); }
     static float damage(BossAttack attack) { return (float)(DAMAGE.get() * ATTACKS.get(attack).damage.get()); }

@@ -14,6 +14,7 @@ import net.minecraft.world.phys.BlockHitResult;
 public final class BossAltarBlock extends BaseEntityBlock {
     private final BossKind kind;
     public BossAltarBlock(BossKind kind, Properties properties) { super(properties); this.kind = kind; }
+    public BossKind kind() { return kind; }
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return simpleCodec(p -> new BossAltarBlock(kind, p)); }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new BossAltarEntity(pos, state); }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }

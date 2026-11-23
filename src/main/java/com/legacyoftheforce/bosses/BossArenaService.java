@@ -94,13 +94,13 @@ public final class BossArenaService {
     private void feedback(ServerPlayer actor, String key) { actor.displayClientMessage(Component.translatable("boss.legacyoftheforce." + key), false); }
     public boolean canOpen(ServerPlayer actor, BlockPos pos) {
         if (!ready || actor.server != server || !server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || !actor.canInteractWithBlock(pos, 0)) return false;
-        var kind = actor.level().getBlockState(pos).is(BossContent.JEDI_ALTAR.get()) ? BossKind.GUARDIAN : actor.level().getBlockState(pos).is(BossContent.SITH_ALTAR.get()) ? BossKind.FROST_LORD : null;
-        if (kind == null) return false;
+        var kind = actor.level().getBlockState(pos).getBlock() instanceof BossAltarBlock block ? block.kind() : null;
+        if (kind == null || !kind.dimension().equals(actor.level().dimension().location())) return false;
         if(!(actor.level().getBlockEntity(pos) instanceof BossAltarEntity tile) || !tile.supported() || tile.pendingClaim()!=null || !new VanillaProtectedWorldService().mayUseContainer(actor,actor.serverLevel(),pos)) return false;
         var tag = arenas.get(arenaId(actor.serverLevel(), pos, kind));
         if (tag == null) {
             if (!(actor.level().getBlockState(pos).getBlock() instanceof BossAltarBlock)) return false;
-            try { tag = arena(actor.serverLevel(), pos, actor.level().getBlockState(pos).is(BossContent.JEDI_ALTAR.get()) ? BossKind.GUARDIAN : BossKind.FROST_LORD); }
+            try { tag = arena(actor.serverLevel(), pos, kind); }
             catch (IOException failure) { fail(failure); return false; }
         }
         return tag.getString("state").equals("COOLDOWN") && tag.getList("lootOwners", Tag.TAG_STRING).stream().anyMatch(t -> t.getAsString().equals(actor.getUUID().toString()));
@@ -108,12 +108,13 @@ public final class BossArenaService {
     public boolean challenge(ServerPlayer actor, BlockPos pos, BossKind kind) {
         if (!ready) { feedback(actor,"pending"); return false; }
         if (actor.server != server || !server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isCreative() || actor.isFakePlayer()
-                || !actor.level().dimension().location().toString().equals("legacyoftheforce:ilum") || !actor.canInteractWithBlock(pos, 0)
-                || !actor.level().getBlockState(pos).is(kind == BossKind.GUARDIAN ? BossContent.JEDI_ALTAR.get() : BossContent.SITH_ALTAR.get())
+                || !actor.level().dimension().location().equals(kind.dimension()) || !actor.canInteractWithBlock(pos, 0)
+                || !actor.level().getBlockState(pos).is(BossContent.altar(kind))
                 || !(actor.level().getBlockEntity(pos) instanceof BossAltarEntity altar) || !altar.supported() || !actor.level().mayInteract(actor, pos)) return false;
         if (now() < nextInteraction.getOrDefault(actor.getUUID(),0L)) return false;
         if (nextInteraction.size() >= 1024 && !nextInteraction.containsKey(actor.getUUID())) return false;
         nextInteraction.put(actor.getUUID(),now()+10);
+        if (!bounds(pos).contains(actor.position())) { feedback(actor, "step_inside"); return false; }
         var spawn=pos.north(3);
         if(!actor.serverLevel().entityManager.areEntitiesLoaded(new net.minecraft.world.level.ChunkPos(spawn).toLong()) || !actor.serverLevel().isPositionEntityTicking(spawn)) { feedback(actor,"loading");return false; }
         if (!arenas.containsKey(arenaId(actor.serverLevel(),pos,kind)) && arenas.size() >= 128 && arenas.values().stream().noneMatch(t -> t.getString("state").equals("COOLDOWN"))) return false;
@@ -133,7 +134,7 @@ public final class BossArenaService {
                 if (!actor.level().hasChunkAt(floor) || actor.level().getBlockState(floor).getCollisionShape(actor.level(), floor).isEmpty()
                         || !actor.level().getBlockState(floor).getFluidState().isEmpty()) { feedback(actor, "floor"); return false; }
             }
-            var boss = (kind == BossKind.GUARDIAN ? BossContent.GUARDIAN.get() : BossContent.FROST_LORD.get()).create(actor.level());
+            var boss = BossContent.entity(kind).create(actor.level());
             if (boss == null) return false;
             boss.setPos(center.getX() + .5, center.getY(), center.getZ() + .5);
             if (!actor.level().noCollision(boss, boss.getBoundingBox())) { feedback(actor, "space"); return false; }
@@ -167,7 +168,7 @@ public final class BossArenaService {
         try {
             var payload = new CompoundTag(); payload.putInt("schemaVersion", 1); payload.putString("dimension", boss.level().dimension().location().toString());
             payload.putLong("altar", boss.altar().asLong()); payload.putString("kind", boss.kind().name());
-            payload.putInt("xp", BossConfig.XP.get()); payload.putInt("rewardCooldown", BossConfig.REWARD_COOLDOWN.get());
+            payload.putInt("xp", BossConfig.xp(boss.kind())); payload.putInt("rewardCooldown", BossConfig.REWARD_COOLDOWN.get());
             payload.putLong("arenaReadyAt", now() + BossConfig.ARENA_COOLDOWN.get());
             var eligible = new ListTag(); for (UUID player : boss.eligibleParticipants()) eligible.add(StringTag.valueOf(player.toString())); payload.put("eligible", eligible);
             victories.prepare(boss.getUUID(), payload);
@@ -195,8 +196,8 @@ public final class BossArenaService {
     }
     private void validateVictory(StoredOperation entry) throws IOException {
         var p = entry.payload();
-        if (!entry.supported() || p.getInt("schemaVersion") != 1 || !Set.of("GUARDIAN", "FROST_LORD").contains(p.getString("kind"))
-                || !p.getString("dimension").equals("legacyoftheforce:ilum") || p.getInt("xp") < 1 || p.getInt("xp") > 100000
+        if (!entry.supported() || p.getInt("schemaVersion") != 1 || java.util.Arrays.stream(BossKind.values()).noneMatch(kind -> kind.name().equals(p.getString("kind")) && kind.dimension().toString().equals(p.getString("dimension")))
+                || p.getInt("xp") < 1 || p.getInt("xp") > 100000
                 || p.getInt("rewardCooldown") < 1 || p.getLong("arenaReadyAt") < 0 || !p.contains("eligible", Tag.TAG_LIST)
                 || p.getList("eligible", Tag.TAG_STRING).size() > 16) throw new IOException("Unsupported boss victory retained");
         for (var id : p.getList("eligible", Tag.TAG_STRING)) UUID.fromString(id.getAsString());
@@ -221,7 +222,7 @@ public final class BossArenaService {
         }
         if (entry.phase().equals("HELD")) {
             if (!(level.getBlockEntity(pos) instanceof BossAltarEntity altar) || !altar.supported()
-                    || !level.getBlockState(pos).is(kind == BossKind.GUARDIAN ? BossContent.JEDI_ALTAR.get() : BossContent.SITH_ALTAR.get())) return;
+                    || !level.getBlockState(pos).is(BossContent.altar(kind))) return;
             if (!entry.id().equals(altar.lootVictory())) {
                 if (!altar.isEmpty()) return;
                 altar.publish(entry.id(), !p.getList("awarded", Tag.TAG_STRING).isEmpty());checkpoints.accept(Checkpoint.LOOT_MEMORY);

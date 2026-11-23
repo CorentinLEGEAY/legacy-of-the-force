@@ -31,6 +31,8 @@ public final class ClientBootstrap {
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.GUARDIAN.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.GUARDIAN));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.FROST_LORD.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.FROST_LORD));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.KNIGHT.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.WANDERING_KNIGHT));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.EXILE.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.DESERT_EXILE));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ICE.get(), ArenaIceRenderer::new);
         });
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) ->

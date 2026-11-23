@@ -48,6 +48,7 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.quests.QuestCatalog::register);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());
+        NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.PlanetEnvironment());
         com.legacyoftheforce.speeder.SpeederContent.register(modBus);
         com.legacyoftheforce.content.PlanetaryMaterials.register(modBus);
         com.legacyoftheforce.core.api.PlayerProgressAccess.install(new ProgressService()::get);
@@ -65,6 +66,13 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.SaberTypeCatalog::register);
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.KyberAffinities::register);
         com.legacyoftheforce.core.api.CrystalAffinityAccess.install(com.legacyoftheforce.lightsaber.KyberAffinities::read);
+        com.legacyoftheforce.core.api.PlanetaryCrystals.install(com.legacyoftheforce.lightsaber.PlanetaryCrystalLoot::create);
+        com.legacyoftheforce.core.api.SaberDesigns.install(type -> {
+            var stack = new net.minecraft.world.item.ItemStack(SaberContent.BLUEPRINT.get());
+            stack.set(SaberContent.BLUEPRINT_DATA.get(), com.legacyoftheforce.lightsaber.SaberBlueprintData.create(
+                    SaberContent.defaultDesign(com.legacyoftheforce.lightsaber.SaberType.parse(type).orElseThrow())));
+            return stack;
+        });
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.PowerCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());

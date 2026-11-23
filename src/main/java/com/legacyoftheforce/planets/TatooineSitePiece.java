@@ -16,13 +16,13 @@ public final class TatooineSitePiece extends StructurePiece {
     private final CompoundTag retained;
     public TatooineSitePiece(BlockPos origin, int kind) {
         super(PlanetContent.DESERT_PIECE.get(), 0, new BoundingBox(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + 12, origin.getY() + 16, origin.getZ() + 12));
-        if (kind < 0 || kind > 2) throw new IllegalArgumentException("Invalid desert site");
+        if (kind < 0 || kind > 4) throw new IllegalArgumentException("Invalid desert site");
         this.kind = kind; retained = new CompoundTag(); setOrientation(Direction.SOUTH);
     }
     public TatooineSitePiece(StructurePieceSerializationContext context, CompoundTag tag) {
         super(PlanetContent.DESERT_PIECE.get(), tag); retained = tag.copy();
         kind = tag.contains("schemaVersion", Tag.TAG_INT) && tag.getInt("schemaVersion") == 1
-                && tag.contains("siteKind", Tag.TAG_INT) && tag.getInt("siteKind") >= 0 && tag.getInt("siteKind") <= 2
+                && tag.contains("siteKind", Tag.TAG_INT) && tag.getInt("siteKind") >= 0 && tag.getInt("siteKind") <= 4
                 && getBoundingBox().getXSpan() == 13 && getBoundingBox().getZSpan() == 13 && getBoundingBox().getYSpan() == 17 ? tag.getInt("siteKind") : -1;
     }
     @Override protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
@@ -32,6 +32,7 @@ public final class TatooineSitePiece extends StructurePiece {
     private void put(WorldGenLevel world, BoundingBox clip, Block block, int x, int y, int z) { placeBlock(world, block.defaultBlockState(), x, y, z, clip); }
     @Override public void postProcess(WorldGenLevel world, StructureManager manager, ChunkGenerator generator, RandomSource random, BoundingBox clip, ChunkPos chunk, BlockPos pivot) {
         if (kind < 0) return;
+        if (kind >= 3) { arena(world, clip); return; }
         if (kind == 0) mine(world, clip); else if (kind == 1) settlement(world, clip); else wreck(world, clip);
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/tatooine_expedition"));
         createChest(world, clip, random, kind == 0 ? 10 : 6, 1, kind == 0 ? 10 : 9, loot);
@@ -54,6 +55,27 @@ public final class TatooineSitePiece extends StructurePiece {
         for (int x = 7; x <= 9; x++) for (int z = 7; z <= 9; z++) put(world, clip, PlanetContent.SILICA_ORE.get(), x, 0, z);
         put(world, clip, PlanetContent.TATOOINE_CRYSTAL.get(), 8, 1, 8);
         put(world, clip, Blocks.SHROOMLIGHT, 10, 5, 10);
+    }
+    private void arena(WorldGenLevel world, BoundingBox clip) {
+        boolean dark = kind == 4;
+        var stone = dark ? Blocks.RED_SANDSTONE : Blocks.SMOOTH_SANDSTONE;
+        for (int x = 0; x <= 12; x++) for (int z = 0; z <= 12; z++) {
+            for (int y = 0; y <= 9; y++) {
+                Block block = y == 0 ? stone : Blocks.AIR;
+                boolean wall = x == 0 || x == 12 || z == 0 || z == 12;
+                if (wall && y <= (dark ? 4 : 2)) block = stone;
+                if ((z == 0 || z == 12) && x >= 5 && x <= 7 && y > 0 && y <= 3) block = Blocks.AIR;
+                put(world, clip, block, x, y, z);
+            }
+        }
+        // Low pillars inside the encounter offer real line-of-sight cover for gusts/storms.
+        for (int x : new int[]{3, 9}) for (int z : new int[]{3, 8}) {
+            for (int y = 1; y <= 2; y++) put(world, clip, dark ? Blocks.CUT_RED_SANDSTONE : Blocks.CHISELED_SANDSTONE, x, y, z);
+        }
+        for (int x : new int[]{1, 11}) for (int y = 1; y <= 6; y++) put(world, clip, stone, x, y, 11);
+        if (!dark) for (int x = 1; x <= 11; x++) put(world, clip, Blocks.CUT_SANDSTONE, x, 6, 11);
+        put(world, clip, com.legacyoftheforce.core.api.BossArenaSites.altar(PlanetId.TATOOINE.id(), dark), 6, 1, 9);
+        for (int x : new int[]{1, 11}) put(world, clip, Blocks.SHROOMLIGHT, x, 1, 6);
     }
     private void settlement(WorldGenLevel world, BoundingBox clip) {
         for (int x = 0; x <= 12; x++) for (int z = 0; z <= 12; z++) {

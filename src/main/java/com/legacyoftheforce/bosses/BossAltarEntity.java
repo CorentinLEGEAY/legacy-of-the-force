@@ -28,10 +28,30 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
     void unlockClaim(UUID operation) { if(!supported() || !operation.equals(pendingClaim)) throw new IllegalStateException("Altar unlock mismatch");pendingClaim=null;setChanged(); }
     public void publish(UUID event, boolean reward) {
         if (!supported() || !isEmpty() || pendingClaim!=null || event == null) throw new IllegalStateException("Altar cannot replace existing inventory");
-        if (reward) items.set(0, new ItemStack(BossContent.RELIC.get()));
-        var cells = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:speeder_energy_cell"));
-        if (reward) items.set(1, new ItemStack(cells, 4)); lootVictory = event; setChanged();
+        var planned = NonNullList.withSize(9, ItemStack.EMPTY);
+        if (reward) {
+            planned.set(0, new ItemStack(BossContent.RELIC.get()));
+            var cells = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:speeder_energy_cell"));
+            planned.set(1, new ItemStack(cells, 4));
+            if (getBlockState().getBlock() instanceof BossAltarBlock block && block.kind().desert()) {
+                planned.set(0, new ItemStack(BossContent.DESERT_RELIC.get()));
+                planned.set(2, new ItemStack(com.legacyoftheforce.content.PlanetaryMaterials.item("tatooine_silica"), BossConfig.DESERT_MATERIALS.get()));
+                var design = com.legacyoftheforce.core.api.SaberDesigns.create(block.kind().dark() ? "short" : "curved");
+                if (design.isEmpty()) throw new IllegalStateException("Missing desert design reward");
+                planned.set(3, design);
+                var chart = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:endor_coordinates"));
+                planned.set(4, new ItemStack(chart));
+                if (Math.floorMod(event.hashCode(), 100) < BossConfig.DESERT_CRYSTAL_CHANCE.get()) {
+                    var identity = UUID.nameUUIDFromBytes(("expedition-crystal/" + block.kind().dimension() + "/" + event).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    var crystal = com.legacyoftheforce.core.api.PlanetaryCrystals.create(block.kind().dimension(), identity);
+                    if (crystal.isEmpty()) throw new IllegalStateException("Missing expedition crystal");
+                    planned.set(5, crystal);
+                }
+            }
+        }
+        items = planned; lootVictory = event; setChanged();
     }
+
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         if (unsupported != null) { tag.merge(unsupported.copy()); return; }

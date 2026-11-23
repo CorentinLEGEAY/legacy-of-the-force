@@ -20,17 +20,26 @@ public final class BossContent {
     public static final Supplier<BossAltarBlock> SITH_ALTAR = BLOCKS.register("sith_trial_altar", () -> new BossAltarBlock(BossKind.FROST_LORD, BlockBehaviour.Properties.of().strength(5).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> JEDI_ITEM = ITEMS.register("jedi_trial_altar", () -> new BlockItem(JEDI_ALTAR.get(), new Item.Properties()));
     public static final Supplier<BlockItem> SITH_ITEM = ITEMS.register("sith_trial_altar", () -> new BlockItem(SITH_ALTAR.get(), new Item.Properties()));
+    public static final Supplier<BossAltarBlock> KNIGHT_ALTAR = BLOCKS.register("tatooine_jedi_altar", () -> new BossAltarBlock(BossKind.WANDERING_KNIGHT, BlockBehaviour.Properties.of().strength(5).requiresCorrectToolForDrops()));
+    public static final Supplier<BossAltarBlock> EXILE_ALTAR = BLOCKS.register("tatooine_sith_altar", () -> new BossAltarBlock(BossKind.DESERT_EXILE, BlockBehaviour.Properties.of().strength(5).requiresCorrectToolForDrops()));
     public static final Supplier<Item> RELIC = ITEMS.register("ilum_boss_relic", () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
-    public static final Supplier<BlockEntityType<BossAltarEntity>> ALTAR_ENTITY = TILES.register("trial_altar", () -> BlockEntityType.Builder.of(BossAltarEntity::new, JEDI_ALTAR.get(), SITH_ALTAR.get()).build(null));
+    public static final Supplier<Item> DESERT_RELIC = ITEMS.register("tatooine_boss_relic", () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+    public static final Supplier<BlockEntityType<BossAltarEntity>> ALTAR_ENTITY = TILES.register("trial_altar", () -> BlockEntityType.Builder.of(BossAltarEntity::new, JEDI_ALTAR.get(), SITH_ALTAR.get(), KNIGHT_ALTAR.get(), EXILE_ALTAR.get()).build(null));
     public static final Supplier<EntityType<IlumBossEntity>> GUARDIAN = ENTITIES.register("ilum_guardian", () -> EntityType.Builder.<IlumBossEntity>of((type, level) -> new IlumBossEntity(type, level, BossKind.GUARDIAN), MobCategory.MONSTER).sized(.7f, 2.2f).clientTrackingRange(10).updateInterval(2).fireImmune().noSummon().build("legacyoftheforce:ilum_guardian"));
     public static final Supplier<EntityType<IlumBossEntity>> FROST_LORD = ENTITIES.register("ilum_frost_lord", () -> EntityType.Builder.<IlumBossEntity>of((type, level) -> new IlumBossEntity(type, level, BossKind.FROST_LORD), MobCategory.MONSTER).sized(.7f, 2.2f).clientTrackingRange(10).updateInterval(2).fireImmune().noSummon().build("legacyoftheforce:ilum_frost_lord"));
+    public static final Supplier<EntityType<IlumBossEntity>> KNIGHT = ENTITIES.register("tatooine_wandering_knight", () -> EntityType.Builder.<IlumBossEntity>of((type, level) -> new IlumBossEntity(type, level, BossKind.WANDERING_KNIGHT), MobCategory.MONSTER).sized(.7f, 2.2f).clientTrackingRange(10).updateInterval(2).noSummon().build("legacyoftheforce:tatooine_wandering_knight"));
+    public static final Supplier<EntityType<IlumBossEntity>> EXILE = ENTITIES.register("tatooine_desert_exile", () -> EntityType.Builder.<IlumBossEntity>of((type, level) -> new IlumBossEntity(type, level, BossKind.DESERT_EXILE), MobCategory.MONSTER).sized(.7f, 2.2f).clientTrackingRange(10).updateInterval(2).noSummon().build("legacyoftheforce:tatooine_desert_exile"));
+    public static BossAltarBlock altar(BossKind kind) { return switch (kind) { case GUARDIAN -> JEDI_ALTAR.get(); case FROST_LORD -> SITH_ALTAR.get(); case WANDERING_KNIGHT -> KNIGHT_ALTAR.get(); case DESERT_EXILE -> EXILE_ALTAR.get(); }; }
+    public static EntityType<IlumBossEntity> entity(BossKind kind) { return switch (kind) { case GUARDIAN -> GUARDIAN.get(); case FROST_LORD -> FROST_LORD.get(); case WANDERING_KNIGHT -> KNIGHT.get(); case DESERT_EXILE -> EXILE.get(); }; }
     public static final Supplier<EntityType<ArenaIceEntity>> ICE = ENTITIES.register("arena_ice", () -> EntityType.Builder.<ArenaIceEntity>of(ArenaIceEntity::new, MobCategory.MISC).sized(.95f, .95f).clientTrackingRange(10).updateInterval(1).noSummon().build("legacyoftheforce:arena_ice"));
     public static void register(IEventBus bus) {
         BLOCKS.register(bus); ITEMS.register(bus); ENTITIES.register(bus); TILES.register(bus); ATTACHMENTS.register(bus);
         bus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent event) -> {
             event.put(GUARDIAN.get(), IlumBossEntity.attributes().build()); event.put(FROST_LORD.get(), IlumBossEntity.attributes().build()); event.put(ICE.get(), ArenaIceEntity.attributes().build());
+            event.put(KNIGHT.get(), IlumBossEntity.attributes().build()); event.put(EXILE.get(), IlumBossEntity.attributes().build());
         });
         com.legacyoftheforce.core.api.BossArenaSites.install(JEDI_ALTAR, SITH_ALTAR);
+        com.legacyoftheforce.core.api.BossArenaSites.installPlanets((planet, dark) -> altar(java.util.Arrays.stream(BossKind.values()).filter(kind -> kind.dimension().equals(planet) && kind.dark() == dark).findFirst().orElseThrow()));
     }
     private BossContent() {}
 }

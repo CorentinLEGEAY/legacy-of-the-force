@@ -26,6 +26,7 @@ public final class PlanetContent {
     public static final Supplier<GalacticTerminalBlock> TERMINAL = BLOCKS.register("galactic_terminal", () -> new GalacticTerminalBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> TERMINAL_ITEM = ITEMS.register("galactic_terminal", () -> new BlockItem(TERMINAL.get(), new Item.Properties()));
     public static final Supplier<Item> COORDINATES = ITEMS.register("ilum_coordinates", () -> new Item(new Item.Properties().stacksTo(16)));
+    public static final Supplier<PlanetFieldNotesItem> DESERT_NOTES = ITEMS.register("tatooine_field_notes", () -> new PlanetFieldNotesItem(PlanetId.TATOOINE, new Item.Properties().stacksTo(1)));
     private static final java.util.Map<PlanetId,Supplier<Item>> CHARTS=new java.util.EnumMap<>(PlanetId.class);
     static{for(var planet:PlanetId.values())if(planet!=PlanetId.ILUM)CHARTS.put(planet,ITEMS.register(planet.key()+"_coordinates",()->new Item(new Item.Properties().stacksTo(16))));}
     public static Item coordinates(PlanetId planet){return planet==PlanetId.ILUM?COORDINATES.get():CHARTS.get(planet).get();}
@@ -49,6 +50,7 @@ public final class PlanetContent {
         bus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(TERMINAL_ITEM.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(COORDINATES.get());
+            if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(DESERT_NOTES.get());
             if(event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES))CHARTS.values().forEach(chart->event.accept(chart.get()));
         });
     }

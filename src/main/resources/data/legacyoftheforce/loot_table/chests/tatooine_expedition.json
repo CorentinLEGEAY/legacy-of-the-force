@@ -113,6 +113,18 @@
           "weight": 3
         }
       ]
+    },
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "legacyoftheforce:tatooine_field_notes"
+        },
+        {
+          "type": "minecraft:empty"
+        }
+      ]
     }
   ]
 }

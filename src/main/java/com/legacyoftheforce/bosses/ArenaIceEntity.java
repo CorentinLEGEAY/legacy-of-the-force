@@ -8,9 +8,11 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.level.*;
 import net.minecraft.world.phys.*;
+import net.minecraft.network.syncher.*;
 
 /** Solid, non-exportable arena object. Force impulses really move cover/projectiles. */
 public final class ArenaIceEntity extends PathfinderMob {
+    private static final EntityDataAccessor<Integer> MATERIAL = SynchedEntityData.defineId(ArenaIceEntity.class, EntityDataSerializers.INT);
     private UUID owner, reflector;
     private boolean projectile;
     private int remaining;
@@ -18,16 +20,22 @@ public final class ArenaIceEntity extends PathfinderMob {
     public static AttributeSupplier.Builder attributes() { return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 10).add(Attributes.MOVEMENT_SPEED, 0); }
     public UUID owner() { return owner; }
     public boolean projectile() { return projectile; }
+    public int material() { return entityData.get(MATERIAL); }
+    @Override protected void defineSynchedData(SynchedEntityData.Builder builder) { super.defineSynchedData(builder); builder.define(MATERIAL, 0); }
     private Entity ownerEntity() { return owner != null && level() instanceof net.minecraft.server.level.ServerLevel level ? level.getEntity(owner) : null; }
     static void spawn(IlumBossEntity boss, Vec3 point, Vec3 velocity, boolean projectile) {
         var level = boss.serverLevel();
         if (level.getEntitiesOfClass(ArenaIceEntity.class, BossArenaService.bounds(boss.altar()), ice -> ice.isAlive() && boss.getUUID().equals(ice.owner)).size() >= 2) return;
         var ice = BossContent.ICE.get().create(level); if (ice == null) return;
         ice.owner = boss.getUUID(); ice.projectile = projectile; ice.remaining = BossConfig.ICE_LIFETIME.get();
+        ice.entityData.set(MATERIAL, boss.kind().desert() ? boss.kind().dark() ? 2 : 1 : 0);
         ice.getAttribute(Attributes.MAX_HEALTH).setBaseValue(BossConfig.ICE_HEALTH.get()); ice.setHealth(ice.getMaxHealth()); ice.setPos(point); ice.setDeltaMovement(velocity);
-        if (level.noCollision(ice, ice.getBoundingBox())) level.addFreshEntity(ice);
+        if (BossArenaService.bounds(boss.altar()).inflate(.1).contains(point) && level.noCollision(ice, ice.getBoundingBox())) level.addFreshEntity(ice);
     }
-    void deflected(ServerPlayer actor) { if (ownerEntity() instanceof IlumBossEntity boss && boss.participant(actor)) { reflector = actor.getUUID(); boss.support(actor); } }
+    void deflected(ServerPlayer actor) { if (ownerEntity() instanceof IlumBossEntity boss && boss.participant(actor)) {
+        if (boss.kind().desert() && reflector != null) return;
+        reflector = actor.getUUID(); boss.support(actor); if (boss.kind().desert()) boss.arenaObjectDisrupted();
+    } }
     @Override protected void customServerAiStep() {
         if (!(ownerEntity() instanceof IlumBossEntity boss) || --remaining <= 0 || boss.altar() == null
                 || BossArenaService.forServer(boss.serverLevel().getServer()) == null || !BossArenaService.forServer(boss.serverLevel().getServer()).authorized(boss)
@@ -47,17 +55,20 @@ public final class ArenaIceEntity extends PathfinderMob {
     @Override public boolean isPushable() { return true; }
     @Override public boolean hurt(DamageSource source, float amount) {
         if (level().isClientSide() || !(source.getEntity() instanceof ServerPlayer actor) || !(ownerEntity() instanceof IlumBossEntity boss) || !boss.participant(actor)) return false;
-        boolean hit = super.hurt(source, amount); if (hit) boss.support(actor); return hit;
+        boolean hit = super.hurt(source, amount); if (hit) { boss.support(actor); if (isDeadOrDying() && boss.kind().desert()) boss.arenaObjectDisrupted(); } return hit;
     }
     @Override protected void dropAllDeathLoot(net.minecraft.server.level.ServerLevel level, DamageSource source) {}
     @Override public boolean removeWhenFarAway(double distance) { return false; }
     @Override public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag); var data = new CompoundTag(); data.putInt("schemaVersion", 1); if (owner != null) data.putUUID("owner", owner);
         if (reflector != null) data.putUUID("reflector", reflector); data.putBoolean("projectile", projectile); data.putInt("remaining", remaining); tag.put("lotfArenaIce", data);
+        if (material() != 0) { data.putInt("schemaVersion", 2); data.putString("material", material() == 1 ? "sandstone" : "red_sandstone"); }
     }
     @Override public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag); var data = tag.getCompound("lotfArenaIce");
-        if (data.getInt("schemaVersion") != 1 || !data.hasUUID("owner") || data.getInt("remaining") < 1 || data.getInt("remaining") > 400) { remaining = 0; return; }
+        if ((data.getInt("schemaVersion") != 1 && data.getInt("schemaVersion") != 2) || !data.hasUUID("owner") || data.getInt("remaining") < 1 || data.getInt("remaining") > 400
+                || data.getInt("schemaVersion") == 2 && !java.util.Set.of("sandstone", "red_sandstone").contains(data.getString("material"))) { remaining = 0; return; }
+        entityData.set(MATERIAL, data.getInt("schemaVersion") == 1 ? 0 : data.getString("material").equals("sandstone") ? 1 : 2);
         owner = data.getUUID("owner"); reflector = data.hasUUID("reflector") ? data.getUUID("reflector") : null; projectile = data.getBoolean("projectile"); remaining = data.getInt("remaining");
     }
 }

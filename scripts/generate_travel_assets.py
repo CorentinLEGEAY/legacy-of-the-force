@@ -75,3 +75,7 @@ for lang, entries in texts.items():
     previous = json.loads((ROOT / path).read_text(encoding="utf-8"))
     previous.update({key if key.startswith(("block.", "item.")) else "travel.legacyoftheforce." + key: value for key, value in entries.items()})
     write(path, previous)
+
+# Preserve the authored instruments and the extended atlas texts on regeneration.
+import runpy
+runpy.run_path(str(Path(__file__).with_name('generate_planet_expansion.py')), run_name='__main__')

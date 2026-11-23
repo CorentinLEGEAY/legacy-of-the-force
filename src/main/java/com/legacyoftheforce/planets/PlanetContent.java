@@ -26,11 +26,21 @@ public final class PlanetContent {
     public static final Supplier<GalacticTerminalBlock> TERMINAL = BLOCKS.register("galactic_terminal", () -> new GalacticTerminalBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> TERMINAL_ITEM = ITEMS.register("galactic_terminal", () -> new BlockItem(TERMINAL.get(), new Item.Properties()));
     public static final Supplier<Item> COORDINATES = ITEMS.register("ilum_coordinates", () -> new Item(new Item.Properties().stacksTo(16)));
+    private static final java.util.Map<PlanetId,Supplier<Item>> CHARTS=new java.util.EnumMap<>(PlanetId.class);
+    static{for(var planet:PlanetId.values())if(planet!=PlanetId.ILUM)CHARTS.put(planet,ITEMS.register(planet.key()+"_coordinates",()->new Item(new Item.Properties().stacksTo(16))));}
+    public static Item coordinates(PlanetId planet){return planet==PlanetId.ILUM?COORDINATES.get():CHARTS.get(planet).get();}
     public static final Supplier<net.minecraft.world.inventory.MenuType<GalacticTerminalMenu>> TERMINAL_MENU = MENUS.register("galactic_terminal", () -> new net.minecraft.world.inventory.MenuType<>(GalacticTerminalMenu::new, net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS));
     public static final Supplier<IlumCrystalBlock> CRYSTAL = BLOCKS.register("ilum_crystal_cluster", () -> new IlumCrystalBlock(BlockBehaviour.Properties.of()
             .strength(4f).requiresCorrectToolForDrops().noOcclusion().lightLevel(state -> 8).sound(net.minecraft.world.level.block.SoundType.AMETHYST)));
     public static final Supplier<BlockItem> CRYSTAL_ITEM = ITEMS.register("ilum_crystal_cluster", () -> new BlockItem(CRYSTAL.get(), new Item.Properties()));
     public static final Supplier<Feature<IlumFrostFeature.Settings>> FROST = FEATURES.register("ilum_frost", IlumFrostFeature::new);
+    public static final Supplier<IlumCrystalBlock> TATOOINE_CRYSTAL = BLOCKS.register("tatooine_crystal_cluster", () -> new IlumCrystalBlock(BlockBehaviour.Properties.of()
+            .strength(4f).requiresCorrectToolForDrops().noOcclusion().lightLevel(state -> 8).sound(net.minecraft.world.level.block.SoundType.AMETHYST)));
+    public static final Supplier<net.minecraft.world.level.block.Block> SILICA_ORE = BLOCKS.register("tatooine_silica_ore", () -> new net.minecraft.world.level.block.Block(
+            BlockBehaviour.Properties.of().strength(3f).requiresCorrectToolForDrops()));
+    public static final Supplier<Feature<TatooineLandscapeFeature.Settings>> DUNES = FEATURES.register("tatooine_landscape", TatooineLandscapeFeature::new);
+    public static final Supplier<StructureType<TatooineSiteStructure>> DESERT_SITE = STRUCTURES.register("tatooine_site", () -> () -> TatooineSiteStructure.CODEC);
+    public static final Supplier<StructurePieceType> DESERT_PIECE = PIECES.register("tatooine_site", () -> TatooineSitePiece::new);
     public static final Supplier<StructureType<IlumSiteStructure>> SITE = STRUCTURES.register("ilum_site", () -> () -> IlumSiteStructure.CODEC);
     public static final Supplier<StructurePieceType> SITE_PIECE = PIECES.register("ilum_site", () -> IlumSitePiece::new);
     public static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, name); }
@@ -39,6 +49,7 @@ public final class PlanetContent {
         bus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(TERMINAL_ITEM.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(COORDINATES.get());
+            if(event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES))CHARTS.values().forEach(chart->event.accept(chart.get()));
         });
     }
     private PlanetContent() {}

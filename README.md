@@ -14,6 +14,8 @@ Le nouvel atelier propose **25 pièces et cinq types** : simple, court, courbe, 
 
 Kyber : six familles et leurs affinités, corruption rouge et purification blanche sont intégrées au code. **Il faut désormais éveiller le cristal à l’atelier avant d’activer la lame**, y compris pour les anciens sabres dormants :4 améthystes+2 lapis par défaut. Les rituels avancés demandent niveau/alignement et matériaux de Mustafar/Jedha ; ils conservent l’UUID, l’origine et le lien. Les matériaux, plans et cinq autres cristaux attendent encore leur acquisition naturelle dans P6. Rendu, persistance et équilibrage du lot restent en attente de campagne.
 
+Navigation étendue en cours : le terminal sélectionne désormais six destinations et conserve les anciens voyages Ilum. Tatooine dispose de terrains dunes/canyons, mines de cristal jaune/silice, établissements et épaves dans les nouvelles données ; ses deux boss, ses temples et la pièce exclusive restent à intégrer. Les autres dimensions ne sont pas encore disponibles. Ce lot compile mais son chargement et son gameplay attendent la campagne globale.
+
 ## Objectif
 Construire **un mod Minecraft Java unique**, organisé en modules internes, mêlant survie Minecraft, RPG Star Wars, combats, Force physique, sabres laser personnalisés et évolutifs, speeders construits sur mesure et exploration de six planètes. Direction artistique : **monde Minecraft + équipements et effets cinématographiques**.
 
@@ -21,7 +23,7 @@ Construire **un mod Minecraft Java unique**, organisé en modules internes, mêl
 1. Copiez le contenu de ce dossier à la racine d'un **dépôt Git**. Ouvrez ce dépôt dans Codex.
 2. Faites lire à Codex **`AGENTS.md`**, puis **`docs/00_DECISIONS.md`**, **`docs/01_ARCHITECTURE.md`**, **`docs/02_ROADMAP.md`** et la fiche du module concerné.
 3. Commencez par **l'étape P0** : amorcer le projet Gradle/NeoForge, lancer client et serveur de développement et vérifier que le JAR se construit.
-4. Avancez **une tâche et un test à la fois**. Ne demandez pas « programme tout le mod d'un coup ».
+4. Suivez la cadence autorisée du projet : développements par lots, puis campagnes de tests groupées et corrections ; ne validez aucune phase sans preuves.
 5. Faites actualiser `docs/03_ETAT_DU_PROJET.md` après chaque tâche terminée.
 
 ## Structure du dossier

@@ -1,0 +1,23 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:tatooine_crystal_mine",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:tatooine_settlement",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:tatooine_wreck",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 741928,
+    "spacing": 14,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}

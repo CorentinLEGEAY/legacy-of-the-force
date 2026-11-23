@@ -32,8 +32,9 @@ public final class TravelService {
     public TravelService(MinecraftServer server, Path directory, ProtectedWorldService protection) { this(server, directory, protection, ignored -> {}); }
     TravelService(MinecraftServer server, Path directory, ProtectedWorldService protection, Probe probe) { this.server = server; this.directory = directory; this.protection = protection; this.probe = probe; }
     public static int outboundCost(TravelState.View atlas) { return TravelConfig.OUTBOUND_CELLS.get() + (atlas.returnCredit() ? 0 : TravelConfig.RETURN_RESERVE_CELLS.get()); }
-    public Result request(ServerPlayer actor, BlockPos terminal, int button) {
-        if (button < 0 || button > 2 || actor == null || actor.server != server || !server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer()) return Result.PERMISSION;
+    public Result request(ServerPlayer actor,BlockPos terminal,int button){return request(actor,terminal,button,PlanetId.ILUM);}
+    public Result request(ServerPlayer actor, BlockPos terminal, int button,PlanetId selected) {
+        if (selected==null||button < 0 || button > 2 || actor == null || actor.server != server || !server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer()) return Result.PERMISSION;
         if (actor.isPassenger() || actor.isVehicle()) return Result.OCCUPIED;
         if (!actor.containerMenu.getCarried().isEmpty()) return Result.CLEAR_CURSOR;
         if (!actor.serverLevel().hasChunkAt(terminal) || !actor.level().getBlockState(terminal).is(PlanetContent.TERMINAL.get()) || !actor.canInteractWithBlock(terminal, 4)
@@ -43,26 +44,27 @@ public final class TravelService {
         if (now < atlas.get().readyAt()) return Result.COOLDOWN;
         if (now < atlas.get().combatUntil()) return Result.COMBAT;
         try {
-            recover(actor); var before = snapshot(actor); var previous = new TravelState(before.getCompound("atlas")).view().orElseThrow();
+            recover(actor);if(!PlayerInventoryHooks.ready(actor))return Result.UNAVAILABLE; var before = snapshot(actor); var previous = new TravelState(before.getCompound("atlas")).view().orElseThrow();
             var kind = button == 2 ? Kind.DISCOVER : button == 0 ? Kind.OUTBOUND : Kind.RETURN;
+            var planet=kind==Kind.RETURN?PlanetId.from(actor.level().dimension().location()).orElse(selected):selected;
             var source = TravelPoint.at(actor); TravelPoint target = source, fallback = null; int cost = 1;
-            if (kind == Kind.DISCOVER && previous.ilumKnown()) return Result.KNOWN;
+            if (kind == Kind.DISCOVER && previous.known(planet)) return Result.KNOWN;
             if (kind == Kind.OUTBOUND) {
-                if (!previous.ilumKnown()) return Result.COORDINATES_REQUIRED;
+                if (!previous.known(planet)) return Result.COORDINATES_REQUIRED;
                 if (!actor.level().dimension().equals(Level.OVERWORLD)) return Result.WRONG_ORIGIN;
                 if (TravelConfig.REQUIRE_PORTABLE.get() && actor.getInventory().countItem(PlanetContent.TERMINAL_ITEM.get()) < 1) return Result.PORTABLE_REQUIRED;
-                if (server.getLevel(PlanetContent.ILUM) == null) return Result.UNAVAILABLE;
-                target = new TravelPoint(PlanetContent.ILUM.location(), .5, 64, .5, source.yaw(), 0); cost = outboundCost(previous);
+                if (server.getLevel(planet.dimension()) == null) return Result.UNAVAILABLE;
+                target = new TravelPoint(planet.id(),planet==PlanetId.ILUM?.5:8.5,64,planet==PlanetId.ILUM?.5:8.5, source.yaw(), 0); cost = outboundCost(previous);
             }
             if (kind == Kind.RETURN) {
-                if (!actor.level().dimension().equals(PlanetContent.ILUM) || !previous.returnCredit() || previous.home() == null) return Result.NO_RETURN;
+                if (!actor.level().dimension().equals(planet.dimension())||!previous.known(planet)||!previous.returnCredit() || previous.home() == null) return Result.NO_RETURN;
                 target = previous.home(); var spawn = server.overworld().getSharedSpawnPos();
                 fallback = new TravelPoint(Level.OVERWORLD.location(), spawn.getX() + .5, spawn.getY(), spawn.getZ() + .5, 0, 0); cost = 0;
             }
             if (kind != Kind.DISCOVER && select(actor, target, fallback, kind).isEmpty()) return Result.NO_SAFE_ARRIVAL;
             var preview = new Inventory(actor); preview.load(before.getList("Inventory", Tag.TAG_COMPOUND));
             if (!preview.save(new ListTag()).equals(before.get("Inventory"))) return Result.UNAVAILABLE;
-            var material = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(TravelTransaction.material(kind)));
+            var material = BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse(TravelTransaction.material(kind,planet)));
             if (preview.countItem(material) < cost) return kind == Kind.DISCOVER ? Result.CHART_REQUIRED : Result.FUEL_REQUIRED;
             int left = cost;
             for (int slot = 0; slot < preview.getContainerSize() && left > 0; slot++) if (preview.getItem(slot).is(material)) {
@@ -70,8 +72,8 @@ public final class TravelService {
             }
             UUID operation = UUID.randomUUID();
             var after = new CompoundTag(); after.put("Inventory", preview.save(new ListTag()));
-            after.put("atlas", new TravelState(before.getCompound("atlas")).prepare(operation, kind, source, now + TravelConfig.COOLDOWN.get()).tag());
-            var record = TravelTransaction.prepare(actor.getUUID(), operation, kind, before, after, source, target, fallback, cost);
+            after.put("atlas", new TravelState(before.getCompound("atlas")).prepare(operation, kind, source, now + TravelConfig.COOLDOWN.get(),planet).tag());
+            var record = TravelTransaction.prepare(actor.getUUID(), operation, kind, before, after, source, target, fallback, cost,planet);
             persist(actor, before); begin(record); probe.reached(Checkpoint.PREPARED);
             apply(actor, after, false); probe.reached(Checkpoint.PAYMENT_MEMORY); persist(actor, after); probe.reached(Checkpoint.PAYMENT_DURABLE);
             record = advance(record, Phase.PAID); probe.reached(Checkpoint.PAID); finish(actor, record);
@@ -148,7 +150,7 @@ public final class TravelService {
                 apply(actor, active, false); probe.reached(Checkpoint.ACTIVATION_MEMORY); persist(actor, active);
             }
             probe.reached(Checkpoint.ACTIVE_DURABLE); advance(record, Phase.DONE); probe.reached(Checkpoint.DONE);
-            if (value.kind() == Kind.DISCOVER) net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PlanetDiscovered(value.owner(), value.operation(), PlanetContent.ILUM.location()));
+            if (value.kind() == Kind.DISCOVER) net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PlanetDiscovered(value.owner(), value.operation(), value.planet().id()));
             else net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PlanetTravelCompleted(value.owner(), value.operation(), value.source().dimension(), actor.level().dimension().location()));
         }
     }

@@ -26,7 +26,7 @@ public final class TravelLifecycle {
         catch (Exception unresolved) { LegacyOfTheForce.LOGGER.error("Travel login recovery retained: {}", unresolved.getMessage()); actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("travel.legacyoftheforce.pending")); }
     }
     @SubscribeEvent public void portal(EntityTravelToDimensionEvent event) {
-        if (!event.getEntity().level().dimension().equals(PlanetContent.ILUM) && !event.getDimension().equals(PlanetContent.ILUM)) return;
+        if (PlanetId.from(event.getEntity().level().dimension().location()).isEmpty()&&PlanetId.from(event.getDimension().location()).isEmpty()) return;
         if (event.getEntity() instanceof ServerPlayer actor && (actor.hasPermissions(2) || PERMITS.getOrDefault(actor.server, Set.of()).contains(actor.getUUID()))) return;
         event.setCanceled(true);
     }
@@ -43,7 +43,8 @@ public final class TravelLifecycle {
         var current = actor.getData(PlanetContent.ATLAS.get());
         if (current.view().isPresent() && current.view().get().pending() == null) actor.setData(PlanetContent.ATLAS.get(), current.combatUntil(actor.server.overworld().getGameTime() + TravelConfig.COMBAT_LOCK.get()));
     }
-    public static TravelService.Result request(ServerPlayer actor, BlockPos terminal, int button) {
-        var service = SERVICES.get(actor.server); return service == null ? TravelService.Result.UNAVAILABLE : service.request(actor, terminal, button);
+    public static TravelService.Result request(ServerPlayer actor,BlockPos terminal,int button){return request(actor,terminal,button,PlanetId.ILUM);}
+    public static TravelService.Result request(ServerPlayer actor, BlockPos terminal, int button,PlanetId planet) {
+        var service = SERVICES.get(actor.server); return service == null ? TravelService.Result.UNAVAILABLE : service.request(actor, terminal, button,planet);
     }
 }

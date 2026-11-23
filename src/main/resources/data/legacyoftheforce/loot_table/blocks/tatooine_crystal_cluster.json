@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "legacyoftheforce:blocks/tatooine_crystal_cluster",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "legacyoftheforce:ilum_crystal",
+          "functions": [
+            {
+              "function": "legacyoftheforce:identify_ilum_crystal",
+              "planet": "legacyoftheforce:tatooine"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:location_check",
+          "predicate": {
+            "dimension": "legacyoftheforce:tatooine"
+          }
+        },
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "items": "#minecraft:pickaxes"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

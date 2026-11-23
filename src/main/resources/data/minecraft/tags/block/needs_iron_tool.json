@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "legacyoftheforce:ilum_crystal_cluster"
+    "legacyoftheforce:ilum_crystal_cluster",
+    "legacyoftheforce:tatooine_crystal_cluster",
+    "legacyoftheforce:tatooine_silica_ore"
   ]
 }

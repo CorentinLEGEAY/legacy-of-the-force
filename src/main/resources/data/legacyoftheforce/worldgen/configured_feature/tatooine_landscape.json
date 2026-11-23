@@ -1,0 +1,7 @@
+{
+  "type": "legacyoftheforce:tatooine_landscape",
+  "config": {
+    "spire_chance": 9,
+    "cactus_attempts": 2
+  }
+}

@@ -1,6 +1,7 @@
 package com.legacyoftheforce.lightsaber;
 
 import com.legacyoftheforce.LegacyOfTheForce;
+import com.legacyoftheforce.core.api.SaberTransferCheckpoint;
 import com.legacyoftheforce.core.operation.*;
 import java.io.IOException;
 import java.nio.file.*;
@@ -46,6 +47,7 @@ public final class SaberItemTransfers {
         catch(IOException|RuntimeException failure) {LegacyOfTheForce.LOGGER.error("Saber transfers disabled: journal could not be opened",failure);}
     }
     @SubscribeEvent public void stop(ServerStoppedEvent event) {SERVICES.remove(event.getServer());}
+    @SubscribeEvent public void stopping(ServerStoppingEvent event) {var service=SERVICES.get(event.getServer());if(service!=null)service.releaseLease();}
     @SubscribeEvent(priority=EventPriority.LOWEST) public void toss(ItemTossEvent event) {
         if(!(event.getPlayer() instanceof ServerPlayer actor)||!relevant(event.getEntity().getItem()))return;
         // GUI throw handlers can clear the cursor after this event returns. They need their own
@@ -72,12 +74,15 @@ public final class SaberItemTransfers {
     }
 
     static final class Service {
+        private static final TicketType<UUID> RECOVERY_TICKET=TicketType.create("legacyoftheforce:saber_transfer",UUID::compareTo);
+        private record RecoveryLease(ServerLevel level,net.minecraft.world.level.ChunkPos chunk,UUID operation,long until) {}
         private final MinecraftServer server;
         private final DurableOperationStore store;
         private final VerifiedPlayerSaveBarrier players=new VerifiedPlayerSaveBarrier();
         private final VerifiedEntitySaveBarrier entities=new VerifiedEntitySaveBarrier();
         private final LinkedHashMap<UUID,StoredOperation> pending=new LinkedHashMap<>();
         private boolean healthy=true;private long nextRetry,nextWarning;
+        private RecoveryLease lease;private boolean waitingForEntities;
         Service(MinecraftServer server,Path directory,int budget) throws IOException {
             this.server=server;store=new DurableOperationStore(directory,budget);
             for(var entry:store.list()) {validate(entry);pending.put(entry.id(),entry);}
@@ -104,17 +109,24 @@ public final class SaberItemTransfers {
             if(!identity(stack).filter(tag.getUUID("saberId")::equals).isPresent())throw new IOException("Invalid transfer item");
         }
         private StoredOperation prepare(ServerPlayer actor,ItemEntity entity,String direction) throws IOException {
-            UUID id=UUID.randomUUID();var entry=store.prepare(id,payload(actor,entity,id,direction));validate(entry);pending.put(id,entry);return entry;
+            UUID id=UUID.randomUUID();var entry=store.prepare(id,payload(actor,entity,id,direction));validate(entry);pending.put(id,entry);checkpoint(entry,SaberTransferCheckpoint.Stage.PREPARED);return entry;
+        }
+        private void checkpoint(StoredOperation entry,SaberTransferCheckpoint.Stage stage) {
+            var tag=entry.payload();net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new SaberTransferCheckpoint(stage,entry.id(),tag.getUUID("actor"),tag.getUUID("entityId"),tag.getUUID("saberId"),tag.getString("direction"),ResourceKey.create(Registries.DIMENSION,ResourceLocation.parse(tag.getString("dimension")))));
         }
         private void pay(ServerPlayer actor,StoredOperation entry) throws IOException {
             actor.setData(SaberContent.TRANSFER_RECEIPT.get(),new SaberTransferReceipt(entry.payload().getCompound("receipt")));
             var expected=actor.getInventory().save(new ListTag());NativeInventoryImage.validate(expected);var saved=players.persist(actor);
             if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected)||!saved.getCompound("neoforge:attachments").getCompound(RECEIPT).equals(entry.payload().getCompound("receipt")))throw new IOException("Native transfer payment read-back mismatch");
+            checkpoint(entry,SaberTransferCheckpoint.Stage.PAYMENT_DURABLE);
             var paid=store.transition(entry.id(),OperationPhase.PREPARED,OperationPhase.HELD,entry.payload());pending.put(entry.id(),paid);
+            checkpoint(paid,SaberTransferCheckpoint.Stage.HELD);
         }
         private void close(StoredOperation entry) throws IOException {
             if(!entry.phase().equals("CLOSED"))store.transition(entry.id(),OperationPhase.valueOf(entry.phase()),OperationPhase.CLOSED,entry.payload());
+            checkpoint(entry,SaberTransferCheckpoint.Stage.CLOSED);
             store.removeClosed(entry.id());pending.remove(entry.id());
+            if(lease!=null&&lease.operation().equals(entry.id()))releaseLease();
         }
         private void uncertain(ServerPlayer actor,Exception failure) {
             LegacyOfTheForce.LOGGER.error("Saber transfer pending; player disconnected until durable reconciliation",failure);
@@ -143,7 +155,7 @@ public final class SaberItemTransfers {
             try {
                 pay(actor,entry);
                 if(!actor.serverLevel().addFreshEntity(entity))throw new IOException("Saber drop publication refused");
-                entities.persist(entity);close(pending.get(entry.id()));actor.inventoryMenu.broadcastChanges();
+                entities.persist(entity);checkpoint(entry,SaberTransferCheckpoint.Stage.ENTITY_DURABLE);close(pending.get(entry.id()));actor.inventoryMenu.broadcastChanges();
             }catch(IOException|RuntimeException failure) {uncertain(actor,failure);}
         }
         void pickup(ServerPlayer actor,ItemEntity entity) {
@@ -154,7 +166,7 @@ public final class SaberItemTransfers {
             try {entry=prepare(actor,entity,"PICKUP");}catch(IOException|RuntimeException failure) {warn(failure);return;}
             var original=entity.getItem().copy();actor.getInventory().setItem(free,original.copy());actor.getInventory().setChanged();
             try {
-                pay(actor,entry);var chunk=entity.chunkPosition();entity.discard();entities.persistAbsence(actor.serverLevel(),chunk,entity.getUUID());close(pending.get(entry.id()));
+                pay(actor,entry);var chunk=entity.chunkPosition();entity.discard();entities.persistAbsence(actor.serverLevel(),chunk,entity.getUUID());checkpoint(entry,SaberTransferCheckpoint.Stage.ENTITY_DURABLE);close(pending.get(entry.id()));
                 entity.getItem().shrink(1);net.neoforged.neoforge.event.EventHooks.fireItemPickupPost(entity,actor,original);actor.take(entity,1);entity.getItem().setCount(1);actor.awardStat(Stats.ITEM_PICKED_UP.get(original.getItem()),1);actor.onItemPickup(entity);actor.inventoryMenu.broadcastChanges();
             }catch(IOException|RuntimeException failure) {uncertain(actor,failure);}
         }
@@ -162,9 +174,19 @@ public final class SaberItemTransfers {
         void retry() {
             if(pending.isEmpty()||!healthy)return;long now=server.overworld().getGameTime();if(now<nextRetry)return;nextRetry=now+SaberConfig.TRANSFER_RETRY.get();
             // One operation per retry bounds chunk loads and disk work independently of journal size.
-            var entry=pending.values().iterator().next();
-            try {recover(entry);}catch(IOException|RuntimeException failure) {warn(failure);}
+            var entry=pending.values().iterator().next();waitingForEntities=false;
+            try {recover(entry);}catch(IOException|RuntimeException failure) {releaseLease();warn(failure);}
+            if(waitingForEntities) {nextRetry=now+1;return;}
+            releaseLease();
             if(pending.containsKey(entry.id())) {pending.remove(entry.id());pending.put(entry.id(),entry);}
+        }
+        private void releaseLease() {
+            if(lease==null)return;lease.level().getChunkSource().removeRegionTicket(RECOVERY_TICKET,lease.chunk(),2,lease.operation());lease=null;
+        }
+        private void holdLease(ServerLevel level,net.minecraft.world.level.ChunkPos chunk,UUID operation) throws IOException {
+            if(lease!=null&&(!lease.operation().equals(operation)||lease.level()!=level||!lease.chunk().equals(chunk)))releaseLease();
+            if(lease==null) {lease=new RecoveryLease(level,chunk,operation,server.overworld().getGameTime()+SaberConfig.TRANSFER_LOAD_TIMEOUT.get());level.getChunkSource().addRegionTicket(RECOVERY_TICKET,chunk,2,operation);}
+            if(server.overworld().getGameTime()>=lease.until())throw new IOException("Saber transfer entity chunk did not load within its bounded lease");
         }
         private void recover(StoredOperation entry) throws IOException {
             if(entry.phase().equals("CLOSED")) {close(entry);return;}
@@ -183,8 +205,8 @@ public final class SaberItemTransfers {
             if(copies!=(paid?(drop?0:1):(drop?1:0)))throw new IOException("Native inventory disagrees with transfer receipt; journal retained");
             if(!paid) {if(entry.phase().equals("HELD"))throw new IOException("Paid journal has an older native player receipt");if(drop) {close(entry);return;}}
             var key=ResourceKey.create(Registries.DIMENSION,ResourceLocation.parse(tag.getString("dimension")));var level=server.getLevel(key);if(level==null)throw new IOException("Transfer dimension unavailable");
-            var position=tag.getCompound("entity").getList("Pos",Tag.TAG_DOUBLE);var at=net.minecraft.core.BlockPos.containing(position.getDouble(0),position.getDouble(1),position.getDouble(2));level.getChunkAt(at);var chunk=new net.minecraft.world.level.ChunkPos(at);
-            if(!level.entityManager.areEntitiesLoaded(chunk.toLong()))return;
+            var position=tag.getCompound("entity").getList("Pos",Tag.TAG_DOUBLE);var at=net.minecraft.core.BlockPos.containing(position.getDouble(0),position.getDouble(1),position.getDouble(2));var chunk=new net.minecraft.world.level.ChunkPos(at);holdLease(level,chunk,entry.id());level.getChunkAt(at);
+            if(!level.entityManager.areEntitiesLoaded(chunk.toLong())) {waitingForEntities=true;return;}
             var entity=level.getEntity(tag.getUUID("entityId"));
             if(entity!=null&&(!(entity instanceof ItemEntity item)||!identity(item.getItem()).filter(tag.getUUID("saberId")::equals).isPresent()||!item.getItem().save(server.registryAccess()).equals(tag.getCompound("entity").getCompound("Item"))))throw new IOException("Conflicting entity at transfer identity");
             if(drop||!paid) {

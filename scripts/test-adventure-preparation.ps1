@@ -1,7 +1,8 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
 $ErrorActionPreference='Stop'
+if($TransferStage -and $Mode -ne 'SaberCrash') { throw 'TransferStage requires isolated SaberCrash mode.' }
 $killRequested=$KillHeld -or $Mode -in @('ImpulseCrash','SaberCrash')
-$checkpointName=if($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
+$checkpointName=if($Mode -eq 'SaberCrash' -and $TransferStage) {'saber-transfer-checkpoint.nbt'} elseif($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
 if($KillHeld -and $Mode -ne 'Block') { throw 'KillHeld requires isolated Block mode.' }
 if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
@@ -19,7 +20,7 @@ if($Mode -ne 'Prep') {
     Copy-Item -LiteralPath $source -Destination $world -Recurse
     $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'SaberPickup') {'adventureSaberPickup'} elseif($Mode -in @('SaberWorkshop','SaberRecover','SaberCrash')) {'adventureSaberWorkshop'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover','ImpulseUnload')) {'adventureImpulseRestart'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'SaberCheckpointRecover') {'adventureSaberCheckpointRecover'} elseif($Mode -eq 'SaberPickup') {'adventureSaberPickup'} elseif($Mode -in @('SaberWorkshop','SaberRecover','SaberCrash')) {'adventureSaberWorkshop'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover','ImpulseUnload')) {'adventureImpulseRestart'} else {'adventureTravel'}
 $artifact=if($Mode -eq 'BlockRecover') {'block-recovered'} elseif($Mode -eq 'RewardsRecovery') {'rewards-recovery'} elseif($Mode -eq 'ProgressRecovery') {'progress-recovery'} elseif($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
 $marker=if($Mode -eq 'BlockRecover') {'ADVENTURE_BLOCK_RECOVER'} elseif($Mode -eq 'RewardsRecovery') {'ADVENTURE_REWARDS_RECOVERY'} elseif($Mode -eq 'ProgressRecovery') {'ADVENTURE_PROGRESS_RECOVERY'} elseif($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
@@ -31,6 +32,7 @@ $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID
 foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-adventure-test-server.ps1'),'-Run',$Run,'-Mode',$Mode)) { $info.ArgumentList.Add($arg) }
 if($Duel) { $info.ArgumentList.Add('-Duel') }
 if($KillHeld) { $info.ArgumentList.Add('-KillHeld') }
+if($TransferStage) { $info.ArgumentList.Add('-TransferStage');$info.ArgumentList.Add($TransferStage) }
 $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
 $runner=[Diagnostics.Process]::new();$runner.StartInfo=$info;$started=Get-Date;$runner.Start() | Out-Null
 $serverOut=$runner.StandardOutput.ReadToEndAsync();$serverErr=$runner.StandardError.ReadToEndAsync();$log=Join-Path $repoPath "run-adventure-$Run/logs/latest.log"

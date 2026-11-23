@@ -25,6 +25,35 @@ public final class SaberTransferGameTests {
     private static CompoundTag intent(ServerPlayer actor,ItemEntity item,UUID operation,String direction) {
         var tag=new CompoundTag();tag.putInt("schemaVersion",1);tag.putString("direction",direction);tag.putUUID("actor",actor.getUUID());tag.putUUID("entityId",item.getUUID());tag.putUUID("saberId",item.getItem().get(SaberContent.ASSEMBLY.get()).tag().getUUID("saberId"));tag.putString("dimension",actor.serverLevel().dimension().location().toString());tag.put("entity",item.saveWithoutId(new CompoundTag()));tag.put("receipt",actor.getData(SaberContent.TRANSFER_RECEIPT.get()).next(operation).tag());return tag;
     }
+    @GameTest(template="empty",timeoutTicks=120) public static void recoveryLoadsAnUnticketedEntityChunkWithoutAnOnlinePlayer(GameTestHelper helper) throws Exception {
+        var actor=actor(helper);var at=helper.absolutePos(new BlockPos(8192,1,8192));helper.assertFalse(helper.getLevel().hasChunk(at.getX()>>4,at.getZ()>>4),"Fixture must start outside the loaded test chunks");
+        var item=new ItemEntity(helper.getLevel(),at.getX()+.5,at.getY()+.5,at.getZ()+.5,saber());var root=directory(helper);var operation=UUID.randomUUID();var tag=intent(actor,item,operation,"DROP");new DurableOperationStore(root,4).prepare(operation,tag);actor.setData(SaberContent.TRANSFER_RECEIPT.get(),new SaberTransferReceipt(tag.getCompound("receipt")));new VerifiedPlayerSaveBarrier().persist(actor);
+        var recovered=new SaberItemTransfers.Service(actor.server,root,4);
+        helper.succeedWhen(()->{
+            recovered.retry();var restored=helper.getLevel().getEntity(item.getUUID());
+            helper.assertTrue(restored instanceof ItemEntity,"Offline recovery must finish publication after asynchronous entity loading");
+            try {helper.assertTrue(new DurableOperationStore(root,4).list().isEmpty(),"Recovered publication must close its journal");new VerifiedEntitySaveBarrier().persist(restored);restored.discard();}
+            catch(java.io.IOException failure) {throw new IllegalStateException(failure);}
+        });
+    }
+    @GameTest(template="empty",timeoutTicks=100) public static void checkpointNotificationsMatchNativeFilesBeforeAnotherStageRuns(GameTestHelper helper) throws Exception {
+        var actor=actor(helper);var stack=saber();var item=new ItemEntity(helper.getLevel(),actor.getX(),actor.getY(),actor.getZ(),stack.copy());var root=directory(helper);var stages=new java.util.ArrayList<com.legacyoftheforce.core.api.SaberTransferCheckpoint.Stage>();
+        java.util.function.Consumer<com.legacyoftheforce.core.api.SaberTransferCheckpoint> listener=event->{
+            if(!event.actor().equals(actor.getUUID()))return;
+            try {
+                var journal=new DurableOperationStore(root,4).read(event.operation());var stage=event.stage();stages.add(stage);
+                helper.assertTrue(event.entity().equals(item.getUUID())&&event.saber().equals(stack.get(SaberContent.ASSEMBLY.get()).tag().getUUID("saberId"))&&event.direction().equals("DROP"),"Checkpoint metadata must identify the actual transfer");
+                boolean paid=stage!=com.legacyoftheforce.core.api.SaberTransferCheckpoint.Stage.PREPARED;var saved=new VerifiedPlayerSaveBarrier().read(actor);
+                helper.assertTrue(saved.getList("Inventory",Tag.TAG_COMPOUND).size()==(paid?0:1),"Notification must follow the actual native inventory barrier");
+                helper.assertTrue(saved.getCompound("neoforge:attachments").getCompound("legacyoftheforce:saber_transfer_receipt").getLong("revision")== (paid?1:0),"Native receipt must agree with the announced stage");
+                String phase=switch(stage) {case PREPARED,PAYMENT_DURABLE->"PREPARED";case HELD,ENTITY_DURABLE->"HELD";case CLOSED->"CLOSED";};helper.assertTrue(journal.phase().equals(phase),"Journal must not advance before its checkpoint notification");
+            }catch(java.io.IOException failure) {throw new IllegalStateException(failure);}
+        };
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(listener);
+        try {new SaberItemTransfers.Service(actor.server,root,4).drop(actor,item);helper.assertTrue(stages.equals(java.util.List.of(com.legacyoftheforce.core.api.SaberTransferCheckpoint.Stage.values())),"All five durability notifications must follow their actual barriers in order");}
+        finally {net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(listener);if(!item.isRemoved())item.discard();}
+        helper.succeed();
+    }
     @GameTest(template="empty",timeoutTicks=100) public static void recentAcquisitionBeforeImageSurvivesAnUnwritableIntentJournal(GameTestHelper helper) throws Exception {
         var actor=actor(helper);new VerifiedPlayerSaveBarrier().persist(actor);var stack=saber();var root=directory(helper);var service=new SaberItemTransfers.Service(actor.server,root,4);
         // The old player snapshot contains no saber; the Q packet has already removed its new stack.

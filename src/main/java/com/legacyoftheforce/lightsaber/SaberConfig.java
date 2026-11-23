@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class SaberConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue MINED_PURITY_MIN, MINED_PURITY_MAX, MINED_STABILITY_MIN, MINED_STABILITY_MAX;
-    public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY;
+    public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY, TRANSFER_LOAD_TIMEOUT;
     public static final ModConfigSpec.IntValue ACTIVATION_INTERVAL;
     public static final ModConfigSpec.IntValue PARRY_WINDOW, PARRY_COOLDOWN, RECOVERY_DELAY;
     public static final ModConfigSpec.DoubleValue ATTACK_COST, PARRY_COST, ENDURANCE_RECOVERY, PARRY_REDUCTION;
@@ -16,6 +16,7 @@ public final class SaberConfig {
         var builder = new ModConfigSpec.Builder();
         TRANSFER_BUDGET = builder.worldRestart().defineInRange("transfer.maximumPending", 256, 1, 1024);
         TRANSFER_RETRY = builder.defineInRange("transfer.retryTicks", 20, 1, 1200);
+        TRANSFER_LOAD_TIMEOUT = builder.defineInRange("transfer.chunkLoadTimeoutTicks", 200, 20, 2400);
         MINED_PURITY_MIN = builder.defineInRange("ilum.minedPurityMinimum", .55, 0, 1);
         MINED_PURITY_MAX = builder.defineInRange("ilum.minedPurityMaximum", .90, 0, 1);
         MINED_STABILITY_MIN = builder.defineInRange("ilum.minedStabilityMinimum", .60, 0, 1);

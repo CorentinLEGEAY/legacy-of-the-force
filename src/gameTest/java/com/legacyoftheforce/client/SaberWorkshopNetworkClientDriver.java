@@ -1,0 +1,58 @@
+package com.legacyoftheforce.client;
+
+import com.legacyoftheforce.LegacyOfTheForce;
+import com.legacyoftheforce.content.AdventureRoute;
+import com.legacyoftheforce.core.operation.AtomicNbtFile;
+import com.legacyoftheforce.lightsaber.*;
+import java.util.*;
+import net.minecraft.client.*;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.nbt.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.phys.*;
+import net.minecraft.core.Direction;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.*;
+
+/** Native crafting, rendered workshop buttons, death UI and socket lifecycle. */
+@EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
+public final class SaberWorkshopNetworkClientDriver {
+    private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.saberRecover");
+    private static final long STARTED=System.nanoTime();private static final ListTag crafts=new ListTag(),frames=new ListTag();
+    private static String stage="WAIT";private static int role=-1,index;private static long tick,ready,deathReady;private static boolean connected,failed,death,pressed,respawned;private static NativeCraftingDriver crafting;
+    private static void require(boolean value,String why) {if(!value)throw new IllegalStateException(why);}
+    private static void stage(String next,int delay) {stage=next;ready=tick+delay;}
+    @SubscribeEvent public static void message(ClientChatReceivedEvent.System event) {
+        if(!Boolean.getBoolean("lotf.validation.adventureSaberWorkshop"))return;switch(event.getMessage().getString()) {case "LOTF_SABER_WORKSHOP_GO"->stage(RECOVER?"OPEN_WORKSHOP":"OPEN_TABLE",12);case "LOTF_SABER_WORKSHOP_ASSEMBLE"->stage("OPEN_WORKSHOP",12);case "LOTF_SABER_WORKSHOP_DEATH"->death=true;case "LOTF_SABER_WORKSHOP_LOGOUT"->stage("LOGOUT",0);case "LOTF_SABER_WORKSHOP_PASS"->stage("PASS",0);case "LOTF_SABER_WORKSHOP_FAILED"->failed=true;default->{}}
+    }
+    private static void button(Minecraft mc,String key) {String label=Component.translatable("workshop.legacyoftheforce."+key).getString();var b=mc.screen.children().stream().filter(child->child instanceof Button value&&value.getMessage().getString().equals(label)).map(child->(Button)child).findFirst().orElseThrow();require(b.active&&b.visible,"Real visible workshop button required");b.onPress();}
+    private static void use(Minecraft mc,net.minecraft.core.BlockPos at) {NativeWalkingDriver.face(mc,Vec3.atCenterOf(at));mc.gameMode.useItemOn(mc.player,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(at),Direction.NORTH,at,false));}
+    private static void frame(Minecraft mc,String name) {var tag=new CompoundTag();tag.putString("phase",name);tag.putLong("tick",tick);tag.put("Inventory",mc.player.getInventory().save(new ListTag()));if(mc.player.containerMenu instanceof SaberWorkshopMenu menu) {tag.putString("status",menu.status().name());tag.putInt("emitter",menu.emitterIndex());var counts=new CompoundTag();for(var slot:SaberSlot.values())counts.putInt(slot.key(),menu.owned(slot));tag.put("owned",counts);}frames.add(tag);Screenshot.grab(mc.gameDirectory,"saber-workshop-"+name+".png",mc.getMainRenderTarget(),message->{});}
+    private static void finish(Minecraft mc,String ending) throws java.io.IOException {var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putInt("role",role);proof.putUUID("owner",mc.player.getUUID());proof.put("crafts",crafts);proof.put("frames",frames);proof.put("Inventory",mc.player.getInventory().save(new ListTag()));proof.putBoolean("realRespawn",pressed&&respawned);proof.putString("ending",ending);AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-saber"+(RECOVER?"recover":"workshop")+"-client.nbt"),proof,4194304);if(ending.equals("logout_after_respawn"))mc.getConnection().getConnection().disconnect(Component.literal("Isolated workshop lifecycle validation"));stage="DONE";LegacyOfTheForce.LOGGER.info("ADVENTURE_SABER"+(RECOVER?"RECOVER":"WORKSHOP")+"_CLIENT_PASS");mc.stop();}
+    @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
+        if(!Boolean.getBoolean("lotf.validation.adventureSaberWorkshop")||stage.equals("DONE"))return;var mc=Minecraft.getInstance();tick++;
+        try {
+            require(!failed,"Native workshop server failed");require((System.nanoTime()-STARTED)/1_000_000_000L<500,"Native workshop deadline "+stage);require(mc.gameDirectory.toPath().toAbsolutePath().normalize().getFileName().toString().startsWith("run-adventure-client-"),"Isolated profile required");require(!connected||mc.getConnection()!=null,"Unexpected native disconnect");if(mc.player==null||mc.level==null||mc.getConnection()==null)return;connected=true;if(role<0)role=AdventureRoute.NAMES.indexOf(mc.player.getGameProfile().getName());require(role>=0,"Known native actor required");
+            if(death&&mc.screen instanceof DeathScreen) {if(deathReady==0)deathReady=tick+30;if(tick<deathReady)return;var b=mc.screen.children().stream().filter(child->child instanceof Button value&&value.getMessage().getString().equals(Component.translatable("deathScreen.respawn").getString())).map(child->(Button)child).findFirst().orElseThrow();if(!b.active)return;frame(mc,"death-screen");pressed=true;b.onPress();return;}
+            if(death&&pressed&&!respawned&&mc.player.isAlive()&&mc.screen==null) {respawned=true;frame(mc,"respawned");mc.getConnection().sendCommand("lotf_saber_workshop_test respawned");}
+            require(mc.player.isAlive()||death,"Unexpected death");if(tick<ready)return;
+            if(stage.equals("LOGOUT")) {finish(mc,"logout_after_respawn");return;}if(stage.equals("PASS")) {finish(mc,RECOVER?"native_reloaded_workshop":"peer_observed_lifecycle");return;}
+            if(stage.equals("OPEN_TABLE")) {use(mc,AdventureRoute.table(role));stage("TABLE",16);}
+            else if(stage.equals("TABLE")) {if(!(mc.player.containerMenu instanceof CraftingMenu))return;stage("CRAFT",0);}
+            else if(stage.equals("CRAFT")) {
+                if(index==SaberSlot.values().length+1) {mc.player.closeContainer();frame(mc,"parts");mc.getConnection().sendCommand("lotf_saber_workshop_test parts");stage("WAIT",0);return;}
+                var slot=index==0?null:SaberSlot.values()[index-1];String name=slot==SaberSlot.EMITTER&&role==1?"emitter_claw":slot==null?"":slot.key()+"_basic";if(crafting==null)crafting=new NativeCraftingDriver(slot==null?net.minecraft.resources.ResourceLocation.parse("minecraft:stone_button"):SaberContent.id(name));if(crafting.step(mc,tick)) {crafts.add(crafting.proof(mc));crafting=null;index++;ready=tick+4;}
+            } else if(stage.equals("OPEN_WORKSHOP")) {use(mc,AdventureRoute.workshop(role));stage("SCREEN",20);}
+            else if(stage.equals("SCREEN")) {if(!(mc.screen instanceof SaberWorkshopScreen)||!(mc.player.containerMenu instanceof SaberWorkshopMenu))return;frame(mc,RECOVER?"reloaded":"before");if(!RECOVER&&role==1) {button(mc,"emitter");stage("SELECTED",16);}else stage(RECOVER?"MISSING":"SELECTED",16);}
+            else if(stage.equals("SELECTED")) {var menu=(SaberWorkshopMenu)mc.player.containerMenu;require(menu.emitterIndex()==role,"Server selected emitter must agree");frame(mc,"selected");button(mc,"assemble");button(mc,"assemble");stage("ASSEMBLED",16);}
+            else if(stage.equals("ASSEMBLED")) {var menu=(SaberWorkshopMenu)mc.player.containerMenu;require(mc.player.getInventory().countItem(SaberContent.SABER.get())==2&&menu.status()==SaberWorkshopMenu.Status.COOLDOWN,"One paid assembly and refused native replay required");frame(mc,"assembled-replay");stage("MISSING",12);}
+            else if(stage.equals("MISSING")) {button(mc,"assemble");stage("REFUSED",16);}
+            else if(stage.equals("REFUSED")) {var menu=(SaberWorkshopMenu)mc.player.containerMenu;require(menu.status()==SaberWorkshopMenu.Status.MISSING&&mc.player.getInventory().countItem(SaberContent.SABER.get())==2,"Missing parts must not create another saber");frame(mc,RECOVER?"reloaded-refused":"missing");mc.player.closeContainer();mc.getConnection().sendCommand("lotf_saber_workshop_test assembled");stage("WAIT",0);}
+        }catch(Exception failure) {stage="DONE";LegacyOfTheForce.LOGGER.error("ADVENTURE_SABER"+(RECOVER?"RECOVER":"WORKSHOP")+"_CLIENT_FAILED",failure);mc.stop();}
+    }
+}

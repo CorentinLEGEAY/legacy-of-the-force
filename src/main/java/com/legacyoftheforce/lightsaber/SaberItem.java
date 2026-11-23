@@ -31,6 +31,7 @@ public final class SaberItem extends Item {
         var data = stack.get(SaberContent.ASSEMBLY.get());
         if (data == null || !data.supported()) { lines.add(Component.translatable("saber.legacyoftheforce.invalid")); return; }
         lines.add(Component.translatable("workshop.legacyoftheforce.condition",data.condition()));
+        lines.add(Component.translatable("saber.legacyoftheforce.type_"+data.type().key()));
         if (data.crystal().isEmpty()) lines.add(Component.translatable("saber.legacyoftheforce.unpowered"));
         else {
             lines.add(Component.translatable(data.active() ? "saber.legacyoftheforce.active" : "saber.legacyoftheforce.inactive"));
@@ -38,5 +39,6 @@ public final class SaberItem extends Item {
         }
         for (var entry : data.parts().get().entrySet()) lines.add(Component.translatable("slot.legacyoftheforce." + entry.getKey().key())
                 .append(": ").append(Component.translatable("item." + entry.getValue().getNamespace() + "." + entry.getValue().getPath())));
+        data.secondaryEmitter().ifPresent(id->lines.add(Component.translatable("workshop.legacyoftheforce.secondary").append(": ").append(Component.translatable("item."+id.getNamespace()+"."+id.getPath()))));
     }
 }

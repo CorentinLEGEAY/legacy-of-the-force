@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "slot": "pommel",
+  "mount": "standard",
+  "types": [
+    "single",
+    "short",
+    "curved",
+    "crossguard"
+  ],
+  "length": 1.35,
+  "radius": 2.2,
+  "stability": 0,
+  "parry": 0.04,
+  "speed": -0.04
+}

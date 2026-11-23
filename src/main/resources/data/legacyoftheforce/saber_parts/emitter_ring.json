@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slot": "emitter",
+  "mount": "standard",
+  "types": [
+    "single",
+    "double",
+    "curved"
+  ],
+  "length": 2.4,
+  "radius": 2.7,
+  "stability": 0.05,
+  "parry": 0.02
+}

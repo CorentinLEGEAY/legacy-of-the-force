@@ -1,11 +1,12 @@
 {
-  "mount": "standard",
   "schemaVersion": 1,
+  "slot": "grip",
+  "mount": "standard",
   "types": [
-    "single"
+    "single",
+    "crossguard"
   ],
   "length": 6,
   "radius": 2,
-  "stability": 0.0,
-  "slot": "grip"
+  "stability": 0
 }

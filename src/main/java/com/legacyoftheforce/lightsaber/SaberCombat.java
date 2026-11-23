@@ -25,6 +25,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 /** Keeps vanilla hit resolution, armour, PvP and kill attribution in the damage path. */
 public final class SaberCombat {
     private static final net.minecraft.resources.ResourceLocation STYLE_DAMAGE_ID=SaberContent.id("style_damage");
+    private static final net.minecraft.resources.ResourceLocation REACH_ID=SaberContent.id("blade_reach");
     private final com.legacyoftheforce.core.api.ProtectedWorldService protection;
     public SaberCombat(){this(new com.legacyoftheforce.core.security.VanillaProtectedWorldService());}
     SaberCombat(com.legacyoftheforce.core.api.ProtectedWorldService protection){this.protection=java.util.Objects.requireNonNull(protection);}
@@ -39,11 +40,13 @@ public final class SaberCombat {
         var stats = profile(event.getItemStack()); if (stats.isEmpty()) return;
         event.replaceModifier(Attributes.ATTACK_DAMAGE, new AttributeModifier(SaberContent.id("blade_damage"), stats.get().damage() - 1, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
         event.replaceModifier(Attributes.ATTACK_SPEED, new AttributeModifier(SaberContent.id("blade_speed"), stats.get().attacksPerSecond() - 4, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.MAINHAND);
+        event.replaceModifier(Attributes.ENTITY_INTERACTION_RANGE,new AttributeModifier(REACH_ID,stats.get().reach()-3,AttributeModifier.Operation.ADD_VALUE),EquipmentSlotGroup.MAINHAND);
     }
     static Optional<SaberStats> refreshAttributes(ServerPlayer actor) {
         var stats = profile(actor.getMainHandItem());
         reconcile(actor.getAttribute(Attributes.ATTACK_DAMAGE), DAMAGE_ID, stats.map(value -> value.damage() - 1));
         reconcile(actor.getAttribute(Attributes.ATTACK_SPEED), SPEED_ID, stats.map(value -> value.attacksPerSecond() - 4));
+        reconcile(actor.getAttribute(Attributes.ENTITY_INTERACTION_RANGE),REACH_ID,stats.map(value->value.reach()-3));
         var style=actor.getData(SaberContent.ENDURANCE).style();
         reconcile(actor.getAttribute(Attributes.ATTACK_DAMAGE),STYLE_DAMAGE_ID,stats.map(value->Math.clamp(value.damage()*style.damage(),1,SaberConfig.MELEE_DAMAGE_CAP.get())-value.damage()));
         return stats;
@@ -64,7 +67,7 @@ public final class SaberCombat {
         var target = event.getTarget();
         var state=actor.getData(SaberContent.ENDURANCE);var assembly=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());
         int combo=assembly==null?0:state.comboStep(target.getUUID(),assembly.tag().getUUID("saberId"),now(actor));
-        double cost=SaberConfig.ATTACK_COST.get()*state.style().attackCost()*(1+combo*SaberConfig.COMBO_COST.get())+(state.counterRequested(target.getUUID(),now(actor))?SaberConfig.COUNTER_COST.get():0);
+        double cost=SaberConfig.ATTACK_COST.get()*stats.get().costMultiplier()*state.style().attackCost()*(1+combo*SaberConfig.COMBO_COST.get())+(state.counterRequested(target.getUUID(),now(actor))?SaberConfig.COUNTER_COST.get():0);
         if (!valid(actor) || !(target instanceof LivingEntity living) || !living.isAlive() || living.isInvulnerable()
                 || target.level() != actor.level() || !actor.hasLineOfSight(target)
                 || target.getBoundingBox().distanceToSqr(actor.getEyePosition()) > actor.entityInteractionRange() * actor.entityInteractionRange()
@@ -82,7 +85,7 @@ public final class SaberCombat {
     static boolean guard(ServerPlayer actor) {
         if (!valid(actor) || profile(actor.getMainHandItem()).isEmpty()) return false;
         var state=actor.getData(SaberContent.ENDURANCE);
-        boolean accepted = state.beginGuard(now(actor), SaberConfig.PARRY_COST.get()*state.style().guardCost(),
+        boolean accepted = state.beginGuard(now(actor), SaberConfig.PARRY_COST.get()*profile(actor.getMainHandItem()).orElseThrow().costMultiplier()*state.style().guardCost(),
                 SaberConfig.PARRY_WINDOW.get(), SaberConfig.PARRY_COOLDOWN.get(), SaberConfig.RECOVERY_DELAY.get());
         feedback(actor, accepted ? "saber.legacyoftheforce.guard" : "saber.legacyoftheforce.guard_unavailable"); return accepted;
     }

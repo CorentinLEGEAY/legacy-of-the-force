@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "slot": "neck",
+  "mount": "standard",
+  "types": [
+    "curved"
+  ],
+  "length": 1.8,
+  "radius": 2.2,
+  "stability": 0,
+  "parry": 0.03
+}

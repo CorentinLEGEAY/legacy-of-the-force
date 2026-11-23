@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "slot": "grip",
+  "mount": "standard",
+  "types": [
+    "curved"
+  ],
+  "length": 5.7,
+  "radius": 2.2,
+  "stability": 0,
+  "parry": 0.04
+}

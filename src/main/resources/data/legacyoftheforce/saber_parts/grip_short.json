@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "slot": "grip",
+  "mount": "standard",
+  "types": [
+    "short"
+  ],
+  "length": 5.7,
+  "radius": 2.2,
+  "stability": 0,
+  "speed": 0.08
+}

@@ -123,3 +123,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    import runpy
+    runpy.run_path(str(Path(__file__).with_name('generate_saber_expansion.py')),run_name='__main__')

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "slot": "pommel",
+  "mount": "standard",
+  "types": [
+    "single",
+    "short",
+    "curved"
+  ],
+  "length": 1.35,
+  "radius": 2.2,
+  "stability": 0,
+  "speed": 0.03
+}

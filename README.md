@@ -10,6 +10,8 @@ Le lot suivant ajoute les assemblages connectés avec `/lotf force group`, `/lot
 
 Combat sabre en cours d’intégration : **Y** change de style (défensif/équilibré/agressif), **B** prépare une garde, **M** tente un contre après parade sur l’adversaire visé, **Alt gauche** esquive en arrière. Commandes `/lotf saber style`, `/lotf saber counter`, `/lotf saber dodge back` (également `left`, `right` ou `forward`). Les combos exigent des impacts réels ; la garde peut dévier des flèches vanilla avec coût supplémentaire. Touches reconfigurables. Ces ajouts compilent mais attendent la campagne de gameplay/réseau ; types avancés, rituels et double wield restent à compléter.
 
+Le nouvel atelier propose **25 pièces et cinq types** : simple, court, courbe, double et garde. Cliquer une famille fait défiler ses pièces compatibles ; **Type** choisit une structure et **Deuxième émetteur** complète le double. Les plans avancés doivent être lus avant fabrication ; leur distribution naturelle reste à intégrer aux planètes. Les pièces choisies composent désormais le rendu et les statistiques serveur ; le double paie et restitue bien ses deux émetteurs. Cette intégration compile, mais sa jouabilité, son rendu et sa persistance attendent la campagne globale.
+
 ## Objectif
 Construire **un mod Minecraft Java unique**, organisé en modules internes, mêlant survie Minecraft, RPG Star Wars, combats, Force physique, sabres laser personnalisés et évolutifs, speeders construits sur mesure et exploration de six planètes. Direction artistique : **monde Minecraft + équipements et effets cinématographiques**.
 

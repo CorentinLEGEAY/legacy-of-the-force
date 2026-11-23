@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "slot": "emitter",
+  "mount": "standard",
+  "types": [
+    "crossguard"
+  ],
+  "length": 2.4,
+  "radius": 5.5,
+  "stability": 0,
+  "parry": 0.05,
+  "speed": -0.05
+}

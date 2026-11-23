@@ -23,6 +23,7 @@ public final class ClientBootstrap {
         NeoForge.EVENT_BUS.addListener(new SpeederControls()::tick);
         NeoForge.EVENT_BUS.addListener(new SpeederHud()::render);
         modBus.addListener(SpeederColors::register);
+        modBus.addListener(CompositeSaberRenderer::register);
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.GUARDIAN.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.GUARDIAN));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.FROST_LORD.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.FROST_LORD));

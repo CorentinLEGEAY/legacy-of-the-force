@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "slot": "pommel",
+  "mount": "standard",
+  "types": [
+    "double"
+  ],
+  "length": 1.35,
+  "radius": 2.2,
+  "stability": 0.03
+}

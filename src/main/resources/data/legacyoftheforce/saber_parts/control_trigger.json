@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "slot": "control",
+  "mount": "standard",
+  "types": [
+    "single",
+    "short",
+    "curved",
+    "double",
+    "crossguard"
+  ],
+  "length": 1.95,
+  "radius": 2.2,
+  "stability": 0,
+  "speed": 0.03
+}

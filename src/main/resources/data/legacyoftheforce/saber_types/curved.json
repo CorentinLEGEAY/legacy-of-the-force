@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "damage": 0.95,
+  "speed": 1.05,
+  "reach": 3,
+  "cost": 1,
+  "parry": 0.05
+}

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "slot": "neck",
+  "mount": "standard",
+  "types": [
+    "short"
+  ],
+  "length": 1.8,
+  "radius": 2.2,
+  "stability": 0,
+  "speed": 0.04
+}

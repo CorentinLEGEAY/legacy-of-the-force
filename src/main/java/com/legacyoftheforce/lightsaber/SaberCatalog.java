@@ -25,7 +25,7 @@ public final class SaberCatalog extends SimpleJsonResourceReloadListener {
                 for (var type : json.getAsJsonArray("types")) types.add(type.getAsString());
                 loaded.put(entry.getKey(), new SaberPart(SaberSlot.valueOf(json.get("slot").getAsString().toUpperCase(Locale.ROOT)),
                         json.get("mount").getAsString(), types, json.get("length").getAsDouble(), json.get("radius").getAsDouble(),
-                        json.get("stability").getAsDouble()));
+                        json.get("stability").getAsDouble(),number(json,"damage"),number(json,"speed"),number(json,"cost"),number(json,"parry")));
             }
             parts = Map.copyOf(loaded);
             LegacyOfTheForce.LOGGER.info("Loaded {} saber part definitions", parts.size());
@@ -33,4 +33,5 @@ public final class SaberCatalog extends SimpleJsonResourceReloadListener {
             parts = Map.of(); LegacyOfTheForce.LOGGER.error("Saber workshop disabled: invalid part catalog", invalid);
         }
     }
+    private static double number(JsonObject json,String key){return json.has(key)?json.get(key).getAsDouble():0;}
 }

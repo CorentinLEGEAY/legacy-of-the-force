@@ -1,11 +1,12 @@
 {
-  "mount": "standard",
   "schemaVersion": 1,
+  "slot": "neck",
+  "mount": "standard",
   "types": [
-    "single"
+    "single",
+    "crossguard"
   ],
   "length": 2,
   "radius": 2,
-  "stability": 0.0,
-  "slot": "neck"
+  "stability": 0
 }

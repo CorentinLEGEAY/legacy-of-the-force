@@ -60,6 +60,7 @@ public final class LegacyOfTheForce {
         modBus.addListener(SaberContent::creative);
         container.registerConfig(ModConfig.Type.SERVER, SaberConfig.SPEC, "legacyoftheforce-saber.toml");
         NeoForge.EVENT_BUS.addListener(SaberCatalog::register);
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.SaberTypeCatalog::register);
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.PowerCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());

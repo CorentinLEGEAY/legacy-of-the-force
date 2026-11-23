@@ -1,11 +1,13 @@
 {
-  "mount": "standard",
   "schemaVersion": 1,
+  "slot": "emitter",
+  "mount": "standard",
   "types": [
-    "single"
+    "single",
+    "short",
+    "curved"
   ],
   "length": 3,
   "radius": 2,
-  "stability": 0.0,
-  "slot": "emitter"
+  "stability": 0
 }

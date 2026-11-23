@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "slot": "circuit",
+  "mount": "standard",
+  "types": [
+    "single",
+    "short",
+    "curved",
+    "double",
+    "crossguard"
+  ],
+  "length": 1,
+  "radius": 2.2,
+  "stability": 0,
+  "damage": 1,
+  "cost": 0.2,
+  "speed": -0.05
+}

@@ -1,5 +1,11 @@
 # 01 — Architecture, interfaces et sauvegardes
 
+### Transferts sabre/sol — correctif du 23 novembre 2026
+
+`lightsaber.SaberItemTransfers` coordonne le Q hors menus et le pickup de sabres identifiés avec `core.operation.DurableOperationStore` et les writers natifs vérifiés. Intention PREPARED, reçu `saber_transfer_receipt` enregistré dans le même playerdata que l'inventaire, HELD après vérification, puis publication/retrait durable de l'ItemEntity avant fermeture. Aucun nouvel endpoint client. Reprise bornée serveur/offline à partir du reçu et du nombre d'identités, sans restaurer une ancienne image d'inventaire. Inconnus/conflits restent conservés ; un objet engagé ne ticke pas tant que le journal reste ouvert. Configuration de budget/retry dans le TOML sabre. Aucun checkpoint forcé avec curseur/grille temporaire/autre menu ouvert ; le dépôt GUI reste vanilla et doit encore être sécurisé par son propre chemin.
+
+Le correctif ferme la duplication sd1 sur sa répétition sd2 ; rapport `validation/P2-01_TRANSFERS.md`. Coupures intermédiaires de processus, erreurs de fichiers et autres transferts (mortfalse, conteneurs/hoppers, cristaux libres) restent à exercer avant garantie globale des objets rares. Les fixtures de frontières durables ne sont pas déclarées des kills réels.
+
 ## Contraintes techniques
 - **Un mod Java NeoForge** : un seul projet Gradle, un seul `modid=legacyoftheforce`, un seul JAR distribué. Pas de microservices ni de modules Gradle séparés au MVP.
 - Packages Java `com.legacyoftheforce.{core,rpg,force,lightsaber,speeder,planets,bosses,quests,client,content}`.

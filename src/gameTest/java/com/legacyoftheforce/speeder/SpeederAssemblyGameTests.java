@@ -52,11 +52,20 @@ public final class SpeederAssemblyGameTests {
     public static void garageBuildButtonUsesTheRealTransactionAndCannotRepeatInOneMenu(GameTestHelper helper) {
         var setup = setup(helper); var actor = setup.actor();
         var menu = new SpeederGarageMenu(1, actor.getInventory(), net.minecraft.world.inventory.ContainerLevelAccess.create(helper.getLevel(), setup.garage())); actor.containerMenu = menu;
-        helper.assertTrue(menu.clickMenuButton(actor, 58), "Garage button must call the registered assembly service");
+        buildWhenAdmitted(helper,actor,menu,actor.getInventory().save(new net.minecraft.nbt.ListTag()),0);
+    }
+    private static void buildWhenAdmitted(GameTestHelper helper,ServerPlayer actor,SpeederGarageMenu menu,net.minecraft.nbt.ListTag unpaid,int attempts) {
+        boolean built=menu.clickMenuButton(actor,58);
+        if(!built&&menu.status()==SpeederGarageMenu.Status.BUILD_BUSY) {
+            helper.assertTrue(unpaid.equals(actor.getInventory().save(new net.minecraft.nbt.ListTag())),"Global admission refusal must consume nothing");
+            helper.assertTrue(attempts<3,"Global assembly admission must become available within bounded retries");
+            helper.runAfterDelay(SpeederConfig.BUILD_INTERVAL.get()+1,()->buildWhenAdmitted(helper,actor,menu,unpaid,attempts+1));return;
+        }
+        helper.assertTrue(built, "Garage button must call the registered assembly service: " + menu.status());
         helper.assertTrue(menu.status() == SpeederGarageMenu.Status.BUILD_BUILT, "Client must receive the built result");
         var receipt = actor.getData(SpeederContent.ASSEMBLY_RECEIPT.get());
         for (int i = 0; i < 4; i++) actor.getInventory().setItem(i + 1, new ItemStack(SpeederContent.part(i)));
-        helper.runAfterDelay(12, () -> {
+        helper.runAfterDelay(SpeederConfig.BUILD_INTERVAL.get()+1, () -> {
             helper.assertFalse(menu.clickMenuButton(actor, 58), "Replayed build in the same menu must not create another vehicle");
             helper.assertTrue(receipt.equals(actor.getData(SpeederContent.ASSEMBLY_RECEIPT.get())), "Receipt cannot advance on repeat");
             for (int i = 1; i <= 4; i++) helper.assertTrue(actor.getInventory().getItem(i).getCount() == 1, "Repeated button cannot consume extra parts"); helper.succeed();

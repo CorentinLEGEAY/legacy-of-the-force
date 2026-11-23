@@ -2,6 +2,8 @@
 
 **ÉCHEC DE L'INVARIANT PRODUIT**, reproduction sd1 du23 novembre2026. P2-01 non validé. Aucun correctif de production n'est encore appliqué par cette tranche.
 
+Actualisation : [P2-01_TRANSFERS.md](P2-01_TRANSFERS.md) décrit le correctif journal/reçu puis sd2, qui conserve un seul exemplaire sur le même scénario. Le défaut de sd1 et son monde original restent conservés ; les coupures intermédiaires et autres transferts ne sont pas déclarés validés.
+
 ```powershell
 .\scripts\test-adventure-preparation.ps1 -Run sd1 -Mode SaberCrash -PreparationRun sw2
 ```

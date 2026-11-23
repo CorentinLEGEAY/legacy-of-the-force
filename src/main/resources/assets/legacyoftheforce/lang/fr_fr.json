@@ -397,5 +397,8 @@
   "speeder.legacyoftheforce.class_heavy": "Classe lourde",
   "speeder.legacyoftheforce.seats": "Places :%s",
   "speeder.legacyoftheforce.occupancy": " · Places %s/%s",
-  "speeder.legacyoftheforce.passenger_controls": "Passager · %s : descendre"
+  "speeder.legacyoftheforce.passenger_controls": "Passager · %s : descendre",
+  "rpg.legacyoftheforce.mastery_pending": "Sauvegarde de maîtrise incertaine ; reconnectez-vous pour relire votre profil.",
+  "power.legacyoftheforce.mastery": "Maîtrise %s/3 · usages %s/%s · coût énergétique %s%%",
+  "power.legacyoftheforce.mastery_max": "maximum"
 }

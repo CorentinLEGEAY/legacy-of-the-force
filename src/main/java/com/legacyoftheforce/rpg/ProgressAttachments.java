@@ -14,5 +14,6 @@ public final class ProgressAttachments {
     public static final Supplier<AttachmentType<KillCredit>> KILL_CREDIT = TYPES.register(
             "kill_credit", () -> AttachmentType.serializable(KillCredit::new).build());
     public static final Supplier<AttachmentType<LearnedPowers>> LEARNED_POWERS = TYPES.register("learned_powers",()->AttachmentType.serializable(LearnedPowers::new).copyOnDeath().build());
+    public static final Supplier<AttachmentType<PowerMastery>> POWER_MASTERY = TYPES.register("power_mastery",()->AttachmentType.serializable(PowerMastery::new).copyOnDeath().build());
     private ProgressAttachments() {}
 }

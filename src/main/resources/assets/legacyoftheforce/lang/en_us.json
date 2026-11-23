@@ -397,5 +397,8 @@
   "speeder.legacyoftheforce.class_heavy": "Heavy class",
   "speeder.legacyoftheforce.seats": "Seats: %s",
   "speeder.legacyoftheforce.occupancy": " · Seats %s/%s",
-  "speeder.legacyoftheforce.passenger_controls": "Passenger · %s: dismount"
+  "speeder.legacyoftheforce.passenger_controls": "Passenger · %s: dismount",
+  "rpg.legacyoftheforce.mastery_pending": "Mastery save is uncertain; reconnect to reload your profile.",
+  "power.legacyoftheforce.mastery": "Mastery %s/3 · uses %s/%s · energy cost %s%%",
+  "power.legacyoftheforce.mastery_max": "maximum"
 }

@@ -10,6 +10,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ProgressService implements PlayerProgressService {
+    @Override public com.legacyoftheforce.core.api.PowerMasterySnapshot mastery(UUID playerId,String id) {
+        var actor=onlinePlayer(playerId);return actor==null?com.legacyoftheforce.core.api.PowerMasterySnapshot.NONE:actor.getData(ProgressAttachments.POWER_MASTERY).snapshot(id);
+    }
+    @Override public boolean creditPowerUse(UUID playerId,String id,UUID context) {
+        var actor=onlinePlayer(playerId);
+        if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||context==null||context.equals(playerId)||!hasLearnedPower(playerId,id))return false;
+        if(!actor.getData(ProgressAttachments.POWER_MASTERY).credit(id,context,actor.server.overworld().getGameTime()))return false;
+        try{new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);return true;}
+        catch(java.io.IOException|RuntimeException failure){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Mastery save uncertain; native aggregate retained",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.mastery_pending"));return false;}
+    }
     @Override public Optional<com.legacyoftheforce.core.api.PowerDefinition> power(String id) {return PowerCatalog.get(id);}
     @Override public java.util.List<com.legacyoftheforce.core.api.PowerDefinition> powers() {return PowerCatalog.all();}
     @Override public boolean hasLearnedPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);var definition=power(id);return actor!=null&&definition.isPresent()&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id)&&definition.get().requirement().isEligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot());}

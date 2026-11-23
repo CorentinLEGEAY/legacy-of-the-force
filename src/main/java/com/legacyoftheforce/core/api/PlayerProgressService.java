@@ -15,6 +15,9 @@ public interface PlayerProgressService {
     default boolean hasLearnedPower(UUID playerId,String id) {return false;}
     default boolean knowsPower(UUID playerId,String id) {return false;}
     default boolean learnPower(UUID playerId,String id) {return false;}
+    default PowerMasterySnapshot mastery(UUID playerId,String id) {return PowerMasterySnapshot.NONE;}
+    /** Only call after a meaningful server effect; context identifies the actual target/challenge. */
+    default boolean creditPowerUse(UUID playerId,String id,UUID context) {return false;}
     RewardResult awardBoss(UUID playerId, BossReward reward);
     default BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) { return BossRewardStatus.PENDING; }
 }

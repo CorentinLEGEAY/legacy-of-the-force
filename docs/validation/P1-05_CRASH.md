@@ -1,6 +1,6 @@
 # P1-05 — arrêt brutal avec impulsion active
 
-Résultat du 23 novembre 2026 : crash et reprise réussis, vérifiés indépendamment. P1-05 reste partiel pour le déchargement natif de cible/chunk. Les faits ci-dessous ne valident aucune autre phase.
+Résultat du 23 novembre 2026 : crash et reprise réussis, vérifiés indépendamment. Le déchargement natif du chunk d'entités est ensuite vérifié dans P1-05_UNLOAD.md ; clôture du socle P1-05/P1 dans P1_PHASE.md. Les faits ci-dessous ne valident aucune autre phase.
 
 ## Fixture et arrêt effectif
 

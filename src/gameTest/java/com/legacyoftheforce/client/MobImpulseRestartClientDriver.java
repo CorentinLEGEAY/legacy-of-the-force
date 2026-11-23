@@ -17,7 +17,7 @@ import net.neoforged.neoforge.client.event.*;
 /** Native intent/observations only, including actual socket disconnection after the server kill. */
 @EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
 public final class MobImpulseRestartClientDriver {
-    private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.impulseRecover");
+    private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.impulseRecover"), UNLOAD=Boolean.getBoolean("lotf.validation.impulseUnload");
     private static final long STARTED=System.nanoTime();private static final ListTag frames=new ListTag(),actions=new ListTag();
     private static String task="WAIT",phase="",feedback="";private static int role=-1;private static long ticks,ready;private static boolean connected,armed,faced,sent,failed;private static UUID target;private static Vec3 expected;private static Connection connection;private static CompoundTag prefix;
     private static void require(boolean value,String why) {if(!value)throw new IllegalStateException(why);}
@@ -29,7 +29,7 @@ public final class MobImpulseRestartClientDriver {
         if(event.getMessage().getContents() instanceof TranslatableContents c&&c.getKey().startsWith("force.legacyoftheforce."))feedback=c.getKey().substring("force.legacyoftheforce.".length());
     }
     private static CompoundTag image(Minecraft mc) {var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putUUID("owner",mc.player.getUUID());proof.putInt("role",role);proof.put("frames",frames.copy());proof.put("actions",actions.copy());proof.put("Inventory",mc.player.getInventory().save(new ListTag()));return proof;}
-    private static void finish(Minecraft mc,CompoundTag proof) throws java.io.IOException {AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-impulse"+(RECOVER?"recover":"crash")+"-client.nbt"),proof,4194304);task="DONE";LegacyOfTheForce.LOGGER.info("ADVENTURE_IMPULSE"+(RECOVER?"RECOVER":"CRASH")+"_CLIENT_PASS");mc.stop();}
+    private static void finish(Minecraft mc,CompoundTag proof) throws java.io.IOException {AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-impulse"+(UNLOAD?"unload":RECOVER?"recover":"crash")+"-client.nbt"),proof,4194304);task="DONE";LegacyOfTheForce.LOGGER.info("ADVENTURE_IMPULSE"+(UNLOAD?"UNLOAD":RECOVER?"RECOVER":"CRASH")+"_CLIENT_PASS");mc.stop();}
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
         if(!Boolean.getBoolean("lotf.validation.adventureImpulseRestart")||task.equals("DONE"))return;var mc=Minecraft.getInstance();ticks++;
         try {
@@ -37,8 +37,8 @@ public final class MobImpulseRestartClientDriver {
             if(armed&&connection!=null&&!connection.isConnected()&&connection.getDisconnectionDetails()!=null) {var proof=prefix.copy();proof.putBoolean("disconnectObserved",true);proof.putString("disconnectReason",connection.getDisconnectionDetails().reason().getString());finish(mc,proof);return;}
             require(!connected||armed||mc.getConnection()!=null,"Unexpected disconnect");if(mc.player==null||mc.level==null||mc.getConnection()==null)return;connected=true;connection=mc.getConnection().getConnection();
             if(role<0)role=com.legacyoftheforce.content.AdventureRoute.NAMES.indexOf(mc.player.getGameProfile().getName());require(role>=0&&mc.player.isAlive(),"Known living actor required");if(mc.screen!=null)return;
-            if(task.equals("ARM")) {require(!RECOVER,"Crash fixture only");armed=true;prefix=image(mc);AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/impulse-crash-prefix.nbt"),prefix,4194304);mc.getConnection().sendCommand("lotf_impulse_restart armed");task="WAIT";return;}
-            if(task.equals("PASS")) {require(RECOVER,"Recovery fixture only");finish(mc,image(mc));return;}
+            if(task.equals("ARM")) {require(!RECOVER&&!UNLOAD,"Crash fixture only");armed=true;prefix=image(mc);AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/impulse-crash-prefix.nbt"),prefix,4194304);mc.getConnection().sendCommand("lotf_impulse_restart armed");task="WAIT";return;}
+            if(task.equals("PASS")) {require(RECOVER||UNLOAD,"Recovery/unload fixture only");finish(mc,image(mc));return;}
             LivingEntity entity=null;for(var value:mc.level.entitiesForRendering())if(target!=null&&value.getUUID().equals(target)&&value instanceof LivingEntity living) {entity=living;break;}if(entity==null)return;
             if(task.equals("ACT")) {
                 if(!faced) {NativeWalkingDriver.face(mc,entity.getEyePosition());faced=true;ready=ticks+12;return;}if(ticks<ready)return;
@@ -49,6 +49,6 @@ public final class MobImpulseRestartClientDriver {
                 if(entity.position().distanceTo(expected)>.2)return;if(!faced) {NativeWalkingDriver.face(mc,entity.getBoundingBox().getCenter());faced=true;ready=ticks+30;return;}if(ticks<ready)return;
                 var frame=new CompoundTag();frame.putString("phase",phase);frame.putUUID("target",target);frame.putFloat("health",entity.getHealth());var pos=new ListTag();pos.add(DoubleTag.valueOf(entity.getX()));pos.add(DoubleTag.valueOf(entity.getY()));pos.add(DoubleTag.valueOf(entity.getZ()));frame.put("Pos",pos);frames.add(frame);Screenshot.grab(mc.gameDirectory,"impulse-restart-"+phase+".png",mc.getMainRenderTarget(),message->{});mc.getConnection().sendCommand("lotf_impulse_restart seen_"+phase);task="WAIT";
             }
-        }catch(Exception failure) {task="DONE";LegacyOfTheForce.LOGGER.error("ADVENTURE_IMPULSE"+(RECOVER?"RECOVER":"CRASH")+"_CLIENT_FAILED",failure);mc.stop();}
+        }catch(Exception failure) {task="DONE";LegacyOfTheForce.LOGGER.error("ADVENTURE_IMPULSE"+(UNLOAD?"UNLOAD":RECOVER?"RECOVER":"CRASH")+"_CLIENT_FAILED",failure);mc.stop();}
     }
 }

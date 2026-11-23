@@ -8,12 +8,13 @@ import net.minecraft.server.level.ServerPlayer;
 
 /** Virtual recipe selection: components stay in the player's inventory until the atomic server action. */
 public final class SaberWorkshopMenu extends AbstractContainerMenu {
-    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY }
+    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY, MODIFIED, DISMANTLED, MAINTAINED, NO_BLUEPRINT, PLAN_SAVED, PLAN_LOADED, UNCHANGED }
     private final Inventory inventory;
     private final ContainerLevelAccess access;
     private final DataSlot emitter = DataSlot.standalone();
     private final DataSlot status = DataSlot.standalone();
     private final DataSlot ritualAmethyst = DataSlot.standalone(), ritualLapis = DataSlot.standalone();
+    private final DataSlot condition = DataSlot.standalone(), damage = DataSlot.standalone(), stability = DataSlot.standalone();
     private final List<DataSlot> owned = new ArrayList<>();
     private long nextCraftTick;
     public SaberWorkshopMenu(int id, Inventory inventory) { this(id, inventory, ContainerLevelAccess.NULL); }
@@ -22,12 +23,16 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
         addDataSlot(emitter); addDataSlot(status);
         for (var slot : SaberSlot.values()) { var count = DataSlot.standalone(); owned.add(count); addDataSlot(count); }
         ritualAmethyst.set(4); ritualLapis.set(2); addDataSlot(ritualAmethyst); addDataSlot(ritualLapis);
+        addDataSlot(condition);addDataSlot(damage);addDataSlot(stability);
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
         for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 47 + col * 18, 200));
     }
     public int emitterIndex() { return emitter.get(); }
     public int ritualAmethyst() { return ritualAmethyst.get(); }
     public int ritualLapis() { return ritualLapis.get(); }
+    public int condition() {return condition.get();}
+    public double damage() {return damage.get()/100.0;}
+    public double stability() {return stability.get()/100.0;}
     public Status status() { return Status.values()[Math.clamp(status.get(), 0, Status.values().length - 1)]; }
     public int owned(SaberSlot slot) { return owned.get(slot.ordinal()).get(); }
     public String partName(SaberSlot slot) { return SaberContent.plan(emitter.get()).get(slot).getPath(); }
@@ -46,6 +51,7 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
         if (!inventory.player.level().isClientSide()) {
             for (var slot : SaberSlot.values()) owned.get(slot.ordinal()).set(count(partName(slot)));
             ritualAmethyst.set(SaberConfig.BOND_AMETHYST.get()); ritualLapis.set(SaberConfig.BOND_LAPIS.get());
+            var held=inventory.getSelected().get(SaberContent.ASSEMBLY.get());condition.set(held!=null&&held.supported()?held.condition():100);var stats=SaberStats.calculate(held,SaberCatalog.parts());damage.set(stats.map(value->(int)Math.round(value.damage()*100)).orElse(0));stability.set(stats.map(value->(int)Math.round(value.stability()*100)).orElse(0));
         }
         super.broadcastChanges();
     }
@@ -54,9 +60,14 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
                 || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(player)) { status.set(Status.TOO_FAR.ordinal()); return false; }
         if (button == 1) { emitter.set(1 - emitter.get()); status.set(Status.READY.ordinal()); broadcastChanges(); return true; }
-        if (button != 0 && button != 2 && button != 3) { status.set(Status.INVALID.ordinal()); return false; }
+        if (button < 0 || button > 8) { status.set(Status.INVALID.ordinal()); return false; }
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextCraftTick) { status.set(Status.COOLDOWN.ordinal()); return false; }
+        if(button==8) {
+            for(int index=0;index<36;index++) {var stack=inventory.getItem(index);if(!stack.is(SaberContent.BLUEPRINT.get()))continue;var plan=stack.get(SaberContent.BLUEPRINT_DATA.get());if(plan==null||plan.parts().isEmpty())continue;for(int choice=0;choice<2;choice++)if(plan.parts().get().equals(SaberContent.plan(choice))) {emitter.set(choice);status.set(Status.PLAN_LOADED.ordinal());broadcastChanges();return true;}}
+            status.set(Status.NO_BLUEPRINT.ordinal());return false;
+        }
+        if(button>=4) {var result=SaberWorkshopActions.perform(actor,button,SaberContent.plan(emitter.get()));status.set(result.ordinal());boolean success=result==Status.MODIFIED||result==Status.DISMANTLED||result==Status.MAINTAINED||result==Status.PLAN_SAVED;if(success)nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();broadcastChanges();return success;}
         if (button == 3) {
             var result = KyberRitual.perform(actor); status.set(Status.valueOf(result.name()).ordinal());
             boolean success = result == KyberRitual.Result.AWAKENED || result == KyberRitual.Result.SPECIALIZED;

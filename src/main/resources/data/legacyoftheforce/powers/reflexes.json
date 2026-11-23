@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "common",
+  "level": 25,
+  "minAlignment": -1000,
+  "maxAlignment": 1000,
+  "points": 1,
+  "energy": 20,
+  "cooldown": 240,
+  "range": 0,
+  "duration": 80,
+  "magnitude": 1,
+  "prerequisite": "legacyoftheforce:speed"
+}

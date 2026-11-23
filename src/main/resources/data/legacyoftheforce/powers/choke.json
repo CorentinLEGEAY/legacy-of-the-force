@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "dark",
+  "level": 35,
+  "minAlignment": -1000,
+  "maxAlignment": -200,
+  "points": 1,
+  "energy": 24,
+  "cooldown": 200,
+  "range": 8,
+  "duration": 40,
+  "magnitude": 2,
+  "prerequisite": "legacyoftheforce:fear"
+}

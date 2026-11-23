@@ -62,6 +62,7 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
             forceEnergy = Math.min(maxForceEnergy, forceEnergy + amount);
         }
     }
+    public boolean trySpendSkillPoints(int amount) {if(blocked()||amount<0||amount>skillPoints)return false;skillPoints-=amount;return true;}
 
     public void setEnergyCapacity(double capacity) {
         if (blocked() || !Double.isFinite(capacity) || capacity <= 0 || capacity > 1_000_000) return;

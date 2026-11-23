@@ -7,10 +7,11 @@ import net.minecraft.resources.ResourceLocation;
 /** Recomputed on the server from the current catalog, never trusted from an item/client bonus. */
 public record SaberStats(double damage, double attacksPerSecond, double stability, double parryBonus) {
     public static Optional<SaberStats> calculate(SaberData saber, Map<ResourceLocation, SaberPart> parts) {
-        if (saber == null || !saber.supported() || !saber.compatible(parts) || saber.crystal().isEmpty()) return Optional.empty();
+        if (saber == null || !saber.supported() || !saber.compatible(parts) || saber.crystal().isEmpty() || saber.condition()==0) return Optional.empty();
         var crystal = saber.crystal().get().state().orElseThrow();
         double modifier = saber.parts().orElseThrow().values().stream().mapToDouble(id -> parts.get(id).stability()).sum();
-        return Optional.of(new SaberStats(Math.clamp(SaberConfig.BASE_DAMAGE.get() + crystal.purity() * SaberConfig.PURITY_DAMAGE.get(), 1, 40),
+        double minimum=SaberConfig.MINIMUM_CONDITION_DAMAGE.get();
+        return Optional.of(new SaberStats(Math.clamp((SaberConfig.BASE_DAMAGE.get() + crystal.purity() * SaberConfig.PURITY_DAMAGE.get())*(minimum+(1-minimum)*saber.condition()/100.0), 1, 40),
                 SaberConfig.ATTACKS_PER_SECOND.get(), Math.clamp(crystal.stability() + modifier, 0, 1),
                 SaberConfig.BLUE_PARRY_BONUS.get() * (1 + KyberBond.bonus(crystal.bondLevel(), SaberConfig.BOND_BONUS.get()))));
     }

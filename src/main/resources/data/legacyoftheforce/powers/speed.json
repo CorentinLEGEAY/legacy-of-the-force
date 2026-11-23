@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "common",
+  "level": 20,
+  "minAlignment": -1000,
+  "maxAlignment": 1000,
+  "points": 1,
+  "energy": 18,
+  "cooldown": 200,
+  "range": 0,
+  "duration": 160,
+  "magnitude": 1,
+  "prerequisite": "legacyoftheforce:leap"
+}

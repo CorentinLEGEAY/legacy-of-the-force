@@ -18,7 +18,7 @@ public final class SaberItem extends Item {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.isAlive() || actor.isSpectator()
                 || !actor.server.isSameThread() || actor.getCooldowns().isOnCooldown(this) || stack.getCount() != 1) return InteractionResultHolder.fail(stack);
         var saber = stack.get(SaberContent.ASSEMBLY.get());
-        if (saber == null || !saber.supported() || !saber.compatible(SaberCatalog.parts()) || saber.crystal().isEmpty()) {
+        if (saber == null || !saber.supported() || !saber.compatible(SaberCatalog.parts()) || saber.crystal().isEmpty() || saber.condition()==0) {
             actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cannot_activate"), true); return InteractionResultHolder.fail(stack);
         }
         boolean active = !saber.active(); stack.set(SaberContent.ASSEMBLY.get(), saber.withActive(active));
@@ -30,6 +30,7 @@ public final class SaberItem extends Item {
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flags) {
         var data = stack.get(SaberContent.ASSEMBLY.get());
         if (data == null || !data.supported()) { lines.add(Component.translatable("saber.legacyoftheforce.invalid")); return; }
+        lines.add(Component.translatable("workshop.legacyoftheforce.condition",data.condition()));
         if (data.crystal().isEmpty()) lines.add(Component.translatable("saber.legacyoftheforce.unpowered"));
         else {
             lines.add(Component.translatable(data.active() ? "saber.legacyoftheforce.active" : "saber.legacyoftheforce.inactive"));

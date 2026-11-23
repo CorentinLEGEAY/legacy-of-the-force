@@ -43,8 +43,12 @@ public record SaberData(CompoundTag tag) {
     }
     public boolean supported() {
         return parts().isPresent() && (!tag.contains("active") || (tag.contains("active", Tag.TAG_BYTE) && (tag.getByte("active") == 0 || tag.getByte("active") == 1)))
+                && (!tag.contains("condition") || tag.contains("condition",Tag.TAG_INT)&&tag.getInt("condition")>=0&&tag.getInt("condition")<=100)
                 && (!tag.contains("crystal") || crystal().isPresent());
     }
+    public int condition() {return tag.contains("condition",Tag.TAG_INT)?tag.getInt("condition"):100;}
+    public SaberData withCondition(int condition) {if(!supported()||condition<0||condition>100)throw new IllegalArgumentException("Invalid maintenance state");var updated=tag.copy();updated.putInt("condition",condition);if(condition==0)updated.putBoolean("active",false);return new SaberData(updated);}
+    public SaberData withParts(Map<SaberSlot,ResourceLocation> parts) {if(!supported())throw new IllegalArgumentException("Unsupported saber");var updated=tag.copy();var entries=new CompoundTag();parts.forEach((slot,id)->entries.putString(slot.key(),id.toString()));updated.put("parts",entries);updated.putBoolean("active",false);var result=new SaberData(updated);if(!result.supported())throw new IllegalArgumentException("Invalid parts");return result;}
     public Optional<KyberData> crystal() {
         if (!tag.contains("crystal", Tag.TAG_COMPOUND)) return Optional.empty();
         var crystal = new KyberData(tag.getCompound("crystal"));

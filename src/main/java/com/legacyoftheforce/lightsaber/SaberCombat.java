@@ -66,6 +66,7 @@ public final class SaberCombat {
             event.setCanceled(true); return;
         }
         feedback(actor, "saber.legacyoftheforce.endurance");
+        var assembly=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());if(assembly!=null&&SaberConfig.WEAR_PER_ATTACK.get()>0) {actor.getMainHandItem().set(SaberContent.ASSEMBLY.get(),assembly.withCondition(Math.max(0,assembly.condition()-SaberConfig.WEAR_PER_ATTACK.get())));actor.getInventory().setChanged();}
     }
     static boolean guard(ServerPlayer actor) {
         if (!valid(actor) || profile(actor.getMainHandItem()).isEmpty()) return false;

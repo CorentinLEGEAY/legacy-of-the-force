@@ -37,7 +37,7 @@ public final class SaberStorageCrashValidation {
     private static UUID target(Session s,int role) {return s.source.getList("targets",Tag.TAG_COMPOUND).getCompound(role).getUUID("saber");}
     private static boolean paid(Session s) {return !s.point.getString("stage").equals("PREPARED");}
     private static boolean targetStored(Session s,int role) {return role==1|| (DEPOSIT?(RECOVER&&paid(s)):!(RECOVER&&paid(s)));}
-    private static ListTag nativeStorage(MinecraftServer server) throws java.io.IOException {
+    static ListTag nativeStorage(MinecraftServer server) throws java.io.IOException {
         var result=new ListTag();for(var pos:List.of(SaberStorageNetworkValidation.storage(0),SaberStorageNetworkValidation.storage(0).east(),SaberStorageNetworkValidation.storage(1))) {
             var chunk=server.overworld().getChunkSource().chunkMap.read(new ChunkPos(pos)).join().orElseThrow(()->new java.io.IOException("Missing native storage chunk"));CompoundTag found=null;
             for(var raw:chunk.getList("block_entities",Tag.TAG_COMPOUND)) {var image=(CompoundTag)raw;if(image.getInt("x")==pos.getX()&&image.getInt("y")==pos.getY()&&image.getInt("z")==pos.getZ())found=image.copy();}

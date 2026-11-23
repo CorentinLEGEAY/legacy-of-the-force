@@ -9,7 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWorkshopMenu> {
     public SaberWorkshopScreen(SaberWorkshopMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title); imageWidth = 256; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
+        super(menu, inventory, title); imageWidth = 320; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
     }
     @Override protected void init() {
         super.init();
@@ -22,15 +22,20 @@ public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWork
                 .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("workshop.legacyoftheforce.crystal_help"))).build());
         addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce.bond"), b ->
                 minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 3)).bounds(leftPos + 173, topPos + 120, 76, 20).build());
+        String[] actions={"modify","dismantle","maintain","save_plan","load_plan"};
+        for(int i=0;i<actions.length;i++) {int action=4+i;addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce."+actions[i]),b->minecraft.gameMode.handleInventoryButtonClick(menu.containerId,action)).bounds(leftPos+251,topPos+54+i*22,65,20).build());}
     }
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
         for (var slot : menu.slots) graphics.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff52687a);
-        graphics.pose().pushPose(); graphics.pose().translate(leftPos + 188, topPos + 12, 0); graphics.pose().scale(2.25f, 2.25f, 2.25f);
+        graphics.pose().pushPose(); graphics.pose().translate(leftPos + 244, topPos + 166, 100); graphics.pose().scale(3.25f, 3.25f, 3.25f);
+        graphics.pose().translate(8,8,0);if(!ClientConfig.REDUCED_MOTION.get())graphics.pose().mulPose(com.mojang.math.Axis.YP.rotationDegrees((minecraft.level.getGameTime()+partialTick)%180*2));graphics.pose().translate(-8,-8,0);
         graphics.renderItem(menu.preview(), 0, 0); graphics.pose().popPose();
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(font, title, 8, 7, 0xc9f5ff, false);
+        graphics.drawString(font,Component.translatable("workshop.legacyoftheforce.condition",menu.condition()),173,16,0xc9f5ff,false);
+        graphics.drawString(font,Component.translatable("workshop.legacyoftheforce.stats",String.format(java.util.Locale.ROOT,"%.1f",menu.damage()),Math.round(menu.stability()*100)),173,32,0xa6d9ed,false);
         int y = 24;
         for (var slot : SaberSlot.values()) {
             var name = new net.minecraft.world.item.ItemStack(SaberContent.partItem(menu.partName(slot))).getHoverName();

@@ -60,6 +60,7 @@ public final class LegacyOfTheForce {
         modBus.addListener(SaberContent::creative);
         container.registerConfig(ModConfig.Type.SERVER, SaberConfig.SPEC, "legacyoftheforce-saber.toml");
         NeoForge.EVENT_BUS.addListener(SaberCatalog::register);
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.PowerCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());
         NeoForge.EVENT_BUS.register(com.legacyoftheforce.lightsaber.SaberMenuState.listener());
@@ -71,6 +72,8 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.register(new ForceModule(new ProgressService(), new VanillaProtectedWorldService(),
                 new WorldTransactionAnchors(), new VerifiedChunkSaveBarrier()));
         ProgressAttachments.TYPES.register(modBus);
+        com.legacyoftheforce.rpg.SkillMenu.register(modBus);
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.SkillMenu::commands);
         ForceAttachments.TYPES.register(modBus);
         var progressEvents = new ProgressEvents();
         NeoForge.EVENT_BUS.register(new RewardLifecycle());

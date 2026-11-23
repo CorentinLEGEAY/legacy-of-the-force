@@ -8,6 +8,8 @@ public final class SaberConfig {
     public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY, TRANSFER_LOAD_TIMEOUT;
     public static final ModConfigSpec.IntValue STORAGE_INTERVAL;
     public static final ModConfigSpec.IntValue ACTIVATION_INTERVAL;
+    public static final ModConfigSpec.IntValue WEAR_PER_ATTACK, MAINTENANCE_IRON, MAINTENANCE_REDSTONE;
+    public static final ModConfigSpec.DoubleValue DISMANTLE_RETURN, MINIMUM_CONDITION_DAMAGE;
     public static final ModConfigSpec.IntValue PARRY_WINDOW, PARRY_COOLDOWN, RECOVERY_DELAY;
     public static final ModConfigSpec.DoubleValue ATTACK_COST, PARRY_COST, ENDURANCE_RECOVERY, PARRY_REDUCTION;
     public static final ModConfigSpec.IntValue BOND_2, BOND_3, BOND_4, BOND_WINDOW, BOND_CAP, BOND_COOLDOWN, BOND_AMETHYST, BOND_LAPIS;
@@ -15,6 +17,11 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        WEAR_PER_ATTACK = builder.defineInRange("maintenance.wearPerAttack",1,0,5);
+        MAINTENANCE_IRON = builder.defineInRange("maintenance.ironCost",2,0,64);
+        MAINTENANCE_REDSTONE = builder.defineInRange("maintenance.redstoneCost",1,0,64);
+        DISMANTLE_RETURN = builder.defineInRange("workshop.dismantleReturnRatio",1.0,0.0,1.0);
+        MINIMUM_CONDITION_DAMAGE = builder.defineInRange("maintenance.minimumDamageMultiplier",.65,.1,1.0);
         TRANSFER_BUDGET = builder.worldRestart().defineInRange("transfer.maximumPending", 256, 1, 1024);
         TRANSFER_RETRY = builder.defineInRange("transfer.retryTicks", 20, 1, 1200);
         TRANSFER_LOAD_TIMEOUT = builder.defineInRange("transfer.chunkLoadTimeoutTicks", 200, 20, 2400);

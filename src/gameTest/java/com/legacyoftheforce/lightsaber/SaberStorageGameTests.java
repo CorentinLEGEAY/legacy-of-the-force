@@ -181,4 +181,20 @@ public final class SaberStorageGameTests {
             }catch(Exception failure) {throw new RuntimeException(failure);}
         });
     }
+    @GameTest(template="empty",timeoutTicks=160)
+    public static void disconnectedForeignCloseCannotPublishItsAlreadySavedCursor(GameTestHelper helper) throws Exception {
+        var f=fixture(helper,false);var original=saber();f.container.setItem(0,original.copy());f.menu.clicked(0,0,ClickType.PICKUP,f.actor);
+        var writer=new VerifiedPlayerSaveBarrier();var saved=writer.persist(f.actor);f.actor.disconnect();f.actor.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_WITH_PLAYER);
+        helper.assertTrue(f.container.isEmpty()&&f.actor.containerMenu==f.actor.inventoryMenu&&SaberMenuState.hasDeferred(f.actor),"A disconnected foreign cursor must stay in personal custody");
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,f.actor.getBoundingBox().inflate(4),e->same(e.getItem(),original)).isEmpty(),"A post-save menu close must not publish another world copy");
+        var loaded=new ServerPlayer(f.actor.server,helper.getLevel(),f.actor.getGameProfile(),ClientInformation.createDefault());loaded.connection=new FakePlayer(helper.getLevel(),f.actor.getGameProfile()).connection;loaded.load(saved);
+        helper.assertTrue(SaberMenuState.restore(loaded)&&loaded.getInventory().countItem(SaberContent.SABER.get())==1,"Actual saved external cursor must recover exactly once");helper.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=160)
+    public static void disconnectedPersonalClosePreservesCursorAndCraftingInputsWithoutWorldDrops(GameTestHelper helper) throws Exception {
+        var f=fixture(helper,false);f.actor.containerMenu=f.actor.inventoryMenu;var original=saber();f.actor.inventoryMenu.setCarried(original.copy());for(int slot=1;slot<=4;slot++)f.actor.inventoryMenu.getSlot(slot).set(new ItemStack(Items.IRON_INGOT,slot));
+        var expected=SaberMenuState.capture(f.actor);new VerifiedPlayerSaveBarrier().persist(f.actor);f.actor.disconnect();f.actor.remove(net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_WITH_PLAYER);
+        helper.assertTrue(SaberMenuState.capture(f.actor).equals(expected),"Disconnect must preserve the complete already-saved personal menu");
+        helper.assertTrue(helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,f.actor.getBoundingBox().inflate(4),e->same(e.getItem(),original)||e.getItem().is(Items.IRON_INGOT)).isEmpty(),"Personal cursor and four inputs cannot be dropped after their player save");helper.succeed();
+    }
 }

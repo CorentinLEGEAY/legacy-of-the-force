@@ -2,6 +2,10 @@
 
 > Dossier GDD 0.4 — 11 novembre 2026, avec un **mod de développement exécutable**. V1.0 en cours ; validations et limites dans docs/03_ETAT_DU_PROJET.md.
 
+Développement groupé en cours : le concepteur a demandé d'implémenter les systèmes par grands lots, puis de mener des campagnes de tests globales. Plan et réserves : `docs/09_LOTS_V1.md` ; état réel : `docs/03_ETAT_DU_PROJET.md`. Les nouveaux lots ne sont pas encore validés et la V1.0 n'est pas terminée.
+
+L'intégration actuelle ajoute les actions d'atelier Modifier/Démonter/Entretenir/Enregistrer/Charger un plan, ainsi qu'un arbre de compétences accessible avec I. K sélectionne un pouvoir, O le lance ; touches reconfigurables. Commandes équivalentes : `/lotf skill menu`, `/lotf skill list`, `/lotf skill learn sense` et `/lotf force power sense`. Points, prérequis, alignement, coûts et actions restent contrôlés par le serveur. Ces ajouts attendent la campagne de gameplay, d'interface et de persistance.
+
 ## Objectif
 Construire **un mod Minecraft Java unique**, organisé en modules internes, mêlant survie Minecraft, RPG Star Wars, combats, Force physique, sabres laser personnalisés et évolutifs, speeders construits sur mesure et exploration de six planètes. Direction artistique : **monde Minecraft + équipements et effets cinématographiques**.
 

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "common",
+  "level": 45,
+  "minAlignment": -1000,
+  "maxAlignment": 1000,
+  "points": 1,
+  "energy": 22,
+  "cooldown": 120,
+  "range": 10,
+  "duration": 20,
+  "magnitude": 4,
+  "prerequisite": "legacyoftheforce:levitate"
+}

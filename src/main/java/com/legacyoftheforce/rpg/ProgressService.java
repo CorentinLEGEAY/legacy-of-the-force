@@ -10,6 +10,16 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ProgressService implements PlayerProgressService {
+    @Override public Optional<com.legacyoftheforce.core.api.PowerDefinition> power(String id) {return PowerCatalog.get(id);}
+    @Override public java.util.List<com.legacyoftheforce.core.api.PowerDefinition> powers() {return PowerCatalog.all();}
+    @Override public boolean hasLearnedPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);var definition=power(id);return actor!=null&&definition.isPresent()&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id)&&definition.get().requirement().isEligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot());}
+    @Override public boolean knowsPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);return actor!=null&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id);}
+    @Override public boolean learnPower(UUID playerId,String id) {
+        var actor=onlinePlayer(playerId);var definition=power(id);if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||definition.isEmpty())return false;
+        var data=actor.getData(ProgressAttachments.LEARNED_POWERS);var rule=definition.get();var progress=actor.getData(ProgressAttachments.PLAYER_PROGRESS);
+        if(!data.canLearn(id)||!rule.requirement().isEligible(progress.snapshot())||!rule.prerequisite().isEmpty()&&!data.knows(rule.prerequisite())||!progress.trySpendSkillPoints(rule.points()))return false;data.learn(id);
+        try {new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);}catch(java.io.IOException|RuntimeException failure) {com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Learning save uncertain; reconnect from native aggregate",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.learning_pending"));return false;}ProgressEvents.sync(actor);return true;
+    }
     private static UUID bossReceipt(UUID event, UUID player) { return UUID.nameUUIDFromBytes(("boss/" + event + "/" + player).getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
     @Override public com.legacyoftheforce.core.api.BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) {
         var server = ServerLifecycleHooks.getCurrentServer();

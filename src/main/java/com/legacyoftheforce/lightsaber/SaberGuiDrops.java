@@ -36,6 +36,11 @@ public final class SaberGuiDrops {
         finally {FRAMES.remove(actor);if(completed)frame.finish();else frame.restore();}
     }
     public static void externalRemoved(AbstractContainerMenu menu,Player player,Operation<Void> original) {
+        if(player instanceof ServerPlayer actor&&menu!=actor.inventoryMenu&&menu==actor.containerMenu&&(actor.hasDisconnected()||SaberStorageTransactions.pendingMenuClose(actor))) {
+            // Player.remove closes menus after the logout save. A direct vanilla drop would escape the journal.
+            if(SaberMenuState.ready(actor)&&!menu.getCarried().isEmpty())SaberMenuState.retainExternal(actor);
+            return;
+        }
         if(!(player instanceof ServerPlayer actor)||menu==actor.inventoryMenu||menu!=actor.containerMenu||!actor.isAlive()||!SaberMenuState.ready(actor)||menu.getCarried().isEmpty()||FRAMES.containsKey(actor)) {original.call(player);return;}
         var frame=new Frame(actor);frame.closing=true;FRAMES.put(actor,frame);boolean completed=false;
         try {original.call(player);completed=true;}
@@ -52,6 +57,7 @@ public final class SaberGuiDrops {
         }
     }
     public static void removed(AbstractContainerMenu menu,Player player,Operation<Void> original) {
+        if(player instanceof ServerPlayer actor&&menu==actor.inventoryMenu&&(actor.hasDisconnected()||SaberStorageTransactions.pendingMenuClose(actor)))return;
         if(!(player instanceof ServerPlayer actor)||menu!=actor.inventoryMenu||!actor.isAlive()||!SaberMenuState.ready(actor)||FRAMES.containsKey(actor)) {original.call(player);return;}
         Frame frame;
         try {frame=new Frame(actor);}catch(RuntimeException invalid) {LegacyOfTheForce.LOGGER.error("Personal menu close could not capture its items; current menu retained",invalid);return;}

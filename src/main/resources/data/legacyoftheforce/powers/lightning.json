@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "dark",
+  "level": 55,
+  "minAlignment": -1000,
+  "maxAlignment": -500,
+  "points": 2,
+  "energy": 25,
+  "cooldown": 200,
+  "range": 12,
+  "duration": 40,
+  "magnitude": 3,
+  "prerequisite": "legacyoftheforce:drain"
+}

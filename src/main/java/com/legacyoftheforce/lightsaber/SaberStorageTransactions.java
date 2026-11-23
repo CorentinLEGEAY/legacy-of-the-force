@@ -41,6 +41,7 @@ public final class SaberStorageTransactions implements ProtectionPolicy {
         var service=SERVICES.get(level.getServer());return !SaberStorageImages.knownIdentity(entity)||service!=null&&(!service.healthy||service.locked(level,entity.getBlockPos()));
     }
     static boolean busy(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service==null||!service.healthy||service.executing||service.pendingActor(actor.getUUID());}
+    static boolean pendingMenuClose(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service!=null&&service.pendingActor(actor.getUUID());}
     static boolean supportedMenu(ServerPlayer actor) {return !SaberStorageImages.endpoints(actor.containerMenu).isEmpty()&&!busy(actor);}
     static boolean defer(ItemTossEvent event) {
         if(!(event.getPlayer() instanceof ServerPlayer actor))return false;var frame=FRAMES.get(actor);if(frame==null)return false;

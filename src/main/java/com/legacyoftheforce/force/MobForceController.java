@@ -132,7 +132,7 @@ public final class MobForceController {
         if (!loadedRay(actor, start, end)) return false;
         return actor.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor)).getType() == HitResult.Type.MISS;
     }
-    private boolean loadedRay(ServerPlayer actor, Vec3 start, Vec3 end) {
+    static boolean loadedRay(ServerPlayer actor, Vec3 start, Vec3 end) {
         int steps = Math.max(1, (int) Math.ceil(start.distanceTo(end) * 2));
         for (int index = 0; index <= steps; index++) if (!actor.serverLevel().hasChunkAt(BlockPos.containing(start.lerp(end, (double) index / steps)))) return false;
         return true;

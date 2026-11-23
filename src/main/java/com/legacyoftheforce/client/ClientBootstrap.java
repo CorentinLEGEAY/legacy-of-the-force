@@ -33,6 +33,7 @@ public final class ClientBootstrap {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
                 event.register(com.legacyoftheforce.speeder.SpeederContent.MENU.get(), SpeederGarageScreen::new));
         modBus.addListener(forceKeys::register);
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event)->event.register(com.legacyoftheforce.rpg.SkillMenu.TYPE.get(),SkillScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> event.register(com.legacyoftheforce.quests.QuestContent.JOURNAL.get(), QuestJournalScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> event.register(com.legacyoftheforce.planets.PlanetContent.TERMINAL_MENU.get(), GalacticTerminalScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->

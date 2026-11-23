@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "common",
+  "level": 65,
+  "minAlignment": -1000,
+  "maxAlignment": 1000,
+  "points": 2,
+  "energy": 30,
+  "cooldown": 200,
+  "range": 8,
+  "duration": 20,
+  "magnitude": 1.1,
+  "prerequisite": "legacyoftheforce:throw"
+}

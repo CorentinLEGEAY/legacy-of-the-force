@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "dark",
+  "level": 25,
+  "minAlignment": -1000,
+  "maxAlignment": -200,
+  "points": 1,
+  "energy": 18,
+  "cooldown": 200,
+  "range": 8,
+  "duration": 40,
+  "magnitude": 0.8,
+  "prerequisite": "legacyoftheforce:sense"
+}

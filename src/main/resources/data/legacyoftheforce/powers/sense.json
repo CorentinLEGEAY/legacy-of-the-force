@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "common",
+  "level": 1,
+  "minAlignment": -1000,
+  "maxAlignment": 1000,
+  "points": 0,
+  "energy": 4,
+  "cooldown": 60,
+  "range": 12,
+  "duration": 80,
+  "magnitude": 1,
+  "prerequisite": ""
+}

@@ -10,6 +10,11 @@ public interface PlayerProgressService {
     void setChanneling(UUID playerId, boolean channeling);
     default boolean powerReady(UUID playerId, String powerId) { return false; }
     default boolean tryStartPower(UUID playerId, String powerId, double energy, int cooldownTicks) { return false; }
+    default Optional<PowerDefinition> power(String id) {return Optional.empty();}
+    default java.util.List<PowerDefinition> powers() {return java.util.List.of();}
+    default boolean hasLearnedPower(UUID playerId,String id) {return false;}
+    default boolean knowsPower(UUID playerId,String id) {return false;}
+    default boolean learnPower(UUID playerId,String id) {return false;}
     RewardResult awardBoss(UUID playerId, BossReward reward);
     default BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) { return BossRewardStatus.PENDING; }
 }

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "dark",
+  "level": 80,
+  "minAlignment": -1000,
+  "maxAlignment": -500,
+  "points": 2,
+  "energy": 38,
+  "cooldown": 300,
+  "range": 14,
+  "duration": 40,
+  "magnitude": 3,
+  "prerequisite": "legacyoftheforce:lightning"
+}

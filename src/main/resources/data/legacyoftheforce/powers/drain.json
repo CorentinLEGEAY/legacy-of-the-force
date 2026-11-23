@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "dark",
+  "level": 45,
+  "minAlignment": -1000,
+  "maxAlignment": -300,
+  "points": 1,
+  "energy": 26,
+  "cooldown": 240,
+  "range": 8,
+  "duration": 40,
+  "magnitude": 2,
+  "prerequisite": "legacyoftheforce:choke"
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "light",
+  "level": 30,
+  "minAlignment": 200,
+  "maxAlignment": 1000,
+  "points": 1,
+  "energy": 25,
+  "cooldown": 200,
+  "range": 0,
+  "duration": 1,
+  "magnitude": 6,
+  "prerequisite": "legacyoftheforce:protect"
+}

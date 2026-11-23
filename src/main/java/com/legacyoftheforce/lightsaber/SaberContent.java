@@ -35,6 +35,8 @@ public final class SaberContent {
     public static final Supplier<DataComponentType<SaberData>> ASSEMBLY = COMPONENTS.register("saber_assembly", () ->
             DataComponentType.<SaberData>builder().persistent(SaberData.CODEC).networkSynchronized(ByteBufCodecs.fromCodec(SaberData.CODEC)).build());
     public static final Supplier<SaberItem> SABER = ITEMS.register("lightsaber", () -> new SaberItem(new Item.Properties().stacksTo(1)));
+    public static final Supplier<DataComponentType<SaberBlueprintData>> BLUEPRINT_DATA = COMPONENTS.register("saber_blueprint", () -> DataComponentType.<SaberBlueprintData>builder().persistent(SaberBlueprintData.CODEC).networkSynchronized(ByteBufCodecs.fromCodec(SaberBlueprintData.CODEC)).build());
+    public static final Supplier<SaberBlueprintItem> BLUEPRINT = ITEMS.register("saber_blueprint", () -> new SaberBlueprintItem(new Item.Properties().stacksTo(1)));
     public static final Supplier<SaberWorkshopBlock> WORKSHOP = BLOCKS.register("saber_workshop", () -> new SaberWorkshopBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> WORKSHOP_ITEM = ITEMS.register("saber_workshop", () -> new BlockItem(WORKSHOP.get(), new Item.Properties()));
     public static final Supplier<MenuType<SaberWorkshopMenu>> MENU = MENUS.register("saber_workshop", () -> new MenuType<>(SaberWorkshopMenu::new, FeatureFlags.DEFAULT_FLAGS));
@@ -63,6 +65,7 @@ public final class SaberContent {
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) PART_NAMES.forEach(name -> event.accept(partItem(name)));
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(KYBER.get());
+        if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(BLUEPRINT.get());
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(WORKSHOP_ITEM.get());
     }
     private SaberContent() {}

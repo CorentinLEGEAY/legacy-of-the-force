@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "branch": "light",
+  "level": 45,
+  "minAlignment": 500,
+  "maxAlignment": 1000,
+  "points": 2,
+  "energy": 30,
+  "cooldown": 400,
+  "range": 8,
+  "duration": 160,
+  "magnitude": 1,
+  "prerequisite": "legacyoftheforce:heal"
+}

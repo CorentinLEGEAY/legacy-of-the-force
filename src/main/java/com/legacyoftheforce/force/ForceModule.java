@@ -31,11 +31,13 @@ public final class ForceModule {
     private BlockMoveCoordinator coordinator;
     private final MobForceController mobs;
     private final VehicleForceController vehicles;
+    private final AdvancedPowers advanced;
     private long nextGlobalAction;
     public ForceModule(PlayerProgressService progress, ProtectedWorldService protection, TransactionAnchorAccess anchors, ChunkDurabilityBarrier barrier) {
         this.progress = progress; this.protection = protection; this.anchors = anchors; this.barrier = barrier;
         this.mobs = new MobForceController(progress, protection);
         this.vehicles = new VehicleForceController(progress, protection);
+        this.advanced = new AdvancedPowers(progress, protection);
     }
     @SubscribeEvent public void started(ServerStartedEvent event) {
         try {
@@ -46,7 +48,7 @@ public final class ForceModule {
             LegacyOfTheForce.LOGGER.error("Cannot open Force block journal; actions disabled", failure);
         }
     }
-    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); mobs.stopAll(); }
+    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); mobs.stopAll(); advanced.stop(); }
     @SubscribeEvent public void stopped(ServerStoppedEvent event) { coordinator = null; nextAction.clear(); nextGlobalAction = 0; }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.tick(player);
@@ -55,19 +57,22 @@ public final class ForceModule {
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
         nextAction.remove(event.getEntity().getUUID());
         mobs.cancelActor(event.getEntity().getUUID());
+        advanced.cancel(event.getEntity().getUUID());
     }
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        advanced.cancel(event.getEntity().getUUID());
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
         mobs.cancelActor(event.getEntity().getUUID());
     }
     @SubscribeEvent public void death(LivingDeathEvent event) {
+        if(event.getEntity() instanceof ServerPlayer actor)advanced.cancel(actor.getUUID());
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.cancel(player.getUUID());
         if (event.getEntity() instanceof ServerPlayer player) mobs.cancelActor(player.getUUID());
     }
     @SubscribeEvent public void entityTick(EntityTickEvent.Pre event) {
         if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof Mob mob) mobs.beforeTick(mob);
     }
-    @SubscribeEvent public void serverTick(ServerTickEvent.Post event) { mobs.cleanup(event.getServer()); }
+    @SubscribeEvent public void serverTick(ServerTickEvent.Post event) { mobs.cleanup(event.getServer()); advanced.tick(event.getServer()); }
     @SubscribeEvent public void entityJoin(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.loadedFromDisk() && event.getEntity() instanceof Mob mob) mobs.onReload(mob);
         if (!event.getLevel().isClientSide() && event.loadedFromDisk() && event.getEntity() instanceof Display.BlockDisplay display
@@ -76,6 +81,7 @@ public final class ForceModule {
         }
     }
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
+        advanced.commands(event);
         var force = Commands.literal("force");
         for (String action : new String[]{"grab", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake"}) {
             var command = Commands.literal(action);

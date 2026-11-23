@@ -3,6 +3,8 @@ package com.legacyoftheforce.force;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class ForceConfig {
+    public static final ModConfigSpec.IntValue CHANNEL_INTERVAL, AREA_TARGETS, CHAIN_TARGETS;
+    public static final ModConfigSpec.DoubleValue CHANNEL_COST_FRACTION, CHAIN_RADIUS;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.IntValue VEHICLE_STABILIZE_LEVEL, VEHICLE_BRAKE_LEVEL, VEHICLE_COOLDOWN;
     public static final ModConfigSpec.DoubleValue VEHICLE_MAX_MASS, VEHICLE_BASE_COST, VEHICLE_MASS_COST, VEHICLE_RETENTION;
@@ -51,6 +53,11 @@ public final class ForceConfig {
         MOB_MIN_MASS = builder.defineInRange("mob.minMass", 0.25, 0.1, 4.0);
         MOB_MAX_MASS = builder.defineInRange("mob.maxMass", 32.0, 4.0, 64.0);
         MOB_RESISTANCE_LIMIT = builder.defineInRange("mob.immuneResistance", 0.95, 0.5, 1.0);
+        CHANNEL_INTERVAL = builder.defineInRange("advanced.channelIntervalTicks",5,1,20);
+        CHANNEL_COST_FRACTION = builder.defineInRange("advanced.channelEnergyFraction",.1,.01,1.0);
+        AREA_TARGETS = builder.defineInRange("advanced.maximumAreaTargets",8,1,16);
+        CHAIN_TARGETS = builder.defineInRange("advanced.maximumLightningTargets",3,1,8);
+        CHAIN_RADIUS = builder.defineInRange("advanced.lightningChainRadius",4.0,1.0,8.0);
         SPEC = builder.build();
     }
     private ForceConfig() {}

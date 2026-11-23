@@ -1,5 +1,7 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='')
 $ErrorActionPreference='Stop'
+$killRequested=$KillHeld -or $Mode -eq 'ImpulseCrash'
+$checkpointName=if($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
 if($KillHeld -and $Mode -ne 'Block') { throw 'KillHeld requires isolated Block mode.' }
 if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
@@ -17,7 +19,7 @@ if($Mode -ne 'Prep') {
     Copy-Item -LiteralPath $source -Destination $world -Recurse
     $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover')) {'adventureImpulseRestart'} else {'adventureTravel'}
 $artifact=if($Mode -eq 'BlockRecover') {'block-recovered'} elseif($Mode -eq 'RewardsRecovery') {'rewards-recovery'} elseif($Mode -eq 'ProgressRecovery') {'progress-recovery'} elseif($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
 $marker=if($Mode -eq 'BlockRecover') {'ADVENTURE_BLOCK_RECOVER'} elseif($Mode -eq 'RewardsRecovery') {'ADVENTURE_REWARDS_RECOVERY'} elseif($Mode -eq 'ProgressRecovery') {'ADVENTURE_PROGRESS_RECOVERY'} elseif($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
@@ -61,6 +63,7 @@ tutorialStep:none
         $main=$argsList.IndexOf('net.neoforged.devlaunch.Main');if($main -lt 0) { throw 'Unexpected native launcher.' }
         if($KillHeld) { $argsList.Insert($main,'-Dlotf.validation.blockCrash=true') }
         if($Mode -eq 'BlockRecover') { $argsList.Insert($main,'-Dlotf.validation.blockRecover=true') }
+        if($Mode -eq 'ImpulseRecover') { $argsList.Insert($main,'-Dlotf.validation.impulseRecover=true') }
         if($Mode -eq 'Journey') { $argsList.Insert($main,'-Dlotf.validation.adventureJourney=true') }
         if($Duel) { $argsList.Insert($main,'-Dlotf.validation.adventureDuel=true') }
         $argsList.Insert($main,'-Xms256M');$argsList.Insert($main,'-Xmx1536M');$argsList.Insert($main,"-Dlotf.validation.$validationFlag=true");$argsList[$argsList.Count-1]='@'+$program.Replace('\','\\')
@@ -73,17 +76,17 @@ tutorialStep:none
         Write-Output "STARTED: native $name PID=$($client.Id)"
     }
     $deadline=(Get-Date).AddSeconds($(if($Mode -eq 'Journey') {1860} else {660}))
-    while((-not $runner.HasExited -or ($KillHeld -and $killed)) -and (Get-Date) -lt $deadline) {
+    while((-not $runner.HasExited -or ($killRequested -and $killed)) -and (Get-Date) -lt $deadline) {
         $snapshot=Server-Text
         if($snapshot -match "$($marker)_SERVER_FAILED") { throw 'Native adventure server verification failed; inspect logs.' }
-        if($KillHeld -and -not $killed -and (Test-Path -LiteralPath (Join-Path $world 'validation/block-crash-held.nbt'))) {
+        if($killRequested -and -not $killed -and (Test-Path -LiteralPath (Join-Path $world "validation/$checkpointName"))) {
             $validationPython=$PythonPath
             if(-not $validationPython) {
                 $runtimePath=(Get-AppxPackage '*CodexPrimaryRuntime*' | Select-Object -First 1).InstallLocation
                 if($runtimePath) { $validationPython=Join-Path $runtimePath 'dependencies/python/python.exe' }
             }
             if(-not $validationPython -or -not (Test-Path -LiteralPath $validationPython)) { throw 'Pass -PythonPath to an existing Python3.11+ executable for bounded checkpoint reading.' }
-            $raw=& $validationPython (Join-Path $PSScriptRoot 'read_nbt.py') (Join-Path $world 'validation/block-crash-held.nbt')
+            $raw=& $validationPython (Join-Path $PSScriptRoot 'read_nbt.py') (Join-Path $world "validation/$checkpointName")
             if($LASTEXITCODE -ne 0) { throw 'Cannot read bounded native kill checkpoint.' }
             $checkpoint=$raw | ConvertFrom-Json
             if(-not [string]::Equals([IO.Path]::GetFullPath($checkpoint.world),[IO.Path]::GetFullPath($world),[StringComparison]::OrdinalIgnoreCase)) { throw 'Native checkpoint world mismatch.' }
@@ -92,7 +95,7 @@ tutorialStep:none
             if(-not $owned -or $owned.Name -ne 'java.exe' -or $owned.CommandLine -notlike '*serverRun*' -or -not $listener -or (Get-Process -Id $checkpoint.pid).StartTime -lt $started) { throw 'Owned native loopback server identity not confirmed; nothing killed.' }
             $killedPid=[long]$checkpoint.pid;$killUtc=[DateTime]::UtcNow.ToString('O')
             Stop-Process -Id $killedPid
-            $killed=$true;Write-Output "KILLED: owned native Java PID=$killedPid after both actual client views and durable HELD checkpoint."
+            $killed=$true;Write-Output "KILLED: owned native Java PID=$killedPid after both native client acknowledgements and durable $checkpointName checkpoint."
         }
         $finished=0
         foreach($item in $clients) {
@@ -103,8 +106,8 @@ tutorialStep:none
                 $finished++
             }
         }
-        if($KillHeld -and $killed -and $finished -eq 2 -and $runner.HasExited) { $observed=$true;break }
-        if(-not $KillHeld -and $finished -eq 2 -and $snapshot -match "$($marker)_SERVER_PASS" -and (Test-Path -LiteralPath (Join-Path $world "validation/adventure-$artifact-server.nbt"))) { $observed=$true;break }
+        if($killRequested -and $killed -and $finished -eq 2 -and $runner.HasExited) { $observed=$true;break }
+        if(-not $killRequested -and $finished -eq 2 -and $snapshot -match "$($marker)_SERVER_PASS" -and (Test-Path -LiteralPath (Join-Path $world "validation/adventure-$artifact-server.nbt"))) { $observed=$true;break }
         Start-Sleep -Milliseconds 250
     }
     if(-not $observed) { throw 'Native adventure preparation scenario did not finish.' }
@@ -120,6 +123,6 @@ tutorialStep:none
     }
     @{run=$Run;killed=$killed;killedPid=$killedPid;killUtc=$killUtc;observed=$observed;serverExitCode=$serverExit;clients=$results.ToArray();finishedUtc=[DateTime]::UtcNow.ToString('O')} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$prefix-result.json"
 }
-if(($KillHeld -and (-not $killed -or $serverExit -eq 0)) -or (-not $KillHeld -and ($serverExit -ne 0 -or (Server-Text) -notmatch 'All dimensions are saved')) -or @($results | Where-Object { $_.exitCode -ne 0 -or $_.forced }).Count -gt 0) { throw 'Native server/client shutdown not clean.' }
+if(($killRequested -and (-not $killed -or $serverExit -eq 0)) -or (-not $killRequested -and ($serverExit -ne 0 -or (Server-Text) -notmatch 'All dimensions are saved')) -or @($results | Where-Object { $_.exitCode -ne 0 -or $_.forced }).Count -gt 0) { throw 'Native server/client shutdown not clean.' }
 foreach($item in $results) { if(-not (Test-Path -LiteralPath (Join-Path $item.profile "validation/adventure-$artifact-client.nbt"))) { throw 'Missing native client proof.' } }
 Write-Output 'OBSERVED: server and both native client proofs. Run the independent verifier before validation.'

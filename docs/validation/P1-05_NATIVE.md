@@ -1,6 +1,6 @@
 # P1-05 — impulsions sur serveur dédié et deux clients natifs
 
-Statut : tranche réseau/cycle de vie vérifiée le 22 novembre 2026 ; ticket et phase P1 encore partiels. La reprise pendant un cooldown et le crash réel d'une impulsion active restent à vérifier. Ce rapport complète P1-05.md, dont les anciennes indications générales de progression sont historiques.
+Statut : tranche réseau/cycle de vie vérifiée le 22 novembre 2026 ; ticket et phase P1 encore partiels. La reprise et le crash sont vérifiés séparément dans P1-05_CRASH.md ; le déchargement natif de cible/chunk reste ouvert. Ce rapport complète P1-05.md, dont les anciennes indications générales de progression sont historiques.
 
 ## Exécution et périmètre
 
@@ -32,6 +32,6 @@ mi1 n'est pas une réussite : le mapping du lanceur serveur utilisait par erreur
 
 Le premier passage du nouveau checker supposait à tort y constant et un ordre fixe des joueurs dans la frame de mort. Relecture des échantillons et du code ForceImpulseMath : élévation de production attendue, ordre non contractuel ; vérification corrigée pour borner l'élévation et identifier le joueur par UUID. Aucune donnée de test modifiée.
 
-Restent : nouveau JVM sur le cooldown sauvegardé, crash effectif pendant une impulsion active et reprise sans contrôle orphelin, déchargement natif de cible/chunk pendant contrôle et régression transverse finale avant clôture P1. Le contrôle NBT final après arrêt propre ne prouve pas ces parcours. P1 global et V1.0 ne sont pas déclarés terminés.
+Actualisation : [P1-05_CRASH.md](P1-05_CRASH.md) apporte désormais le kill effectif pendant l'état actif et sa reprise dans une nouvelle JVM, avec immunités préservées, refus natifs et réemploi après expiration. Restent le déchargement natif de cible/chunk pendant contrôle et la consolidation transverse avant clôture P1. Le seul contrôle NBT final après arrêt propre de mi2 ne prouve pas ces parcours. P1 global et V1.0 ne sont pas déclarés terminés.
 
 Régression du 23 novembre : `scripts/gradle.ps1 build runGameTestServer --console=plain`, BUILD SUCCESSFUL en 46 s, 102 GameTests requis réussis. Rapports JUnit : 131 tests, zéro échec/erreur/ignoré (tâche à jour, sans prétendre une nouvelle exécution des JUnit inchangés). Log `.tools/impulse-mi2-regression.log`, fin 17:20:56. Parseur des deux lanceurs PowerShell PASS. JAR SHA256 `64A65E2DF3BB1D37FADA65F010F9681ADA426B58CAC451F30B4C2731342ED628` inchangé ; relecture `scripts/check-packaged-server.py jarmr1` PASS, aucun harnais distribué. Les deux boots installés de jarmr1 restent les preuves antérieures du même JAR, pas de nouveaux démarrages prétendus.

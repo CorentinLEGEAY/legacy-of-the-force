@@ -1,4 +1,4 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse')][string]$Mode='Prep', [switch]$Duel, [switch]$KillHeld)
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover')][string]$Mode='Prep', [switch]$Duel, [switch]$KillHeld)
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$runPath=Join-Path $repoPath "run-adventure-$Run"
 New-Item -ItemType Directory -Path $runPath -Force | Out-Null
@@ -22,17 +22,21 @@ if((Get-Content -LiteralPath (Join-Path $runPath 'server.properties')) -notconta
 if($Mode -ne 'Prep') {
     (Get-Content -LiteralPath (Join-Path $runPath 'server.properties')).Replace('difficulty=peaceful','difficulty=normal') | Set-Content -LiteralPath (Join-Path $runPath 'server.properties') -Encoding ascii
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover')) {'adventureImpulseRestart'} else {'adventureTravel'}
 $journeyFlag=if($Mode -eq 'Journey') { "systemProperty 'lotf.validation.adventureJourney', 'true'" } else {''}
 $duelFlag=if($Duel) { "systemProperty 'lotf.validation.adventureDuel', 'true'" } else {''}
-$blockFlag=if($KillHeld) { "systemProperty 'lotf.validation.blockCrash', 'true'" } elseif($Mode -eq 'BlockRecover') { "systemProperty 'lotf.validation.blockRecover', 'true'" } else {''}
+$blockFlag=if($Mode -eq 'ImpulseRecover') { "systemProperty 'lotf.validation.impulseRecover', 'true'" } elseif($KillHeld) { "systemProperty 'lotf.validation.blockCrash', 'true'" } elseif($Mode -eq 'BlockRecover') { "systemProperty 'lotf.validation.blockRecover', 'true'" } else {''}
 $init=Join-Path $repoPath '.tools/adventure-server.init.gradle'
-if($Mode -in @('Block','BlockRecover','Impulse')) {
+if($Mode -in @('Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover')) {
     $fixtureConfig=Join-Path $runPath 'world/serverconfig';New-Item -ItemType Directory -Path $fixtureConfig -Force | Out-Null
     @'
 [rpg]
 energyRegenPerSecond = 0.0
 '@ | Set-Content -LiteralPath (Join-Path $fixtureConfig 'legacyoftheforce-server.toml') -Encoding ascii
+}
+if($Mode -eq 'ImpulseCrash') {
+    $impulseConfig=Join-Path $runPath 'world/serverconfig/legacyoftheforce-force.toml'
+    "[mob]`ncooldownTicks = 1200`n" | Set-Content -LiteralPath $impulseConfig -Encoding ascii
 }
 if($Mode -in @('Rewards','RewardsRecovery')) {
     $fixtureConfig=Join-Path $runPath 'world/serverconfig';New-Item -ItemType Directory -Path $fixtureConfig -Force | Out-Null

@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 public final class KyberItem extends Item {
     public KyberItem(Properties properties) { super(properties); }
     public static KyberData freshBlue() { return KyberData.blue(UUID.randomUUID(), SaberConfig.CRYSTAL_PURITY.get(), SaberConfig.CRYSTAL_STABILITY.get()); }
+    @Override public Component getName(ItemStack stack){var data=stack.get(SaberContent.KYBER_DATA.get());return data!=null&&data.state().isPresent()?Component.translatable("crystal.legacyoftheforce.kind_"+data.kind().orElseThrow().name().toLowerCase(Locale.ROOT)):super.getName(stack);}
     @Override public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         if (!level.isClientSide() && stack.getCount() == 1 && !stack.has(SaberContent.KYBER_DATA.get())) {
             stack.set(SaberContent.KYBER_DATA.get(), freshBlue());
@@ -25,12 +26,14 @@ public final class KyberItem extends Item {
         var state = data.state();
         if (state.isEmpty()) { lines.add(Component.translatable("crystal.legacyoftheforce.invalid")); return; }
         var value = state.get();
-        lines.add(Component.translatable("crystal.legacyoftheforce.origin"));
+        var kind=data.kind().orElseThrow();lines.add(Component.translatable("crystal.legacyoftheforce.origin_named",Component.translatable("crystal.legacyoftheforce.planet_"+kind.name().toLowerCase(Locale.ROOT))));
+        lines.add(Component.translatable("crystal.legacyoftheforce.state_"+data.tag().getString("state")));
+        lines.add(Component.translatable("crystal.legacyoftheforce.affinity_"+kind.resonance()));
         lines.add(Component.translatable("crystal.legacyoftheforce.quality", String.format(Locale.ROOT, "%.0f%%", value.purity() * 100),
                 String.format(Locale.ROOT, "%.0f%%", value.stability() * 100)));
         lines.add(Component.translatable("crystal.legacyoftheforce.bond", value.bondLevel()));
         lines.add(Component.translatable("crystal.legacyoftheforce.bond_stage_" + value.bondLevel(), value.bondProgress()));
-        if (value.bondLevel() >= 2) lines.add(Component.translatable("crystal.legacyoftheforce.bond_bonus",
-                String.format(Locale.ROOT, "%.0f%%", KyberBond.bonus(value.bondLevel(), SaberConfig.BOND_BONUS.get()) * 100)));
+        if(value.bondLevel()>=1)lines.add(Component.translatable("crystal.legacyoftheforce.affinity_active"));
+        if(value.bondLevel()>=3)lines.add(Component.translatable("crystal.legacyoftheforce.specialization",Component.translatable("crystal.legacyoftheforce.specialization_"+KyberBond.specialization(data))));
     }
 }

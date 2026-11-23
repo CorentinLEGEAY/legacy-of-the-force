@@ -75,7 +75,7 @@ public final class BlockMoveCoordinator {
         if (snapshot.get().level() < required) return ForceResult.no("level_required");
         if (sessions.values().stream().filter(s -> s.record.dimension().equals(level.dimension())).count() >= ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
         double mass = original.is(STONE) ? ForceConfig.STONE_MASS.get() : ForceConfig.LIGHT_MASS.get();
-        double cost = ForceConfig.BASE_COST.get() + mass * ForceConfig.MASS_COST.get();
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
         if (snapshot.get().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockMoveRecord(UUID.randomUUID(), actor.getUUID(), level.dimension(), source.immutable(), null, original, mass);
         try {
@@ -161,7 +161,7 @@ public final class BlockMoveCoordinator {
                 || !protection.mayModify(actor, actor.serverLevel(), record.source(), ModificationKind.GRAB)) {
             interrupt(actor, "cancelled"); return;
         }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass() * ForceConfig.HOLD_COST.get())) {
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost())) {
             interrupt(actor, "not_enough_force"); return;
         }
         var target = actor.getEyePosition().add(actor.getLookAngle().scale(Math.min(ForceConfig.HOLD_DISTANCE.get(), ForceConfig.RANGE.get() - 0.5)));

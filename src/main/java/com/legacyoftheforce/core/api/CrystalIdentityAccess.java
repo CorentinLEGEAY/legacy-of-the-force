@@ -5,7 +5,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import net.minecraft.world.item.ItemStack;
 
-/** Read-only identity port: implementations validate Ilum provenance; consumers never inspect internal components. */
+/** Read-only identity port: implementations validate planetary provenance; consumers never inspect internal components. */
 public final class CrystalIdentityAccess {
     private static Function<ItemStack, Optional<UUID>> reader = stack -> Optional.empty();
     private CrystalIdentityAccess() {}

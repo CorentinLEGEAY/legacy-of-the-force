@@ -69,7 +69,7 @@ public final class MobForceController {
         if (velocity.subtract(target.getDeltaMovement()).lengthSqr() < 0.0001) return ForceResult.no("resistant_target");
         if (!pathAllowed(actor, target, velocity)) return ForceResult.no("blocked_path");
         double cost = (action == ForceAction.PUSH ? ForceConfig.PUSH_COST.get() : ForceConfig.PULL_COST.get()) + mass * ForceConfig.MOB_COST_PER_MASS.get();
-        if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.MOB_COOLDOWN.get())) return ForceResult.no("not_enough_force");
+        if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost*com.legacyoftheforce.core.api.CrystalAffinityAccess.get(actor).telekinesisCost(), ForceConfig.MOB_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         adapter.applyImpulse(velocity);
         if (target instanceof ForceImpulseResistance posture) posture.forceImpulseCommitted();
         state.activate(now, ForceConfig.MOB_COOLDOWN.get());

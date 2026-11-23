@@ -49,6 +49,8 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());
         com.legacyoftheforce.speeder.SpeederContent.register(modBus);
+        com.legacyoftheforce.content.PlanetaryMaterials.register(modBus);
+        com.legacyoftheforce.core.api.PlayerProgressAccess.install(new ProgressService()::get);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.speeder.SpeederAssemblyLifecycle());
         var speederNetwork = new com.legacyoftheforce.speeder.SpeederNetwork();
         modBus.addListener(speederNetwork::register);
@@ -61,6 +63,8 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, SaberConfig.SPEC, "legacyoftheforce-saber.toml");
         NeoForge.EVENT_BUS.addListener(SaberCatalog::register);
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.SaberTypeCatalog::register);
+        NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.KyberAffinities::register);
+        com.legacyoftheforce.core.api.CrystalAffinityAccess.install(com.legacyoftheforce.lightsaber.KyberAffinities::read);
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.PowerCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());

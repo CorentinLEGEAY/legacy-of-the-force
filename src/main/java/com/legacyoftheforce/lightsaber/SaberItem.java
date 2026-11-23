@@ -21,6 +21,7 @@ public final class SaberItem extends Item {
         if (saber == null || !saber.supported() || !saber.compatible(SaberCatalog.parts()) || saber.crystal().isEmpty() || saber.condition()==0) {
             actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cannot_activate"), true); return InteractionResultHolder.fail(stack);
         }
+        if(saber.crystal().orElseThrow().state().orElseThrow().bondLevel()<1){actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.needs_awakening"),true);return InteractionResultHolder.fail(stack);}
         boolean active = !saber.active(); stack.set(SaberContent.ASSEMBLY.get(), saber.withActive(active));
         actor.getCooldowns().addCooldown(this, SaberConfig.ACTIVATION_INTERVAL.get());
         level.playSound(null, actor.blockPosition(), active ? SaberContent.IGNITE.get() : SaberContent.EXTINGUISH.get(), SoundSource.PLAYERS, SaberConfig.SOUND_VOLUME.get().floatValue(), 1);

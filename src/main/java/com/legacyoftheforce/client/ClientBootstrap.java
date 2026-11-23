@@ -24,6 +24,10 @@ public final class ClientBootstrap {
         NeoForge.EVENT_BUS.addListener(new SpeederHud()::render);
         modBus.addListener(SpeederColors::register);
         modBus.addListener(CompositeSaberRenderer::register);
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event)->event.enqueueWork(()->net.minecraft.client.renderer.item.ItemProperties.register(com.legacyoftheforce.lightsaber.SaberContent.KYBER.get(),com.legacyoftheforce.lightsaber.SaberContent.id("crystal_color"),(stack,level,entity,seed)->{
+            var crystal=stack.get(com.legacyoftheforce.lightsaber.SaberContent.KYBER_DATA.get());if(crystal==null||crystal.state().isEmpty())return 0;
+            return switch(crystal.visibleColor()){case "yellow"->1;case "green"->2;case "orange"->3;case "cyan"->4;case "purple"->5;case "red"->6;case "white"->7;default->0;};
+        })));
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) -> {
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.GUARDIAN.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.GUARDIAN));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.FROST_LORD.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.FROST_LORD));

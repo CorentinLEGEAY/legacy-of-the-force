@@ -8,15 +8,17 @@ import net.minecraft.server.level.ServerPlayer;
 
 /** Virtual recipe selection: components stay in the player's inventory until the atomic server action. */
 public final class SaberWorkshopMenu extends AbstractContainerMenu {
-    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY, MODIFIED, DISMANTLED, MAINTAINED, NO_BLUEPRINT, PLAN_SAVED, PLAN_LOADED, UNCHANGED, TYPE_LOCKED }
+    public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY, MODIFIED, DISMANTLED, MAINTAINED, NO_BLUEPRINT, PLAN_SAVED, PLAN_LOADED, UNCHANGED, TYPE_LOCKED, CORRUPTED, PURIFIED, RITUAL_ALIGNMENT, RITUAL_LEVEL }
     private final Inventory inventory;
     private final ContainerLevelAccess access;
+    private final com.legacyoftheforce.core.api.ProtectedWorldService protection=new com.legacyoftheforce.core.security.VanillaProtectedWorldService();
     private final DataSlot emitter = DataSlot.standalone();
     private final DataSlot status = DataSlot.standalone();
     private final DataSlot ritualAmethyst = DataSlot.standalone(), ritualLapis = DataSlot.standalone();
     private final DataSlot condition = DataSlot.standalone(), damage = DataSlot.standalone(), stability = DataSlot.standalone(),reach=DataSlot.standalone(),speed=DataSlot.standalone(),cost=DataSlot.standalone();
     private final List<DataSlot> owned = new ArrayList<>();
     private long nextCraftTick,nextSelection;
+    private final DataSlot[] ritualParameters=new DataSlot[11];
     private final DataSlot type=DataSlot.standalone(),secondary=DataSlot.standalone();
     private final DataSlot secondaryOwned=DataSlot.standalone(),typeKnown=DataSlot.standalone();
     private final List<DataSlot> chosen=new ArrayList<>();
@@ -29,11 +31,13 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
         var held=inventory.getSelected().get(SaberContent.ASSEMBLY.get());if(held!=null&&held.supported())selectDesign(held);
         for (var slot : SaberSlot.values()) { var count = DataSlot.standalone(); owned.add(count); addDataSlot(count); }
         ritualAmethyst.set(4); ritualLapis.set(2); addDataSlot(ritualAmethyst); addDataSlot(ritualLapis);
+        for(int i=0;i<ritualParameters.length;i++){ritualParameters[i]=DataSlot.standalone();addDataSlot(ritualParameters[i]);}
         addDataSlot(condition);addDataSlot(damage);addDataSlot(stability);addDataSlot(reach);addDataSlot(speed);addDataSlot(cost);
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
         for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 47 + col * 18, 200));
     }
     public int emitterIndex() { return emitter.get(); }
+    public int ritualParameter(int i){return ritualParameters[i].get();}public int specializationThreshold(){return (ritualParameter(9)&65535)<<16|ritualParameter(10)&65535;}
     public int ritualAmethyst() { return ritualAmethyst.get(); }
     public int ritualLapis() { return ritualLapis.get(); }
     public int condition() {return condition.get();}
@@ -67,6 +71,7 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
             if(inventory.player instanceof ServerPlayer actor)typeKnown.set(actor.getData(SaberContent.KNOWLEDGE).knows(selectedType())?1:0);
             for (var slot : SaberSlot.values()) owned.get(slot.ordinal()).set(count(partName(slot)));
             ritualAmethyst.set(SaberConfig.BOND_AMETHYST.get()); ritualLapis.set(SaberConfig.BOND_LAPIS.get());
+            int[] values={SaberConfig.CORRUPT_REAGENT.get(),SaberConfig.PURIFY_REAGENT.get(),SaberConfig.CORRUPT_BLAZE.get(),SaberConfig.PURIFY_AMETHYST.get(),SaberConfig.FOCUS_REAGENT.get(),SaberConfig.CORRUPT_LEVEL.get(),SaberConfig.PURIFY_LEVEL.get(),SaberConfig.CORRUPT_ALIGNMENT.get(),SaberConfig.PURIFY_ALIGNMENT.get(),(short)(SaberConfig.BOND_3.get()>>>16),(short)(int)SaberConfig.BOND_3.get()};for(int i=0;i<values.length;i++)ritualParameters[i].set(values[i]);
             var held=inventory.getSelected().get(SaberContent.ASSEMBLY.get());condition.set(held!=null&&held.supported()?held.condition():100);var stats=SaberStats.estimate(preview().get(SaberContent.ASSEMBLY.get()),SaberCatalog.parts());reach.set(stats.map(v->(int)Math.round(v.reach()*100)).orElse(0));speed.set(stats.map(v->(int)Math.round(v.attacksPerSecond()*100)).orElse(0));cost.set(stats.map(v->(int)Math.round(v.costMultiplier()*100)).orElse(0));damage.set(stats.map(value->(int)Math.round(value.damage()*100)).orElse(0));stability.set(stats.map(value->(int)Math.round(value.stability()*100)).orElse(0));
         }
         super.broadcastChanges();
@@ -85,11 +90,13 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
                 var current=SaberContent.id(button==120?secondaryName():partName(slot));int index=(choices.indexOf(current)+1)%choices.size();if(button==120)secondary.set(SaberContent.partIndex(choices.get(index)));else chosen.get(slot.ordinal()).set(SaberContent.partIndex(choices.get(index)));}
             status.set(Status.READY.ordinal());broadcastChanges();return true;
         }
-        if(button<0||button>8){status.set(Status.INVALID.ordinal());return false;}
+        if(button<0||button>8&&!(button>=10&&button<=12)){status.set(Status.INVALID.ordinal());return false;}
         if(tick<nextCraftTick){status.set(Status.COOLDOWN.ordinal());return false;}
+        if(button>=10&&button<=12){nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();var ceremony=button==10?KyberRitual.Ceremony.CORRUPT:button==11?KyberRitual.Ceremony.PURIFY:KyberRitual.Ceremony.FOCUS;var result=KyberRitual.perform(actor,ceremony);status.set(Status.valueOf(result.name()).ordinal());boolean success=result==KyberRitual.Result.CORRUPTED||result==KyberRitual.Result.PURIFIED||result==KyberRitual.Result.SPECIALIZED;if(success)nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();broadcastChanges();return success;}
         if(button==8){for(int index=0;index<36;index++){var stack=inventory.getItem(index);if(!stack.is(SaberContent.BLUEPRINT.get()))continue;var plan=stack.get(SaberContent.BLUEPRINT_DATA.get());if(plan!=null&&plan.design().isPresent()&&plan.design().get().compatible(SaberCatalog.parts())&&selectDesign(plan.design().get())){nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();status.set(Status.PLAN_LOADED.ordinal());broadcastChanges();return true;}}status.set(Status.NO_BLUEPRINT.ordinal());return false;}
         if(button>=4) {var result=SaberWorkshopActions.perform(actor,button,design());status.set(result.ordinal());boolean success=result==Status.MODIFIED||result==Status.DISMANTLED||result==Status.MAINTAINED||result==Status.PLAN_SAVED;if(success)nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();broadcastChanges();return success;}
         if (button == 3) {
+            nextCraftTick=tick+SaberConfig.CRAFT_INTERVAL.get();
             var result = KyberRitual.perform(actor); status.set(Status.valueOf(result.name()).ordinal());
             boolean success = result == KyberRitual.Result.AWAKENED || result == KyberRitual.Result.SPECIALIZED;
             if (success) nextCraftTick = tick + SaberConfig.CRAFT_INTERVAL.get();
@@ -111,7 +118,8 @@ public final class SaberWorkshopMenu extends AbstractContainerMenu {
     @Override public boolean stillValid(Player player) {
         return player == inventory.player && player.isAlive() && !player.isSpectator()
                 && access.evaluate((level, pos) -> player.level() == level && level.getBlockState(pos).is(SaberContent.WORKSHOP.get())
-                    && player.canInteractWithBlock(pos, 4.0) && level.mayInteract(player, pos), player.level().isClientSide());
+                    && player.canInteractWithBlock(pos, 4.0) && level.mayInteract(player, pos)
+                    &&(!(player instanceof ServerPlayer actor)||protection.mayUseContainer(actor,actor.serverLevel(),pos)), player.level().isClientSide());
     }
     @Override public ItemStack quickMoveStack(Player player, int index) {
         if (index < 0 || index >= slots.size() || !stillValid(player)) return ItemStack.EMPTY;

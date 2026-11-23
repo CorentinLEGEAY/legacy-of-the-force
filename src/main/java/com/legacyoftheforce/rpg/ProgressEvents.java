@@ -34,7 +34,7 @@ public final class ProgressEvents {
         var progress = player.getData(ProgressAttachments.PLAYER_PROGRESS);
         var before = progress.snapshot();
         progress.setEnergyCapacity(ServerConfig.MAX_ENERGY.get());
-        if (!progress.isChanneling()) progress.regenerateEnergy(ServerConfig.ENERGY_REGEN_PER_SECOND.get());
+        if (!progress.isChanneling()) progress.regenerateEnergy(ServerConfig.ENERGY_REGEN_PER_SECOND.get()*com.legacyoftheforce.core.api.CrystalAffinityAccess.get(player).forceRegeneration());
         if (!before.equals(progress.snapshot())) sync(player);
     }
 

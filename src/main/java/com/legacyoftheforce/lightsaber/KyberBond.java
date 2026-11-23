@@ -5,7 +5,7 @@ import net.minecraft.nbt.*;
 
 /** Bounded practice history travels with the crystal, including through replacement/reconnection. */
 public final class KyberBond {
-    public enum Activity { COMBAT, PARRY, FORCE, SANCTUARY, BOSS }
+    public enum Activity { COMBAT, PARRY, FORCE, SANCTUARY, BOSS, SUPPORT }
     public record Rules(int harmonized, int resonant, int legendary, int windowTicks, int windowCap, int cooldown) {
         public Rules {
             if (harmonized < 1 || resonant <= harmonized || legendary <= resonant || legendary > 1_000_000
@@ -24,7 +24,7 @@ public final class KyberBond {
         if (!tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") != 1
                 || !tag.contains("windowStart", Tag.TAG_LONG) || tag.getLong("windowStart") < 0
                 || !tag.contains("nextAction", Tag.TAG_LONG) || tag.getLong("nextAction") < 0
-                || !tag.contains("specialization", Tag.TAG_STRING) || !Set.of("none", "defense").contains(tag.getString("specialization")))
+                || !tag.contains("specialization", Tag.TAG_STRING) || !Set.of("none", "defense","endurance","restoration","offense","telekinesis","technique","focus").contains(tag.getString("specialization")))
             throw new IllegalArgumentException("Unsupported practice schema");
         var targets = new HashSet<UUID>(); var activities = EnumSet.noneOf(Activity.class);
         for (String key : new String[]{"targets", "activities"}) if (!tag.contains(key, Tag.TAG_LIST)) throw new IllegalArgumentException("Missing practice list");
@@ -58,10 +58,15 @@ public final class KyberBond {
         write(tag, new Practice(tick, tick, Set.of(), Set.of(), "none")); return new KyberData(tag);
     }
     public static KyberData specialize(KyberData crystal, Rules rules) {
-        var state = crystal.state(); if (state.isEmpty() || state.get().bondLevel() != 2 || state.get().bondProgress() < rules.resonant) return crystal;
-        var old = read(crystal.tag()); var tag = crystal.tag(); tag.putInt("bondLevel", 3);
-        write(tag, new Practice(old.windowStart, old.nextAction, old.targets, old.activities, "defense")); return new KyberData(tag);
+        return specialize(crystal,rules,crystal.kind().map(KyberKind::resonance).orElse("defense"));
     }
+    public static KyberData specialize(KyberData crystal,Rules rules,String specialization){
+        var state = crystal.state(); if (state.isEmpty() || state.get().bondLevel() != 2 || state.get().bondProgress() < rules.resonant) return crystal;
+        if(!specialization.equals("focus")&&!specialization.equals(crystal.kind().orElseThrow().resonance()))return crystal;
+        var old = read(crystal.tag()); var tag = crystal.tag(); tag.putInt("bondLevel", 3);
+        write(tag, new Practice(old.windowStart, old.nextAction, old.targets, old.activities, specialization)); return new KyberData(tag);
+    }
+    public static String specialization(KyberData crystal){return crystal.state().isPresent()?read(crystal.tag()).specialization():"none";}
     public static KyberData practice(KyberData crystal, Activity activity, UUID target, long tick, Rules rules) {
         var state = crystal.state();
         if (state.isEmpty() || state.get().bondLevel() < 1 || activity == null || target == null || target.equals(new UUID(0, 0)) || tick < 0) return crystal;

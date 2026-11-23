@@ -46,20 +46,20 @@ final class AdvancedPowers {
         if(control&&target!=null&&!controlReady(actor,target))return ForceResult.no("resistant_target");
         if(action.equals("wave")) {area=area.stream().filter(mob->controlReady(actor,mob)).toList();if(area.isEmpty())return ForceResult.no("resistant_target");}
         boolean channel=Set.of("lightning","chain_lightning","drain","choke").contains(action);if(channel&&channels.size()>=ForceConfig.MOB_BUDGET.get())return ForceResult.no("budget");
-        if(!progress.tryStartPower(actor.getUUID(),power,def.energy()*progress.mastery(actor.getUUID(),power).energyMultiplier(),def.cooldown()))return ForceResult.no("not_enough_force");
+        if(!progress.tryStartPower(actor.getUUID(),power,def.energy()*progress.mastery(actor.getUUID(),power).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost(),def.cooldown()))return ForceResult.no("not_enough_force");
         switch(action) {
             case "leap" -> {var forward=actor.getLookAngle().multiply(1,0,1).normalize().scale(def.magnitude()/2);actor.push(forward.x,def.magnitude(),forward.z);actor.connection.send(new ClientboundSetEntityMotionPacket(actor));track(actor,def,false);}
             case "speed" -> {if(actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,def.duration(),(int)Math.clamp(def.magnitude()-1,0,2))))track(actor,def,false);}
             case "protect" -> {if(actor.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE,def.duration(),(int)Math.clamp(def.magnitude()-1,0,2))))track(actor,def,true);}
             case "reflexes" -> {actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,def.duration(),0));if(actor.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE,def.duration(),0)))track(actor,def,true);}
-            case "heal" -> {float before=actor.getHealth();actor.heal((float)def.magnitude());if(actor.getHealth()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(actor)!=null)progress.creditPowerUse(actor.getUUID(),power,recentHostile(actor).getUUID());}
-            case "support" -> {actor.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));for(var ally:actor.serverLevel().getPlayers(player->player!=actor&&actor.isAlliedTo(player)&&actor.hasLineOfSight(player)&&actor.distanceToSqr(player)<=def.range()*def.range())) {float before=ally.getAbsorptionAmount();ally.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));if(ally.getAbsorptionAmount()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(ally)!=null)progress.creditPowerUse(actor.getUUID(),power,ally.getUUID());}}
+            case "heal" -> {float before=actor.getHealth();actor.heal((float)def.magnitude());if(actor.getHealth()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(actor)!=null)used(actor,power,recentHostile(actor).getUUID(),true);}
+            case "support" -> {actor.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));for(var ally:actor.serverLevel().getPlayers(player->player!=actor&&actor.isAlliedTo(player)&&actor.hasLineOfSight(player)&&actor.distanceToSqr(player)<=def.range()*def.range())) {float before=ally.getAbsorptionAmount();ally.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));if(ally.getAbsorptionAmount()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(ally)!=null)used(actor,power,ally.getUUID(),true);}}
             case "sense" -> area.forEach(mob->{boolean known=mob.hasEffect(MobEffects.GLOWING);if(mob.addEffect(new MobEffectInstance(MobEffects.GLOWING,def.duration(),0))&&!known)credit(actor,mob,def);});
             case "wave" -> area.forEach(mob->impulse(actor,mob,def));
             case "throw" -> {impulse(actor,target,def);float before=target.getHealth();target.hurt(actor.damageSources().indirectMagic(actor,actor),(float)def.magnitude());if(before-target.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get())credit(actor,target,def);}
             case "freeze","dominate" -> {reserveControl(actor,target,def);if(target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,def.duration(),4)))credit(actor,target,def);}
             case "levitate" -> {reserveControl(actor,target,def);if(target.addEffect(new MobEffectInstance(MobEffects.LEVITATION,def.duration(),0)))credit(actor,target,def);}
-            case "fear" -> {reserveControl(actor,target,def);if(target.getTarget()==actor){target.setTarget(null);progress.creditPowerUse(actor.getUUID(),power,target.getUUID());}target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,def.duration(),0));impulse(actor,target,def);}
+            case "fear" -> {reserveControl(actor,target,def);if(target.getTarget()==actor){target.setTarget(null);used(actor,power,target.getUUID(),false);}target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,def.duration(),0));impulse(actor,target,def);}
             case "lightning","chain_lightning","drain","choke" -> {if(control)reserveControl(actor,target,def);channels.put(actor.getUUID(),new Channel(power,target.getUUID(),actor.server.overworld().getGameTime()+def.duration(),actor.server.overworld().getGameTime()));progress.setChanneling(actor.getUUID(),true);}
             default -> {return ForceResult.no("invalid_target");}
         }
@@ -70,8 +70,9 @@ final class AdvancedPowers {
     private List<Mob> targets(ServerPlayer actor,PowerDefinition def) {return actor.serverLevel().getEntitiesOfClass(Mob.class,actor.getBoundingBox().inflate(def.range()),mob->valid(actor,mob,def)).stream().sorted(Comparator.comparingDouble((Mob mob)->actor.distanceToSqr(mob))).limit(ForceConfig.AREA_TARGETS.get()).toList();}
     private boolean controlReady(ServerPlayer actor,Mob mob) {return actor.server.overworld().getGameTime()>=controlRecovery.getOrDefault(mob.getUUID(),0L)&&(!(mob instanceof ForceImpulseResistance boss)||boss.acceptsForceImpulse());}
     private void reserveControl(ServerPlayer actor,Mob mob,PowerDefinition def) {controlRecovery.put(mob.getUUID(),actor.server.overworld().getGameTime()+def.duration()+ForceConfig.MOB_COOLDOWN.get());if(mob instanceof ForceImpulseResistance boss)boss.forceImpulseCommitted();}
+    private void used(ServerPlayer actor,String power,UUID context,boolean support){progress.creditPowerUse(actor.getUUID(),power,context);if(progress.power(power).map(def->def.energy()>0).orElse(false))net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PowerUseCommitted(actor.getUUID(),context,actor.level().dimension(),actor.server.overworld().getGameTime(),support));}
     private boolean hostile(ServerPlayer actor,Mob target) {return target instanceof net.minecraft.world.entity.monster.Enemy||target.getTarget()==actor;}
-    private void credit(ServerPlayer actor,Mob target,PowerDefinition def) {if(hostile(actor,target))progress.creditPowerUse(actor.getUUID(),def.id(),target.getUUID());}
+    private void credit(ServerPlayer actor,Mob target,PowerDefinition def) {if(hostile(actor,target))used(actor,def.id(),target.getUUID(),false);}
     private net.minecraft.world.entity.LivingEntity recentHostile(ServerPlayer actor) {
         var mob=actor.getLastHurtByMob();int elapsed=actor.tickCount-actor.getLastHurtByMobTimestamp();
         return mob instanceof Mob target&&hostile(actor,target)&&elapsed>=0&&elapsed<=ServerConfig.MASTERY_COMBAT_WINDOW.get()?mob:null;
@@ -96,7 +97,7 @@ final class AdvancedPowers {
                     &&trial.previousHealth()-actor.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()
                     &&actor.getLastDamageSource()!=null&&!actor.getLastDamageSource().is(net.minecraft.tags.DamageTypeTags.BYPASSES_RESISTANCE)
                     :distance>=ServerConfig.MASTERY_TRAVEL_DISTANCE.get()&&(path(trial.power()).equals("leap")?actor.onGround()&&rise>=ServerConfig.MASTERY_MIN_LEAP_HEIGHT.get():actor.hasEffect(MobEffects.MOVEMENT_SPEED));
-            if(success){progress.creditPowerUse(entry.getKey(),trial.power(),trial.context());practice.remove(entry.getKey());}
+            if(success){used(actor,trial.power(),trial.context(),trial.defense());practice.remove(entry.getKey());}
             else practice.put(entry.getKey(),new Practice(trial.power(),trial.context(),trial.dimension(),trial.start(),actor.position(),trial.end(),trial.hurtAtStart(),trial.defense(),rise,actor.getHealth()));
         }
     }
@@ -106,7 +107,7 @@ final class AdvancedPowers {
         for(var entry:List.copyOf(channels.entrySet())) {var actor=server.getPlayerList().getPlayer(entry.getKey());var channel=entry.getValue();var definition=progress.power(channel.power());
             if(actor==null||!actor.isAlive()||actor.isRemoved()||definition.isEmpty()||now>=channel.end()||!progress.hasLearnedPower(entry.getKey(),channel.power())) {cancel(entry.getKey());continue;}
             var entity=actor.serverLevel().getEntity(channel.target());var def=definition.get();if(!(entity instanceof Mob target)||!valid(actor,target,def)) {cancel(entry.getKey());continue;}if(now<channel.next())continue;
-            if(!progress.trySpendForceEnergy(actor.getUUID(),def.energy()*ForceConfig.CHANNEL_COST_FRACTION.get()*progress.mastery(actor.getUUID(),def.id()).energyMultiplier())) {cancel(actor.getUUID());continue;}
+            if(!progress.trySpendForceEnergy(actor.getUUID(),def.energy()*ForceConfig.CHANNEL_COST_FRACTION.get()*progress.mastery(actor.getUUID(),def.id()).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost())) {cancel(actor.getUUID());continue;}
             float health=target.getHealth();boolean hit=target.hurt(actor.damageSources().indirectMagic(actor,actor),(float)def.magnitude());
             if(health-target.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get())credit(actor,target,def);
             if(path(channel.power()).equals("drain")&&hit&&health>target.getHealth())actor.heal(Math.min((float)def.magnitude()/2,health-target.getHealth()));

@@ -3,6 +3,8 @@ package com.legacyoftheforce.lightsaber;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class SaberConfig {
+    public static final ModConfigSpec.IntValue CORRUPT_LEVEL,PURIFY_LEVEL,CORRUPT_ALIGNMENT,PURIFY_ALIGNMENT,CORRUPT_REAGENT,PURIFY_REAGENT,CORRUPT_BLAZE,PURIFY_AMETHYST,FOCUS_REAGENT;
+    public static final ModConfigSpec.DoubleValue CORRUPTED_DAMAGE,PURIFIED_PARRY;
     public static final ModConfigSpec.DoubleValue DEFENSIVE_DAMAGE,AGGRESSIVE_DAMAGE,DEFENSIVE_ATTACK_COST,AGGRESSIVE_ATTACK_COST,DEFENSIVE_GUARD_COST,AGGRESSIVE_GUARD_COST,DEFENSIVE_PARRY,AGGRESSIVE_PARRY;
     public static final ModConfigSpec.DoubleValue COUNTER_COST,COUNTER_BONUS,COMBO_BONUS,COMBO_COST,COMBO_MIN_DAMAGE,MELEE_DAMAGE_CAP,DODGE_COST,DODGE_DISTANCE,DEFLECT_COST,DEFLECT_SPEED,DEFLECT_RETENTION,DEFLECT_DAMAGE_CAP;
     public static final ModConfigSpec.IntValue STYLE_INTERVAL,COUNTER_WINDOW,COMBO_WINDOW,COMBO_HITS,DODGE_COOLDOWN,DEFLECT_GRACE,TECHNIQUE_PATH_CELLS;
@@ -20,6 +22,17 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        CORRUPT_LEVEL=builder.defineInRange("ritual.corruptionMinimumLevel",35,1,100);
+        PURIFY_LEVEL=builder.defineInRange("ritual.purificationMinimumLevel",35,1,100);
+        CORRUPT_ALIGNMENT=builder.defineInRange("ritual.corruptionMaximumAlignmentTenths",-500,-1000,-1);
+        PURIFY_ALIGNMENT=builder.defineInRange("ritual.purificationMinimumAlignmentTenths",500,1,1000);
+        CORRUPT_REAGENT=builder.defineInRange("ritual.mustafarSlagCost",3,1,64);
+        PURIFY_REAGENT=builder.defineInRange("ritual.jedhaRelicDustCost",3,1,64);
+        CORRUPT_BLAZE=builder.defineInRange("ritual.corruptionBlazePowder",2,1,64);
+        PURIFY_AMETHYST=builder.defineInRange("ritual.purificationAmethyst",4,1,64);
+        FOCUS_REAGENT=builder.defineInRange("ritual.focusDagobahEssenceCost",1,1,64);
+        CORRUPTED_DAMAGE=builder.defineInRange("ritual.corruptedDamageBonus",.25,0,1);
+        PURIFIED_PARRY=builder.defineInRange("ritual.purifiedParryBonus",.02,0,.1);
         DEFENSIVE_DAMAGE=builder.defineInRange("style.defensiveDamageMultiplier",.85,.5,1);
         AGGRESSIVE_DAMAGE=builder.defineInRange("style.aggressiveDamageMultiplier",1.15,1,1.5);
         DEFENSIVE_ATTACK_COST=builder.defineInRange("style.defensiveAttackCostMultiplier",.9,.5,1.5);

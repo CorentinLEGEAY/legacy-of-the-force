@@ -12,6 +12,8 @@ Combat sabre en cours d’intégration : **Y** change de style (défensif/équil
 
 Le nouvel atelier propose **25 pièces et cinq types** : simple, court, courbe, double et garde. Cliquer une famille fait défiler ses pièces compatibles ; **Type** choisit une structure et **Deuxième émetteur** complète le double. Les plans avancés doivent être lus avant fabrication ; leur distribution naturelle reste à intégrer aux planètes. Les pièces choisies composent désormais le rendu et les statistiques serveur ; le double paie et restitue bien ses deux émetteurs. Cette intégration compile, mais sa jouabilité, son rendu et sa persistance attendent la campagne globale.
 
+Kyber : six familles et leurs affinités, corruption rouge et purification blanche sont intégrées au code. **Il faut désormais éveiller le cristal à l’atelier avant d’activer la lame**, y compris pour les anciens sabres dormants :4 améthystes+2 lapis par défaut. Les rituels avancés demandent niveau/alignement et matériaux de Mustafar/Jedha ; ils conservent l’UUID, l’origine et le lien. Les matériaux, plans et cinq autres cristaux attendent encore leur acquisition naturelle dans P6. Rendu, persistance et équilibrage du lot restent en attente de campagne.
+
 ## Objectif
 Construire **un mod Minecraft Java unique**, organisé en modules internes, mêlant survie Minecraft, RPG Star Wars, combats, Force physique, sabres laser personnalisés et évolutifs, speeders construits sur mesure et exploration de six planètes. Direction artistique : **monde Minecraft + équipements et effets cinématographiques**.
 

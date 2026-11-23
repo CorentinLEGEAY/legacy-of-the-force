@@ -12,13 +12,15 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class KyberBondService {
     static boolean record(ServerPlayer actor, KyberBond.Activity activity, UUID target) {
-        if (!actor.server.isSameThread() || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator() || SaberCombat.profile(actor.getMainHandItem()).isEmpty()) return false;
+        if (!PlayerInventoryHooks.ready(actor) || SaberCombat.profile(actor.getMainHandItem()).isEmpty()) return false;
         var stack = actor.getMainHandItem(); var saber = stack.get(SaberContent.ASSEMBLY.get()); var crystal = saber.crystal().orElseThrow();
         KyberData updated;
         try { updated = KyberBond.practice(crystal, activity, target, actor.server.overworld().getGameTime(), SaberConfig.bondRules()); }
         catch (IllegalArgumentException invalidRules) { return false; }
         if (updated.equals(crystal)) return false;
-        stack.set(SaberContent.ASSEMBLY.get(), saber.updateCrystal(updated)); actor.getInventory().setChanged(); actor.containerMenu.broadcastChanges();
+        stack.set(SaberContent.ASSEMBLY.get(), saber.updateCrystal(updated)); actor.getInventory().setChanged();
+        try{new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);}catch(java.io.IOException|RuntimeException uncertain){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Kyber practice save uncertain; native aggregate retained",uncertain);actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.menu_recovery"));return false;}
+        actor.containerMenu.broadcastChanges();
         var state = updated.state().orElseThrow(); actor.displayClientMessage(Component.translatable("crystal.legacyoftheforce.practice", state.bondLevel(), state.bondProgress()), true); return true;
     }
     private static ServerPlayer actor(UUID id) { var server = ServerLifecycleHooks.getCurrentServer(); return server != null && server.isSameThread() ? server.getPlayerList().getPlayer(id) : null; }
@@ -47,5 +49,12 @@ public final class KyberBondService {
         var actor = actor(event.actorId);
         if (actor != null && actor.server.overworld().getGameTime() == event.tick && actor.serverLevel().dimension().equals(event.dimension))
             record(actor, event.kind == KyberMilestone.Kind.SANCTUARY ? KyberBond.Activity.SANCTUARY : KyberBond.Activity.BOSS, event.eventId);
+    }
+    @SubscribeEvent public void power(PowerUseCommitted event){var actor=actor(event.actor);if(actor==null||actor.server.overworld().getGameTime()!=event.tick||!actor.level().dimension().equals(event.dimension))return;
+        if(event.support||dangerous(actor.serverLevel().getEntity(event.context)))record(actor,event.support?KyberBond.Activity.SUPPORT:KyberBond.Activity.FORCE,event.context);
+    }
+    @SubscribeEvent public void deflection(SaberProjectileDeflected event){var actor=actor(event.actor);if(actor==null||actor.server.overworld().getGameTime()!=event.tick||!actor.level().dimension().equals(event.dimension)||!dangerous(actor.serverLevel().getEntity(event.shooter)))return;
+        var entity=actor.serverLevel().getEntity(event.projectile);if(!(entity instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow)||arrow.getOwner()!=actor||arrow.getPersistentData().getLong("legacyoftheforce:deflectionTick")!=event.tick)return;
+        var saber=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());if(saber!=null&&saber.crystal().flatMap(KyberData::state).map(state->state.id().equals(event.crystal)).orElse(false))record(actor,KyberBond.Activity.PARRY,event.shooter);
     }
 }

@@ -182,11 +182,12 @@ public final class SaberCombat {
         var positions=net.minecraft.core.BlockPos.betweenClosedStream(swept).iterator();while(positions.hasNext())if(!protection.mayArrive(actor,actor.serverLevel(),positions.next()))return;
         if(actor.serverLevel().getBlockCollisions(arrow,swept).iterator().hasNext())return;
         if(!state.spendAction(tick,SaberConfig.DEFLECT_COST.get(),SaberConfig.RECOVERY_DELAY.get()))return;
-        state.endGuard();arrow.setOwner(actor);arrow.setPos(destination.x,destination.y,destination.z);
+        var shooter=arrow.getOwner();state.endGuard();arrow.setOwner(actor);arrow.setPos(destination.x,destination.y,destination.z);
         arrow.setDeltaMovement(look.scale(Math.min(SaberConfig.DEFLECT_SPEED.get(),motion.length()*SaberConfig.DEFLECT_RETENTION.get())));
         arrow.setBaseDamage(Math.min(arrow.getBaseDamage(),SaberConfig.DEFLECT_DAMAGE_CAP.get()));arrow.setCritArrow(false);arrow.hasImpulse=true;arrow.hurtMarked=true;
         metadata.putInt("legacyoftheforce:deflection",1);metadata.putLong("legacyoftheforce:deflectionTick",tick);event.setCanceled(true);
         feedback(actor,"saber.legacyoftheforce.deflected");
+        if(shooter!=null)net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.legacyoftheforce.core.api.SaberProjectileDeflected(actor.getUUID(),arrow.getUUID(),shooter.getUUID(),actor.getMainHandItem().get(SaberContent.ASSEMBLY.get()).crystal().orElseThrow().state().orElseThrow().id(),actor.level().dimension(),tick));
     }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (event.getEntity() instanceof ServerPlayer actor && actor.isAlive()) {

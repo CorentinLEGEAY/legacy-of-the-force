@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWorkshopMenu> {
     private Button secondaryButton;
     public SaberWorkshopScreen(SaberWorkshopMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title); imageWidth = 360; imageHeight = 230; inventoryLabelX = 47; inventoryLabelY = 130;
+        super(menu, inventory, title); imageWidth = 360; imageHeight = 252; inventoryLabelX = 47; inventoryLabelY = 130;
     }
     @Override protected void init() {
         super.init();
@@ -27,6 +27,7 @@ public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWork
                 minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 3)).bounds(leftPos + 173, topPos + 120, 76, 20).build());
         String[] actions={"modify","dismantle","maintain","save_plan","load_plan"};
         for(int i=0;i<actions.length;i++) {int action=4+i;addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce."+actions[i]),b->minecraft.gameMode.handleInventoryButtonClick(menu.containerId,action)).bounds(leftPos+251,topPos+54+i*22,100,20).build());}
+        String[] ceremonies={"corrupt","purify","focus"};for(int i=0;i<ceremonies.length;i++){int action=10+i;addRenderableWidget(Button.builder(Component.translatable("workshop.legacyoftheforce."+ceremonies[i]),b->minecraft.gameMode.handleInventoryButtonClick(menu.containerId,action)).bounds(leftPos+8+i*112,topPos+226,108,18).build());}
     }
     @Override protected void containerTick(){super.containerTick();secondaryButton.visible=menu.selectedType()==SaberType.DOUBLE;secondaryButton.active=secondaryButton.visible;}
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
@@ -52,6 +53,11 @@ public final class SaberWorkshopScreen extends AbstractContainerScreen<SaberWork
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick); renderTooltip(graphics, mouseX, mouseY);
+        if(mouseY>=topPos+226&&mouseY<topPos+244){
+            if(mouseX>=leftPos+8&&mouseX<leftPos+116)graphics.renderTooltip(font,Component.translatable("workshop.legacyoftheforce.corrupt_help",menu.ritualParameter(5),menu.ritualParameter(7)/10.0,menu.ritualParameter(0),menu.ritualParameter(2)),mouseX,mouseY);
+            if(mouseX>=leftPos+120&&mouseX<leftPos+228)graphics.renderTooltip(font,Component.translatable("workshop.legacyoftheforce.purify_help",menu.ritualParameter(6),menu.ritualParameter(8)/10.0,menu.ritualParameter(1),menu.ritualParameter(3)),mouseX,mouseY);
+            if(mouseX>=leftPos+232&&mouseX<leftPos+340)graphics.renderTooltip(font,Component.translatable("workshop.legacyoftheforce.focus_help",menu.specializationThreshold(),menu.ritualParameter(4)),mouseX,mouseY);
+        }
         if(mouseX>=leftPos+8&&mouseX<leftPos+164&&mouseY>=topPos+114&&mouseY<topPos+126)graphics.renderTooltip(font,Component.translatable("workshop.legacyoftheforce."+menu.status().name().toLowerCase(java.util.Locale.ROOT)),mouseX,mouseY);
         if(mouseX>=leftPos+173&&mouseX<leftPos+351&&mouseY>=topPos+32&&mouseY<topPos+48)graphics.renderTooltip(font,Component.translatable("workshop.legacyoftheforce.preview_stats",menu.reach(),menu.attacksPerSecond(),menu.costMultiplier()),mouseX,mouseY);
         if(menu.selectedType()==SaberType.DOUBLE&&mouseX>=leftPos+8&&mouseX<leftPos+164&&mouseY>=topPos+102&&mouseY<topPos+114)

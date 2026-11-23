@@ -87,7 +87,7 @@ final class BlockGroupCoordinator {
             for (var direction : Direction.values()) queue.add(pos.relative(direction));
         }
         if (members.size() + otherBlocks + blockCount(world.dimension()) > ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
-        double cost = ForceConfig.BASE_COST.get() + mass * ForceConfig.MASS_COST.get();
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
         if (progress.get(actor.getUUID()).orElseThrow().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockGroupRecord(UUID.randomUUID(), actor.getUUID(), world.dimension(), pivot, members, null, 0);
         try {
@@ -125,7 +125,7 @@ final class BlockGroupCoordinator {
         if (!server.isSameThread() || recoveryPending) return ForceResult.no("recovery_pending");
         if (session.velocity != null) return ForceResult.no("cooldown");
         if (level(actor) < ForceConfig.GROUP_THROW_LEVEL.get()) return ForceResult.no("level_required");
-        double cost = ForceConfig.GROUP_THROW_BASE.get() + session.record.mass() * ForceConfig.GROUP_THROW_MASS.get();
+        double cost = (ForceConfig.GROUP_THROW_BASE.get()+session.record.mass()*ForceConfig.GROUP_THROW_MASS.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
         if (!progress.trySpendForceEnergy(actor.getUUID(), cost)) return ForceResult.no("not_enough_force");
         double speed = ForceConfig.GROUP_THROW_SPEED.get() / Math.sqrt(Math.max(1, session.record.mass()));
         session.velocity = actor.getLookAngle().scale(speed); session.flightTicks = ForceConfig.GROUP_FLIGHT_TICKS.get();
@@ -174,7 +174,7 @@ final class BlockGroupCoordinator {
                 || session.displays.stream().anyMatch(Entity::isRemoved)) { cancel(actor.getUUID()); return; }
         for (var member : session.record.members()) if (!actor.serverLevel().hasChunkAt(member.source())
                 || !protection.mayModify(actor, actor.serverLevel(), member.source(), ModificationKind.GRAB)) { cancel(actor.getUUID()); return; }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass() * ForceConfig.HOLD_COST.get())) { cancel(actor.getUUID()); return; }
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost())) { cancel(actor.getUUID()); return; }
         if (!inRange(actor, session.position)) { cancel(actor.getUUID()); return; }
         Vec3 next;
         if (session.velocity == null) {

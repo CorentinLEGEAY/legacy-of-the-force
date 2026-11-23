@@ -1,182 +1,47 @@
 {
-  "display": {
-    "gui": {
-      "rotation": [
-        15,
-        225,
-        0
-      ],
-      "scale": [
-        0.9,
-        0.9,
-        0.9
-      ]
-    }
-  },
-  "render_type": "minecraft:translucent",
-  "textures": {
-    "blue": "minecraft:block/light_blue_stained_glass",
-    "particle": "minecraft:block/light_blue_stained_glass",
-    "white": "minecraft:block/white_concrete"
-  },
-  "elements": [
+  "parent": "legacyoftheforce:item/crystal_blue",
+  "overrides": [
     {
-      "faces": {
-        "north": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "down": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "up": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#blue",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
+      "predicate": {
+        "legacyoftheforce:crystal_color": 1
       },
-      "from": [
-        6,
-        3,
-        6
-      ],
-      "shade": false,
-      "to": [
-        10,
-        13,
-        10
-      ],
-      "rotation": {
-        "rescale": false,
-        "origin": [
-          8,
-          8,
-          8
-        ],
-        "axis": "z",
-        "angle": 45
-      },
-      "neoforge_data": {
-        "ambient_occlusion": false,
-        "sky_light": 15,
-        "block_light": 15
-      }
+      "model": "legacyoftheforce:item/crystal_yellow"
     },
     {
-      "to": [
-        9,
-        11,
-        9
-      ],
-      "shade": false,
-      "faces": {
-        "north": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "down": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "south": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "up": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "east": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        },
-        "west": {
-          "texture": "#white",
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ]
-        }
+      "predicate": {
+        "legacyoftheforce:crystal_color": 2
       },
-      "from": [
-        7,
-        5,
-        7
-      ],
-      "neoforge_data": {
-        "ambient_occlusion": false,
-        "sky_light": 15,
-        "block_light": 15
-      }
+      "model": "legacyoftheforce:item/crystal_green"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:crystal_color": 3
+      },
+      "model": "legacyoftheforce:item/crystal_orange"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:crystal_color": 4
+      },
+      "model": "legacyoftheforce:item/crystal_cyan"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:crystal_color": 5
+      },
+      "model": "legacyoftheforce:item/crystal_purple"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:crystal_color": 6
+      },
+      "model": "legacyoftheforce:item/crystal_red"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:crystal_color": 7
+      },
+      "model": "legacyoftheforce:item/crystal_white"
     }
   ]
 }

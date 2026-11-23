@@ -66,13 +66,13 @@ public record SaberData(CompoundTag tag) {
         var crystal = new KyberData(tag.getCompound("crystal"));
         return crystal.state().isPresent() ? Optional.of(crystal) : Optional.empty();
     }
-    public boolean active() { return supported() && condition()>0 && crystal().isPresent() && tag.getBoolean("active"); }
+    public boolean active() { return supported() && condition()>0 && crystal().flatMap(KyberData::state).map(state->state.bondLevel()>=1).orElse(false) && tag.getBoolean("active"); }
     public SaberData withCrystal(KyberData crystal) {
         if (!supported() || crystal == null || crystal.state().isEmpty()) throw new IllegalArgumentException("Unsupported crystal or saber");
         var updated = tag.copy(); updated.put("crystal", crystal.tag()); updated.putBoolean("active", false); return new SaberData(updated);
     }
     public SaberData withActive(boolean active) {
-        if (!supported() || (active && (crystal().isEmpty()||condition()==0))) throw new IllegalArgumentException("Cannot activate unsupported, broken or empty saber");
+        if (!supported() || (active && (crystal().isEmpty()||condition()==0||crystal().orElseThrow().state().orElseThrow().bondLevel()<1))) throw new IllegalArgumentException("Cannot activate unsupported, dormant, broken or empty saber");
         var updated = tag.copy(); updated.putBoolean("active", active); return new SaberData(updated);
     }
     public SaberData updateCrystal(KyberData updatedCrystal) {

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "parryScale": 0,
+  "enduranceCost": 0.94,
+  "forceRegeneration": 1,
+  "telekinesisCost": 1,
+  "advancedCost": 1,
+  "damageBonus": 0,
+  "growth": 0.15,
+  "focusStrength": 0.5,
+  "focusCost": 0.97
+}

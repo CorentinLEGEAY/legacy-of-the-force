@@ -153,4 +153,32 @@ public final class SaberStorageGameTests {
             try {assertNative(helper,f,0,1,1);}catch(Exception failure) {throw new RuntimeException(failure);}
         });
     }
+    @GameTest(template="empty",timeoutTicks=240)
+    public static void windowsPlayerDenialBeforePaymentRestoresOnlyTheUnpaidChest(GameTestHelper helper) throws Exception {
+        if(!System.getProperty("os.name").startsWith("Windows")) {helper.succeed();return;}
+        var f=fixture(helper,false);var original=saber();f.container.setItem(0,original.copy());var handle=new FileChannel[1];var before=new CompoundTag[1];var writer=new VerifiedPlayerSaveBarrier();
+        Consumer<SaberStorageCheckpoint> listener=event->{
+            if(!event.actor().equals(f.actor.getUUID())||event.stage()!=SaberStorageCheckpoint.Stage.PREPARED)return;
+            try {
+                before[0]=writer.read(f.actor);var file=f.actor.server.getWorldPath(LevelResource.PLAYER_DATA_DIR).resolve(f.actor.getUUID()+".dat");
+                handle[0]=FileChannel.open(file,StandardOpenOption.READ,ExtendedOpenOption.NOSHARE_WRITE,ExtendedOpenOption.NOSHARE_DELETE);
+            }catch(java.io.IOException failure) {throw new java.io.UncheckedIOException(failure);}
+        };
+        NeoForge.EVENT_BUS.addListener(listener);
+        try {
+            f.menu.clicked(0,0,ClickType.PICKUP,f.actor);
+            helper.assertTrue(handle[0]!=null&&before[0]!=null&&writer.read(f.actor).equals(before[0]),"A real Windows denial must retain the native unpaid player aggregate");
+            helper.assertTrue(SaberStorageTransactions.blocked(f.entity),"An uncertain native payment must keep its chest locked");
+        }finally {NeoForge.EVENT_BUS.unregister(listener);if(handle[0]!=null)handle[0].close();}
+        // The unregistered stand-in cannot perform a real logout. Discard it, then load its actual file.
+        helper.succeedWhen(()->{
+            helper.assertTrue(!SaberStorageTransactions.blocked(f.entity),"Normal retry must reconcile the offline unpaid journal");
+            helper.assertTrue(same(f.container.getItem(0),original),"Unpaid recovery must restore the one original stored saber");
+            try {
+                var saved=writer.read(f.actor);helper.assertTrue(saved.equals(before[0]),"Recovery must not rewrite an old inventory into playerdata");
+                var loaded=new ServerPlayer(f.actor.server,helper.getLevel(),f.actor.getGameProfile(),ClientInformation.createDefault());loaded.connection=new FakePlayer(helper.getLevel(),f.actor.getGameProfile()).connection;loaded.load(saved);
+                helper.assertTrue(SaberMenuState.restore(loaded)&&loaded.getInventory().countItem(SaberContent.SABER.get())==0&&loaded.inventoryMenu.getCarried().isEmpty()&&!SaberMenuState.hasDeferred(loaded),"A fresh player load must not receive another saber or deferred credit");
+            }catch(Exception failure) {throw new RuntimeException(failure);}
+        });
+    }
 }

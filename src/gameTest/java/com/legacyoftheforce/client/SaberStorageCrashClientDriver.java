@@ -19,7 +19,7 @@ import net.neoforged.neoforge.client.event.*;
 
 @EventBusSubscriber(modid="legacyoftheforce",value=Dist.CLIENT)
 public final class SaberStorageCrashClientDriver {
-    private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.saberStorageCheckpointRecover");
+    private static final boolean RECOVER=Boolean.getBoolean("lotf.validation.saberStorageCheckpointRecover"),DEPOSIT=Boolean.getBoolean("lotf.validation.saberStorageDeposit");
     private static final long START=System.nanoTime();private static String task="WAIT";private static long ticks,ready;private static BlockPos pos;private static UUID target;private static int role=-1,stored,openAttempts;private static Connection connection;private static CompoundTag observed;private static boolean sent;
     private static String artifact() {return RECOVER?"saberstoragecheckpointrecover":"saberstoragecrash";}
     private static void require(boolean ok,String why) {if(!ok)throw new IllegalStateException(why);}
@@ -28,14 +28,14 @@ public final class SaberStorageCrashClientDriver {
         if(command.startsWith("OPEN ")) {var args=command.split(" ");pos=new BlockPos(Integer.parseInt(args[1]),Integer.parseInt(args[2]),Integer.parseInt(args[3]));target=UUID.fromString(args[4]);stored=Integer.parseInt(args[5]);task="OPEN";}else task=command;ready=ticks+20;
     }
     private static void finish(Minecraft mc,boolean disconnected) throws java.io.IOException {
-        var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putLong("pid",ProcessHandle.current().pid());proof.putInt("role",role);proof.putUUID("target",target);proof.putBoolean("sentWithdrawal",sent);proof.putBoolean("disconnectObserved",disconnected);proof.put("observation",observed);
+        var proof=new CompoundTag();proof.putInt("schemaVersion",1);proof.putBoolean("deposit",DEPOSIT);proof.putLong("pid",ProcessHandle.current().pid());proof.putInt("role",role);proof.putUUID("target",target);proof.putBoolean("sentWithdrawal",sent&&!DEPOSIT);proof.putBoolean("sentDeposit",sent&&DEPOSIT);proof.putBoolean("disconnectObserved",disconnected);proof.put("observation",observed);
         AtomicNbtFile.write(mc.gameDirectory.toPath().resolve("validation/adventure-"+artifact()+"-client.nbt"),proof,4194304);task="DONE";LegacyOfTheForce.LOGGER.info("ADVENTURE_{}_CLIENT_PASS",artifact().toUpperCase(Locale.ROOT));mc.stop();
     }
     @SubscribeEvent public static void tick(ClientTickEvent.Post event) {
         if(!Boolean.getBoolean("lotf.validation.adventureSaberStorageCrash")||task.equals("DONE"))return;var mc=Minecraft.getInstance();ticks++;
         try {
             require((System.nanoTime()-START)/1_000_000_000L<420&&!task.equals("FAILED"),"Native storage crash/recovery deadline or server failure");
-            if(!RECOVER&&observed!=null&&connection!=null&&!connection.isConnected()&&connection.getDisconnectionDetails()!=null) {require(role==1||sent,"First client must have sent the native withdrawal");finish(mc,true);return;}
+            if(!RECOVER&&observed!=null&&connection!=null&&!connection.isConnected()&&connection.getDisconnectionDetails()!=null) {require(role==1||sent,"First client must have sent the native transfer");finish(mc,true);return;}
             if(mc.player==null||mc.level==null||mc.getConnection()==null)return;connection=mc.getConnection().getConnection();if(role<0)role=AdventureRoute.NAMES.indexOf(mc.player.getGameProfile().getName());require(role>=0,"Known native actor required");if(ticks<ready)return;
             if(task.equals("OPEN")) {
                 if(!mc.level.hasChunkAt(pos)||!(mc.level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.ChestBlock||mc.level.getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.BarrelBlock)) {ready=ticks+20;return;}
@@ -50,6 +50,12 @@ public final class SaberStorageCrashClientDriver {
                 Screenshot.grab(mc.gameDirectory,"saber-storage-checkpoint-observed.png",mc.getMainRenderTarget(),message->{});mc.getConnection().sendCommand("lotf_storage_crash_seen");task="WAIT";return;
             }
             if(task.equals("WITHDRAW")) {require(!RECOVER&&role==0&&observed!=null,"Only the actual first client withdraws");mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId,0,0,ClickType.PICKUP,mc.player);sent=true;task="WAIT";return;}
+            if(task.equals("SELECT")) {
+                require(DEPOSIT&&!RECOVER&&role==0,"Only the native deposit owner selects its existing target");int slot=-1;
+                for(int i=0;i<mc.player.containerMenu.slots.size();i++) {var value=mc.player.containerMenu.getSlot(i);var data=value.getItem().get(SaberContent.ASSEMBLY.get());if(value.container==mc.player.getInventory()&&data!=null&&target.equals(data.tag().getUUID("saberId")))slot=i;}
+                require(slot>=0,"Previously recovered saber must already exist in the real inventory");mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId,slot,0,ClickType.PICKUP,mc.player);task="DEPOSIT";ready=ticks+20;return;
+            }
+            if(task.equals("DEPOSIT")) {var data=mc.player.containerMenu.getCarried().get(SaberContent.ASSEMBLY.get());require(DEPOSIT&&data!=null&&target.equals(data.tag().getUUID("saberId")),"Server-projected owned cursor required before deposit");mc.gameMode.handleInventoryMouseClick(mc.player.containerMenu.containerId,0,0,ClickType.PICKUP,mc.player);sent=true;task="WAIT";return;}
             if(task.equals("PASS")) {require(RECOVER&&observed!=null,"Actual recovery observation required");finish(mc,false);}
         }catch(Exception failure) {task="DONE";LegacyOfTheForce.LOGGER.error("ADVENTURE_"+artifact().toUpperCase(Locale.ROOT)+"_CLIENT_FAILED",failure);mc.stop();}
     }

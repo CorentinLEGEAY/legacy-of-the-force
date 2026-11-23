@@ -1,5 +1,6 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberPickupCrash','SaberIo','SaberCheckpointRecover','SaberStorage','SaberStorageRecover','SaberStorageCrash','SaberStorageCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$DesignGallery, [switch]$PersonalMenu, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|PLAYER_DURABLE|STORAGE_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberPickupCrash','SaberIo','SaberCheckpointRecover','SaberStorage','SaberStorageRecover','SaberStorageCrash','SaberStorageCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$DesignGallery, [switch]$PersonalMenu, [switch]$Duel, [switch]$KillHeld, [switch]$StorageDeposit, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|PLAYER_DURABLE|STORAGE_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
 $ErrorActionPreference='Stop'
+if($StorageDeposit -and $Mode -notin @('SaberStorageCrash','SaberStorageCheckpointRecover')) {throw 'StorageDeposit requires an isolated storage checkpoint mode.'}
 if($Mode -in @('SaberCrash','SaberPickupCrash') -and $TransferStage -and $TransferStage -notin @('PREPARED','PAYMENT_DURABLE','HELD','ENTITY_DURABLE','CLOSED')) {throw 'Drop/pickup requires a world-item transfer boundary.'}
 if($Mode -eq 'SaberStorageCrash' -and $TransferStage -notin @('PREPARED','PLAYER_DURABLE','STORAGE_DURABLE','CLOSED')) {throw 'SaberStorageCrash requires an actual storage boundary.'}
 if($PersonalMenu -and $Mode -ne 'SaberCrash') {throw 'PersonalMenu requires isolated SaberCrash mode.'}
@@ -8,7 +9,7 @@ if($DesignGallery -and $Mode -ne 'SaberRecover') {throw 'DesignGallery requires 
 if($Mode -eq 'SaberPickupCrash' -and -not $TransferStage) {throw 'SaberPickupCrash requires TransferStage.'}
 if($TransferStage -and $Mode -notin @('SaberCrash','SaberPickupCrash','SaberIo','SaberStorageCrash')) { throw 'TransferStage requires an isolated world-item or storage fault mode.' }
 $killRequested=$KillHeld -or $Mode -in @('ImpulseCrash','SaberCrash','SaberPickupCrash','SaberStorageCrash')
-$checkpointName=if($Mode -eq 'SaberStorageCrash') {'saber-storage-checkpoint.nbt'} elseif($Mode -in @('SaberCrash','SaberPickupCrash') -and $TransferStage) {'saber-transfer-checkpoint.nbt'} elseif($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
+$checkpointName=if($Mode -eq 'SaberStorageCrash') {if($StorageDeposit) {'saber-storage-deposit-checkpoint.nbt'} else {'saber-storage-checkpoint.nbt'}} elseif($Mode -in @('SaberCrash','SaberPickupCrash') -and $TransferStage) {'saber-transfer-checkpoint.nbt'} elseif($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
 if($KillHeld -and $Mode -ne 'Block') { throw 'KillHeld requires isolated Block mode.' }
 if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
@@ -37,6 +38,7 @@ if($SmallViewport) { $template+="`n--width`n640`n--height`n480`n" }
 $info=[Diagnostics.ProcessStartInfo]::new();$info.FileName=(Get-Process -Id $PID).Path
 foreach($arg in @('-NoProfile','-File',(Join-Path $PSScriptRoot 'run-adventure-test-server.ps1'),'-Run',$Run,'-Mode',$Mode)) { $info.ArgumentList.Add($arg) }
 if($Duel) { $info.ArgumentList.Add('-Duel') }
+if($StorageDeposit) { $info.ArgumentList.Add('-StorageDeposit') }
 if($KillHeld) { $info.ArgumentList.Add('-KillHeld') }
 if($TransferStage) { $info.ArgumentList.Add('-TransferStage');$info.ArgumentList.Add($TransferStage) }
 $info.WorkingDirectory=$repoPath;$info.UseShellExecute=$false;$info.CreateNoWindow=$true;$info.RedirectStandardInput=$true;$info.RedirectStandardOutput=$true;$info.RedirectStandardError=$true
@@ -74,6 +76,7 @@ tutorialStep:none
         if($Mode -eq 'ImpulseRecover') { $argsList.Insert($main,'-Dlotf.validation.impulseRecover=true') }
         if($PersonalMenu) { $argsList.Insert($main,'-Dlotf.validation.saberPersonalMenu=true') }
         if($DesignGallery) { $argsList.Insert($main,'-Dlotf.validation.saberDesignGallery=true') }
+        if($StorageDeposit) { $argsList.Insert($main,'-Dlotf.validation.saberStorageDeposit=true') }
         if($Mode -eq 'SaberStorageCheckpointRecover') { $argsList.Insert($main,'-Dlotf.validation.saberStorageCheckpointRecover=true') }
         if($Mode -eq 'SaberStorageRecover') { $argsList.Insert($main,'-Dlotf.validation.saberStorageRecover=true') }
         if($Mode -eq 'SaberRecover') { $argsList.Insert($main,'-Dlotf.validation.saberRecover=true') }

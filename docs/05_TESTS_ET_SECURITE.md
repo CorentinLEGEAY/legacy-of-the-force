@@ -17,7 +17,7 @@ Tester le gameplay **sur un serveur dédié**, même si le développement se dé
 - Collision avec une position occupée → dépôt refusé, cible reste contrôlée ou revient au point sûr.
 - Mob immunisé, boss, entité protégée, cible hors portée : cas refusés.
 ### Sabres
-- Retrait natif depuis un coffre : deux sockets non-OP, kill PREPARED/PLAYER_DURABLE/STORAGE_DURABLE/CLOSED et nouvelle JVM. Reçu impayé : source stockée ; reçu payé : cible chez le joueur après restauration du curseur, sans copie au coffre. Relecture indépendante des régions, profils et UUID/composants ; preuve dans validation/P2-01_STORAGE_CHECKPOINTS.md. Le dépôt et les pannes entre chunks restent leurs gates distinctes.
+- Retrait et dépôt natifs du coffre : deux sockets non-OP, kill PREPARED/PLAYER_DURABLE/STORAGE_DURABLE/CLOSED et nouvelle JVM. Retrait impayé : source stockée ; payé : cible chez le joueur après restauration du curseur. Dépôt impayé : cible chez le joueur ; payé : cible stockée sans copie joueur. Relecture indépendante régions/profils/UUID/composants ; preuves dans validation/P2-01_STORAGE_CHECKPOINTS.md et P2-01_STORAGE_DEPOSIT.md. IO avec sortie finale et pannes entre chunks restent leurs gates distinctes.
 - Assemblage valide consomme chaque composant une fois ; échec de validation consomme zéro.
 - Sauvegarde/rechargement conserve les pièces et le cristal ; corruption/purification ne duplique pas.
 - Modèle invalide/corrompu → traitement sûr, pas de crash ni d'objet effacé.

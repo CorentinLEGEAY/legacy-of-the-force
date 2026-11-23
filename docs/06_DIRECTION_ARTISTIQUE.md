@@ -1,6 +1,8 @@
 # 06 — Direction artistique, sons, UX, licences
 
 ## Cible visuelle
+Exigence renforcée du concepteur,23 novembre2026 : réaliser un travail de design approfondi sur les items, avec un rendu soigné et proche d'objets réels. Priorités : volumes mécaniques crédibles, proportions et assemblages précis, arêtes travaillées, matières identifiables (métal usiné/brossé, polymère, cuir, cuivre), détails fonctionnels et usure maîtrisée. Les pièces de sabre et cristaux doivent être reconnaissables en inventaire, en main et au sol ; les speeders et leurs modules suivent la même exigence. Contrôler les vues rapprochées, les éclairages et la cohérence de la famille entière ; ne pas présenter les modèles simples actuels comme la finition définitive. Cette exigence complète la cible Minecraft ci-dessous ; elle ne demande ni extraction d'assets officiels ni effets dépendant obligatoirement de shaders.
+
 **Minecraft + réalisme cinématographique maîtrisé** : biomes et blocs lisibles comme Minecraft, personnages aux silhouettes cubiques, mais sabres/speeders plus détaillés, animations agréables, lumières/particules et effets sonores de qualité. Pas de photoréalisme plaqué sur des textures Minecraft.
 
 ## Référentiel graphique

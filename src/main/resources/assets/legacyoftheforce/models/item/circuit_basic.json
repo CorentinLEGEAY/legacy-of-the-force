@@ -1,46 +1,356 @@
 {
-  "gui_light": "front",
+  "textures": {
+    "alloy": "legacyoftheforce:item/saber/alloy",
+    "edge": "legacyoftheforce:item/saber/edge",
+    "gunmetal": "legacyoftheforce:item/saber/gunmetal",
+    "grip": "legacyoftheforce:item/saber/grip",
+    "copper": "legacyoftheforce:item/saber/copper",
+    "indicator": "legacyoftheforce:item/saber/indicator",
+    "button": "legacyoftheforce:item/saber/button",
+    "particle": "legacyoftheforce:item/saber/alloy"
+  },
   "elements": [
     {
       "from": [
+        6.5,
         5,
-        3,
-        5
+        7.5
+      ],
+      "to": [
+        9.5,
+        11,
+        8.5
       ],
       "faces": {
         "down": {
-          "texture": "#red"
-        },
-        "north": {
-          "texture": "#red"
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "up": {
-          "texture": "#red"
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "south": {
-          "texture": "#red"
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "west": {
-          "texture": "#red"
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         },
         "east": {
-          "texture": "#red"
+          "texture": "#gunmetal",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
         }
-      },
+      }
+    },
+    {
+      "from": [
+        6.8,
+        5.2,
+        7.3
+      ],
       "to": [
-        11,
-        13,
-        11
-      ]
+        7.05,
+        10.8,
+        7.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        8.7,
+        5.2,
+        7.3
+      ],
+      "to": [
+        8.95,
+        10.8,
+        7.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#copper",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.3,
+        6,
+        7.1
+      ],
+      "to": [
+        8.5,
+        7.2,
+        7.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#grip",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        7.3,
+        8.4,
+        7.1
+      ],
+      "to": [
+        8.5,
+        9.6,
+        7.5
+      ],
+      "faces": {
+        "down": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "north": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#indicator",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
     }
   ],
-  "textures": {
-    "red": "minecraft:block/redstone_block",
-    "copper": "minecraft:block/copper_block",
-    "metal": "minecraft:block/iron_block",
-    "particle": "minecraft:block/iron_block",
-    "dark": "minecraft:block/black_concrete"
-  },
   "display": {
     "gui": {
       "rotation": [
@@ -48,10 +358,15 @@
         225,
         0
       ],
+      "translation": [
+        0,
+        0.0,
+        0
+      ],
       "scale": [
-        0.8,
-        0.8,
-        0.8
+        1.35,
+        1.35,
+        1.35
       ]
     }
   }

@@ -18,12 +18,14 @@ neoForge {
     runs {
         client {
             client()
+            systemProperty 'lotf.dev.display', project.findProperty('lotfDisplay') ?: '3'
             gameDirectory = project.file('run-client')
             programArguments.addAll '--username', 'ForceTesterOne'
             if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()
         }
         clientTwo {
             client()
+            systemProperty 'lotf.dev.display', project.findProperty('lotfDisplay') ?: '3'
             gameDirectory = project.file('run-client-two')
             programArguments.addAll '--username', 'ForceTesterTwo'
             if (project.hasProperty('connectTo')) programArguments.addAll '--quickPlayMultiplayer', project.property('connectTo').toString()

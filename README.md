@@ -73,6 +73,8 @@ Prérequis : JDK 21 x64, Git. Le wrapper télécharge Gradle et les dépendances
 
 Avec JAVA_HOME configuré, les commandes standard `./gradlew.bat build` (Windows) ou `./gradlew build` (Linux/macOS) fonctionnent également. Le JDK local dans `.tools/java` est détecté par le script PowerShell.
 
+Les clients de développement ciblent l'écran Windows3. Changer temporairement ce choix avec `./scripts/gradle.ps1 runClient -PlotfDisplay=2 --console=plain`. Le placement intervient une fois au démarrage de la fenêtre de jeu et ne déplace aucune autre application. Si l'écran demandé est absent, le client conserve sa position et écrit un avertissement. Les lancements installés ordinaires n'imposent aucun écran.
+
 Le smoke utilise exclusivement `127.0.0.1:25575`, un monde isolé conservé entre lancements, et vérifie démarrage + arrêt + sauvegarde. Les configurations de dev ne remplacent pas un serveur de production authentifié.
 
 Profil : `/lotf profile` affiche aussi l’orientation calculée par le serveur. Dans la section `[rpg]` de `config/legacyoftheforce-server.toml`, `alignmentThresholds = [-500, -200, 200, 500]` règle les quatre seuils de présentation en dixièmes (obscur confirmé/tendance obscure/tendance lumineuse/lumineux confirmé). Garder quatre entiers strictement ordonnés autour de zéro ; une liste invalide est corrigée intégralement aux défauts par NeoForge. Une surcharge par monde est possible sous `world/serverconfig/legacyoftheforce-server.toml`. Cela ne change ni le score sauvegardé, ni les conditions des pouvoirs, ni la couleur du cristal.

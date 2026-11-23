@@ -1,6 +1,8 @@
 # P2-01 — coupures réelles aux frontières DROP
 
-23 novembre 2026. **Tranche validée ; P2-01, P2 et V1.0 restent partiels.** Ce rapport couvre le dépôt Q hors menus de sabres identifiés. Les coupures intermédiaires PICKUP, refus de fichiers Windows, dépôts GUI, mort avec keepInventory=false, conteneurs/hoppers et cristaux libres restent à vérifier/sécuriser.
+23 novembre 2026. **Tranche validée ; P2-01, P2 et V1.0 restent partiels.** Ce rapport couvre cinq frontières de dépôt Q hors menus et cinq frontières de ramassage de sabres identifiés. Les refus de fichiers Windows, dépôts GUI, mort avec keepInventory=false, conteneurs/hoppers et cristaux libres restent à vérifier/sécuriser.
+
+Actualisation : le sens PICKUP est désormais également exercé aux cinq frontières, voir la section ci-dessous. Les refus Windows et autres chemins de transfert restent ouverts.
 
 ## Méthode
 
@@ -51,3 +53,33 @@ str3b repart du stc3 original, sans modification d'inventaire : succès. str1b/s
 Deux GameTests ajoutés : ordre des cinq notifications et relecture des vrais fichiers à chaque frontière ; reprise dans un chunk initialement non chargé sans joueur en ligne. Le premier essai du second test échoue par timeout de fixture : le même Runnable se réinscrivait dans une map dont le planificateur supprimait ensuite la clé. Remplacement par succeedWhen, sans modifier le timeout ni neutraliser d'assertion.
 
 `scripts/gradle.ps1 build runGameTestServer --console=plain` : **BUILD SUCCESSFUL37s, 112GameTests requis passent à19:10:27**. Log `.tools/saber-checkpoint-lease-regression2.log`. **133JUnit, zéro échec/erreur** dans33rapports XML. Vérification installée du JAR courant et référence Git consignées dans le journal du projet après exécution.
+
+## Extension : cinq frontières PICKUP
+
+Chaque crash puc1–5 part d'une copie sd4 arrêtée : reçu1, un sabre natif au sol, un chez le premier joueur, deux chez le pair. Les deux ClientLevel observent la source et ses composants, produisent une capture/prefix d'armement et accusent réception. La fixture libère alors le pickup ; le premier client marche réellement vers l'entité. Le harnais interrompt uniquement la frontière PICKUP demandée. Le kill est toujours un vrai arrêt de processus avec les gardes d'identité du lanceur ; aucun transfert n'est fabriqué par la fixture.
+
+| Frontière | Crash → reprise | Journal au kill | Copies natives au kill | Serveurs crash / reprise | Clients crash ; reprise |
+|---|---|---|---|---|---|
+| PREPARED | puc1 → pur1 | PREPARED | 1 | 23984 / 15756 | 7368,10316 ; 10696,4136 |
+| PAYMENT_DURABLE | puc2 → pur2 | PREPARED | 2 | 23412 / 10160 | 24556,6892 ; 10236,6044 |
+| HELD | puc3 → pur3 | HELD | 2 | 22524 / 18556 | 19024,25720 ; 13984,22140 |
+| ENTITY_DURABLE | puc4 → pur4 | HELD | 1 | 19676 / 11148 | 11444,22904 ; 11688,24964 |
+| CLOSED | puc5 → pur5 | CLOSED | 1 | 18576 / 15044 | 4344,7128 ; 2784,14716 |
+
+Les cinq paires passent. Avant paiement, la reprise conserve la source au sol et le reçu1. Après paiement, elle conserve uniquement le sabre dans le joueur, reçu2, et retire l'entité native. Les deux copies physiques intermédiaires à PAYMENT_DURABLE/HELD sont accompagnées du journal ouvert ; la reprise les réconcilie avant de permettre le login du propriétaire. Il n'y a ni second crédit ni restauration d'ancien inventaire. Quatre UUID de sabres uniques et composants complets conservés dans chaque reprise, pair inchangé, journaux finaux vides.
+
+Le runner complet est cette fois réellement exécuté :
+
+```powershell
+.\scripts\test-saber-transfer-checkpoints.ps1 -Run pu -PreparationRun sd4 -Direction PICKUP
+```
+
+Le vérificateur a ensuite relu les dix paires dépôt/ramassage :
+
+```powershell
+& $validationPython scripts/check-saber-transfer-checkpoints.py stc1 str1b stc2 str2b stc3 str3b stc4 str4 stc5 str5 puc1 pur1 puc2 pur2 puc3 pur3 puc4 pur4 puc5 pur5 --all-drop --all-pickup
+```
+
+PASS : `.tools/saber-all-ten-checkpoints-check.json`, les deux certifications true. Le contrôle cherche également une autre entité portant la même identité de sabre avec un UUID différent. Log du runner `.tools/saber-pickup-checkpoint-matrix.log`. Kills : runners nonzero attendus, deux clients0 ; reprises : serveur/deux clients0 sans force. Captures/prefix des clients et preuves natives sont conservés dans les dossiers isolés puc/pur. Capture avant pickup puc2 réellement inspectée : poignée grise/noire et commande rouge suspendue au-dessus de la table, terrain/HUD/hotbar ; notifications vanilla offline visibles. Cette image précède la nouvelle refonte artistique.
+
+Aucune correction de gameplay nécessaire pendant cette matrice. Régression préalable :112GT requis passent19:20:55, BUILD SUCCESSFUL42s, `.tools/saber-pickup-checkpoint-regression.log`. Les derniers clients de cette matrice incluent le premier essai de préférence d'écran, dont le nom d'adaptateur est corrigé ensuite ; la preuve de placement figure avec la validation artistique. Les gates IO Windows/GUI/mortfalse/conteneurs/hoppers ne sont pas fermées par ces dix kills.

@@ -1,8 +1,10 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberPickupCrash','SaberCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$DesignGallery, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
 $ErrorActionPreference='Stop'
-if($TransferStage -and $Mode -ne 'SaberCrash') { throw 'TransferStage requires isolated SaberCrash mode.' }
-$killRequested=$KillHeld -or $Mode -in @('ImpulseCrash','SaberCrash')
-$checkpointName=if($Mode -eq 'SaberCrash' -and $TransferStage) {'saber-transfer-checkpoint.nbt'} elseif($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
+if($DesignGallery -and $Mode -ne 'SaberRecover') {throw 'DesignGallery requires isolated SaberRecover mode.'}
+if($Mode -eq 'SaberPickupCrash' -and -not $TransferStage) {throw 'SaberPickupCrash requires TransferStage.'}
+if($TransferStage -and $Mode -notin @('SaberCrash','SaberPickupCrash')) { throw 'TransferStage requires isolated SaberCrash or SaberPickupCrash mode.' }
+$killRequested=$KillHeld -or $Mode -in @('ImpulseCrash','SaberCrash','SaberPickupCrash')
+$checkpointName=if($Mode -in @('SaberCrash','SaberPickupCrash') -and $TransferStage) {'saber-transfer-checkpoint.nbt'} elseif($Mode -eq 'SaberCrash') {'saber-crash-drop.nbt'} elseif($Mode -eq 'ImpulseCrash') {'impulse-crash-active.nbt'} else {'block-crash-held.nbt'}
 if($KillHeld -and $Mode -ne 'Block') { throw 'KillHeld requires isolated Block mode.' }
 if($Duel -and $Mode -ne 'Journey') { throw 'Duel requires the legitimate journey prefix.' }
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot));$world=Join-Path $repoPath "run-adventure-$Run/world";$prefix=Join-Path $repoPath ".tools/adventure-preparation-$Run"
@@ -20,7 +22,7 @@ if($Mode -ne 'Prep') {
     Copy-Item -LiteralPath $source -Destination $world -Recurse
     $prefix=Join-Path $repoPath ".tools/adventure-$($Mode.ToLowerInvariant())-$Run"
 }
-$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'SaberCheckpointRecover') {'adventureSaberCheckpointRecover'} elseif($Mode -eq 'SaberPickup') {'adventureSaberPickup'} elseif($Mode -in @('SaberWorkshop','SaberRecover','SaberCrash')) {'adventureSaberWorkshop'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover','ImpulseUnload')) {'adventureImpulseRestart'} else {'adventureTravel'}
+$validationFlag=if($Mode -eq 'Prep') {'adventurePrep'} elseif($Mode -eq 'Recovery') {'adventureRecovery'} elseif($Mode -eq 'Progress') {'adventureProgress'} elseif($Mode -eq 'ProgressRecovery') {'adventureProgressRecovery'} elseif($Mode -eq 'Rewards') {'adventureRewards'} elseif($Mode -eq 'RewardsRecovery') {'adventureRewardsRecovery'} elseif($Mode -in @('Block','BlockRecover')) {'adventureBlock'} elseif($Mode -eq 'SaberCheckpointRecover') {'adventureSaberCheckpointRecover'} elseif($Mode -in @('SaberPickup','SaberPickupCrash')) {'adventureSaberPickup'} elseif($Mode -in @('SaberWorkshop','SaberRecover','SaberCrash')) {'adventureSaberWorkshop'} elseif($Mode -eq 'Impulse') {'adventureImpulse'} elseif($Mode -in @('ImpulseCrash','ImpulseRecover','ImpulseUnload')) {'adventureImpulseRestart'} else {'adventureTravel'}
 $artifact=if($Mode -eq 'BlockRecover') {'block-recovered'} elseif($Mode -eq 'RewardsRecovery') {'rewards-recovery'} elseif($Mode -eq 'ProgressRecovery') {'progress-recovery'} elseif($Mode -eq 'Prep') {'preparation'} else {$Mode.ToLowerInvariant()}
 $marker=if($Mode -eq 'BlockRecover') {'ADVENTURE_BLOCK_RECOVER'} elseif($Mode -eq 'RewardsRecovery') {'ADVENTURE_REWARDS_RECOVERY'} elseif($Mode -eq 'ProgressRecovery') {'ADVENTURE_PROGRESS_RECOVERY'} elseif($Mode -eq 'Prep') {'ADVENTURE_PREPARATION'} else {'ADVENTURE_'+$Mode.ToUpperInvariant()}
 & (Join-Path $PSScriptRoot 'test-travel-network.ps1') -Run $Run -PrepareOnly
@@ -66,8 +68,10 @@ tutorialStep:none
         if($KillHeld) { $argsList.Insert($main,'-Dlotf.validation.blockCrash=true') }
         if($Mode -eq 'BlockRecover') { $argsList.Insert($main,'-Dlotf.validation.blockRecover=true') }
         if($Mode -eq 'ImpulseRecover') { $argsList.Insert($main,'-Dlotf.validation.impulseRecover=true') }
+        if($DesignGallery) { $argsList.Insert($main,'-Dlotf.validation.saberDesignGallery=true') }
         if($Mode -eq 'SaberRecover') { $argsList.Insert($main,'-Dlotf.validation.saberRecover=true') }
         if($Mode -eq 'SaberCrash') { $argsList.Insert($main,'-Dlotf.validation.saberCrash=true') }
+        if($Mode -eq 'SaberPickupCrash') { $argsList.Insert($main,'-Dlotf.validation.saberPickupCrash=true') }
         if($Mode -eq 'ImpulseUnload') { $argsList.Insert($main,'-Dlotf.validation.impulseUnload=true') }
         if($Mode -eq 'Journey') { $argsList.Insert($main,'-Dlotf.validation.adventureJourney=true') }
         if($Duel) { $argsList.Insert($main,'-Dlotf.validation.adventureDuel=true') }

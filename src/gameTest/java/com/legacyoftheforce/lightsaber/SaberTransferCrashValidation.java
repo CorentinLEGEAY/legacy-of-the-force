@@ -18,11 +18,11 @@ public final class SaberTransferCrashValidation {
     private static final Map<MinecraftServer,Boolean> SERVERS=new IdentityHashMap<>();
     private static void require(boolean value,String why) {if(!value)throw new IllegalStateException(why);}
     @SubscribeEvent public static void start(ServerStartedEvent event) {
-        String requested=System.getProperty("lotf.validation.saberCheckpoint","");if(requested.isEmpty())return;SaberTransferCheckpoint.Stage.valueOf(requested);var server=event.getServer();var root=server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();require(Boolean.getBoolean("lotf.validation.saberCrash")&&root.getParent().getFileName().toString().startsWith("run-adventure-")&&!Files.exists(root.resolve("validation/saber-transfer-checkpoint.nbt")),"Fresh isolated native crash run required");SERVERS.put(server,false);
+        String requested=System.getProperty("lotf.validation.saberCheckpoint","");if(requested.isEmpty())return;SaberTransferCheckpoint.Stage.valueOf(requested);var server=event.getServer();var root=server.getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();require((Boolean.getBoolean("lotf.validation.saberCrash")||Boolean.getBoolean("lotf.validation.saberPickupCrash"))&&root.getParent().getFileName().toString().startsWith("run-adventure-")&&!Files.exists(root.resolve("validation/saber-transfer-checkpoint.nbt")),"Fresh isolated native crash run required");SERVERS.put(server,false);
     }
     @SubscribeEvent public static void stop(ServerStoppedEvent event) {SERVERS.remove(event.getServer());}
     @SubscribeEvent public static void checkpoint(SaberTransferCheckpoint event) {
-        if(!event.stage().name().equals(System.getProperty("lotf.validation.saberCheckpoint",""))||!event.direction().equals("DROP"))return;
+        if(!event.stage().name().equals(System.getProperty("lotf.validation.saberCheckpoint",""))||!event.direction().equals(Boolean.getBoolean("lotf.validation.saberPickupCrash")?"PICKUP":"DROP"))return;
         for(var pair:SERVERS.entrySet()) {
             var server=pair.getKey();if(pair.getValue())continue;var actor=server.getPlayerList().getPlayer(event.actor());if(actor==null)continue;
             try {

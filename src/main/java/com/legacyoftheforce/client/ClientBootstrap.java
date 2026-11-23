@@ -13,6 +13,7 @@ import net.neoforged.bus.api.IEventBus;
 public final class ClientBootstrap {
     public ClientBootstrap(ModContainer container, IEventBus modBus) {
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
+        NeoForge.EVENT_BUS.addListener(new DevelopmentWindowPlacement()::tick);
         var hud = new ProgressHud();
         ClientProjection.install(hud::receive);
         NeoForge.EVENT_BUS.addListener(hud::render);

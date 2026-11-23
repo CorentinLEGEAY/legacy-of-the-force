@@ -120,8 +120,23 @@ public final class SaberItemTransfers {
             LegacyOfTheForce.LOGGER.error("Saber transfer pending; player disconnected until durable reconciliation",failure);
             actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.transfer_pending"));
         }
+        private boolean persistDropBeforeImage(ServerPlayer actor,ItemEntity entity) {
+            int slot=actor.getInventory().getFreeSlot();
+            if(slot<0) {refund(actor,entity.getItem());return false;}
+            // Vanilla has already removed the Q item. Make its before-image durable before
+            // an unpaid intent could be recovered against an older acquisition snapshot.
+            actor.getInventory().setItem(slot,entity.getItem().copy());actor.getInventory().setChanged();
+            try {
+                var expected=actor.getInventory().save(new ListTag());NativeInventoryImage.validate(expected);var saved=players.persist(actor);
+                if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected))throw new IOException("Native drop before-image read-back mismatch");
+            }catch(IOException|RuntimeException failure) {
+                actor.containerMenu.broadcastFullState();actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.transfer_unavailable"),true);warn(failure);return false;
+            }
+            actor.getInventory().setItem(slot,ItemStack.EMPTY);actor.getInventory().setChanged();return true;
+        }
         void drop(ServerPlayer actor,ItemEntity entity) {
             if(!ready(actor)||entity.level()!=actor.level()||entity.isRemoved()||identity(entity.getItem()).isEmpty()) {refund(actor,entity.getItem());return;}
+            if(!persistDropBeforeImage(actor,entity))return;
             StoredOperation entry;
             try {entry=prepare(actor,entity,"DROP");}
             catch(IOException|RuntimeException failure) {refund(actor,entity.getItem());warn(failure);return;}
@@ -166,13 +181,13 @@ public final class SaberItemTransfers {
             for(var value:inventory) {var stack=(CompoundTag)value;var assembly=stack.getCompound("components").getCompound("legacyoftheforce:saber_assembly");if(assembly.hasUUID("saberId")&&assembly.getUUID("saberId").equals(tag.getUUID("saberId")))copies+=stack.getInt("count");}
             boolean drop=tag.getString("direction").equals("DROP");
             if(copies!=(paid?(drop?0:1):(drop?1:0)))throw new IOException("Native inventory disagrees with transfer receipt; journal retained");
-            if(!paid) {if(entry.phase().equals("HELD"))throw new IOException("Paid journal has an older native player receipt");close(entry);return;}
+            if(!paid) {if(entry.phase().equals("HELD"))throw new IOException("Paid journal has an older native player receipt");if(drop) {close(entry);return;}}
             var key=ResourceKey.create(Registries.DIMENSION,ResourceLocation.parse(tag.getString("dimension")));var level=server.getLevel(key);if(level==null)throw new IOException("Transfer dimension unavailable");
             var position=tag.getCompound("entity").getList("Pos",Tag.TAG_DOUBLE);var at=net.minecraft.core.BlockPos.containing(position.getDouble(0),position.getDouble(1),position.getDouble(2));level.getChunkAt(at);var chunk=new net.minecraft.world.level.ChunkPos(at);
             if(!level.entityManager.areEntitiesLoaded(chunk.toLong()))return;
             var entity=level.getEntity(tag.getUUID("entityId"));
             if(entity!=null&&(!(entity instanceof ItemEntity item)||!identity(item.getItem()).filter(tag.getUUID("saberId")::equals).isPresent()||!item.getItem().save(server.registryAccess()).equals(tag.getCompound("entity").getCompound("Item"))))throw new IOException("Conflicting entity at transfer identity");
-            if(drop) {
+            if(drop||!paid) {
                 if(entity==null) {entity=EntityType.loadEntityRecursive(withType(tag.getCompound("entity")),level,value->value);if(!(entity instanceof ItemEntity)||!level.addFreshEntity(entity))throw new IOException("Cannot recover durable saber drop");}
                 entities.persist(entity);
             } else {if(entity!=null)entity.discard();entities.persistAbsence(level,chunk,tag.getUUID("entityId"));}

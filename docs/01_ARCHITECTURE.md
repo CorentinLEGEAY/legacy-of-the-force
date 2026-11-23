@@ -6,6 +6,8 @@
 
 Le correctif ferme la duplication sd1 sur sa répétition sd2 ; rapport `validation/P2-01_TRANSFERS.md`. Coupures intermédiaires de processus, erreurs de fichiers et autres transferts (mortfalse, conteneurs/hoppers, cristaux libres) restent à exercer avant garantie globale des objets rares. Les fixtures de frontières durables ne sont pas déclarées des kills réels.
 
+Avant-image de dépôt récente : le stack retiré par Q est temporairement reconstitué dans une place libre, agrégat natif sauvegardé/vérifié avant PREPARED, puis état postQ exact retrouvé. Un refus avant cette frontière garde le stack. Pour un pickup non payé, la reprise préserve aussi la source depuis le journal si sa première sauvegarde d'entité n'avait pas eu lieu ; elle ne ferme pas une intention en perdant cette seule source. Preuves et nouveau serveur/collecte : `validation/P2-01_PICKUP_RECOVERY.md` (sd4→sp2).
+
 ## Contraintes techniques
 - **Un mod Java NeoForge** : un seul projet Gradle, un seul `modid=legacyoftheforce`, un seul JAR distribué. Pas de microservices ni de modules Gradle séparés au MVP.
 - Packages Java `com.legacyoftheforce.{core,rpg,force,lightsaber,speeder,planets,bosses,quests,client,content}`.

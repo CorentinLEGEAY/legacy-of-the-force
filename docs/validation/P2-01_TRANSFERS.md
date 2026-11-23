@@ -2,6 +2,8 @@
 
 Correctif implémenté le23 novembre2026. Le scénario de duplication sd1 est fermé sur sa répétition sd2 ; P2-01 reste partiel pour les coupures intermédiaires natives, les refus d'écriture et les autres chemins de transfert.
 
+Suite vérifiée : [P2-01_PICKUP_RECOVERY.md](P2-01_PICKUP_RECOVERY.md) ajoute sd3→sp1 puis correctif d'avant-image récente et sd4→sp2, deux vraies nouvelles connexions/collecte/reçu2 sans duplication. Les résultats datés ci-dessous restent les preuves de leur propre binaire.
+
 ## Contrat de production
 
 `SaberItemTransfers` intercepte le Q hors menus et le ramassage des sabres identifiés, côté serveur, quand l'agrégat d'inventaire est prêt à sauvegarder. Le même sabre peut contenir un cristal : son ItemStack complet est conservé. Les cristaux libres, conteneurs, drops de mort et autres systèmes de déplacement ne sont pas implicitement pris en charge par ces deux hooks.
@@ -40,4 +42,4 @@ JAR final SHA256 **4D699ABDFA158816A0DF97C6A699CF67E9CE69D298138E4CC005141C486EB
 
 ## Validation restante
 
-Vrai redémarrage de sd3 avec clients et ramassage ; kills au milieu de PREPARED/paiement/publication/retrait/fermeture ; vrais refus d'accès aux fichiers ; drops GUI, mort keepInventoryfalse, inventaires de conteneurs/hoppers et autres échanges. Exercer aussi une création/acquisition très récente non encore dans l'image joueur native : une intention non payée incohérente avec cette image est actuellement retenue en conflit plutôt que de jeter le journal ; la durabilité de l'avant-image doit être traitée pour éviter une reprise bloquée. Ces cas doivent être traités et vérifiés avant toute garantie globale de conservation des objets rares. Les nouveaux exemples sd2/sd3 ferment le défaut reproduit sur le Q payé, pas ces parcours par substitution. La V1.0 et la phase P2 restent ouvertes.
+Le redémarrage avec clients/ramassage et l'avant-image récente sont traités dans P2-01_PICKUP_RECOVERY.md : nouvelle barrière avant PREPARED et reprise d'une source pickup non payée. Restent les kills au milieu de PREPARED/paiement/publication/retrait/fermeture, vrais refus d'accès aux fichiers, drops GUI, mort keepInventoryfalse, inventaires de conteneurs/hoppers et autres échanges. Ces cas doivent être traités et vérifiés avant toute garantie globale de conservation des objets rares. Les exemples sd2/sd3/sd4 ferment le défaut reproduit sur le Q payé, pas ces parcours par substitution. La V1.0 et la phase P2 restent ouvertes.

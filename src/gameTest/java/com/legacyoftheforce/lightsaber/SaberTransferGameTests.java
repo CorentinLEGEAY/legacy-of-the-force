@@ -105,8 +105,7 @@ public final class SaberTransferGameTests {
     @GameTest(template="empty",timeoutTicks=100) public static void malformedReceiptAndFullInventoryCannotConsumeTheWorldItem(GameTestHelper helper) throws Exception {
         var actor=actor(helper);var service=new SaberItemTransfers.Service(actor.server,directory(helper),4);var entity=new ItemEntity(helper.getLevel(),actor.getX(),actor.getY(),actor.getZ(),saber());helper.getLevel().addFreshEntity(entity);
         for(int i=0;i<36;i++)actor.getInventory().setItem(i,new ItemStack(Items.STONE,64));service.pickup(actor,entity);helper.assertFalse(entity.isRemoved(),"Full inventory must preserve the source entity");
-        actor.getInventory().setItem(0,ItemStack.EMPTY);actor.containerMenu.setCarried(new ItemStack(Items.IRON_INGOT));service.pickup(actor,entity);helper.assertTrue(actor.getInventory().getItem(0).isEmpty()&&!entity.isRemoved()&&actor.containerMenu.getCarried().is(Items.IRON_INGOT),"A transient cursor stack must not be excluded from a forced inventory save");actor.containerMenu.setCarried(ItemStack.EMPTY);
-        actor.inventoryMenu.getSlot(1).set(new ItemStack(Items.IRON_INGOT));service.pickup(actor,entity);helper.assertTrue(actor.getInventory().getItem(0).isEmpty()&&!entity.isRemoved()&&actor.inventoryMenu.getSlot(1).getItem().is(Items.IRON_INGOT),"Transient crafting inputs must not enter an incomplete native inventory checkpoint");actor.inventoryMenu.getSlot(1).set(ItemStack.EMPTY);
+        actor.getInventory().setItem(0,ItemStack.EMPTY);
         var future=new CompoundTag();future.putInt("schemaVersion",99);actor.setData(SaberContent.TRANSFER_RECEIPT.get(),new SaberTransferReceipt(future));service.pickup(actor,entity);helper.assertTrue(actor.getInventory().getItem(0).isEmpty()&&!entity.isRemoved(),"Future receipt must refuse without consuming");entity.discard();helper.succeed();
     }
 }

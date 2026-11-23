@@ -21,9 +21,13 @@ def verify(repo,run):
         config=json.loads(archive.read('legacyoftheforce.mixins.json'));assert config['required'] and config['injectors']['defaultRequire']==1 and len(config['mixins'])==3
         for mixin in config['mixins']: assert config['package'].replace('.','/')+'/'+mixin+'.class' in names
         assert 'config="legacyoftheforce.mixins.json"' in archive.read('META-INF/neoforge.mods.toml').decode()
+        personal=json.loads(archive.read('legacyoftheforce.lightsaber.mixins.json'));assert personal['required'] and personal['injectors']['defaultRequire']==1 and set(personal['mixins'])=={'PlayerMenuStateMixin','PersonalMenuDropMixin','PersonalMenuCloseMixin'}
+        for mixin in personal['mixins']:assert personal['package'].replace('.','/')+'/'+mixin+'.class' in names
+        assert 'config="legacyoftheforce.lightsaber.mixins.json"' in archive.read('META-INF/neoforge.mods.toml').decode()
         for language in ('fr_fr','en_us'):
             language_data=json.loads(archive.read(f'assets/legacyoftheforce/lang/{language}.json'))
             assert language_data['boss.legacyoftheforce.fluid_locked'] and language_data['quest.legacyoftheforce.archive_unavailable']
+            assert language_data['saber.legacyoftheforce.menu_recovery'] and language_data['saber.legacyoftheforce.menu_retained']
     for phase in (1,2):
         log=(repo/f'.tools/packaged-{run}-phase{phase}.log').read_text(encoding='utf-8-sig')
         assert 'mods folder locator' in log and 'Legacy of the Force 0.1.0-dev (legacyoftheforce)' in log and 'infrastructure loaded' in log
@@ -33,10 +37,11 @@ def verify(repo,run):
         if result.get('mixinVerbose'):
             console=(repo/f'.tools/packaged-{run}-phase{phase}-console.log').read_text(encoding='utf-8-sig')
             assert all(mixin in console for mixin in ('ArenaFluidFlowMixin','ArenaBucketMixin','ArenaBucketPickupMixin'))
+            assert all(mixin in console for mixin in ('PlayerMenuStateMixin','PersonalMenuDropMixin','PersonalMenuCloseMixin'))
     level=load(world/'level.dat')['Data'];assert 'Player' not in level
     chunk=ilum.read_chunk(world/'region',0,0);assert ilum.block(chunk,0,100,0)==ilum.block(chunk,1,100,0)=='minecraft:water'
     assert ilum.block(chunk,0,99,0)==ilum.block(chunk,1,99,0)=='minecraft:stone'
-    return {'jarSha256':digest,'standaloneServerPids':[p['pid'] for p in result['phases']],'distributedHarnessClasses':0,'requiredMixins':3,'nativeFlowSavedAcrossRestart':True,'ilumLoaded':True}
+    return {'jarSha256':digest,'standaloneServerPids':[p['pid'] for p in result['phases']],'distributedHarnessClasses':0,'requiredMixins':6,'nativeFlowSavedAcrossRestart':True,'ilumLoaded':True}
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('run');args=parser.parse_args();assert 1<=len(args.run)<=12 and all(c in 'abcdefghijklmnopqrstuvwxyz0123456789_-' for c in args.run)
     print(json.dumps(verify(Path(__file__).resolve().parent.parent,args.run),indent=2))

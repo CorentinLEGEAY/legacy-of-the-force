@@ -62,6 +62,7 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(SaberCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());
+        NeoForge.EVENT_BUS.register(com.legacyoftheforce.lightsaber.SaberMenuState.listener());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.KyberBondService());
         NeoForge.EVENT_BUS.register(new TransactionContent());
         NeoForge.EVENT_BUS.register(new ForceModule(new ProgressService(), new VanillaProtectedWorldService(),

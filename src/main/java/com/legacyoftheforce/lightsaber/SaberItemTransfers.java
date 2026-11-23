@@ -34,6 +34,10 @@ public final class SaberItemTransfers {
         return stack.is(SaberContent.SABER.get())&&stack.getCount()==1&&data!=null&&data.supported()?Optional.of(data.tag().getUUID("saberId")):Optional.empty();
     }
     private static boolean relevant(ItemStack stack) {return stack.is(SaberContent.SABER.get());}
+    enum DropOutcome { REFUSED, COMMITTED, PENDING }
+    static boolean canMenuDrop(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service!=null&&service.ready(actor);}
+    static boolean validMenuItem(ItemEntity entity) {return entity!=null&&!entity.isRemoved()&&identity(entity.getItem()).isPresent();}
+    static DropOutcome commitMenuDrop(ServerPlayer actor,ItemEntity entity) {var service=SERVICES.get(actor.server);return service==null?DropOutcome.REFUSED:service.commitDrop(actor,entity);}
     private static void refund(ServerPlayer actor,ItemStack stack) {
         var returned=stack.copy();
         if(!actor.getInventory().add(returned)) {
@@ -48,13 +52,13 @@ public final class SaberItemTransfers {
     }
     @SubscribeEvent public void stop(ServerStoppedEvent event) {SERVICES.remove(event.getServer());}
     @SubscribeEvent public void stopping(ServerStoppingEvent event) {var service=SERVICES.get(event.getServer());if(service!=null)service.releaseLease();}
-    @SubscribeEvent(priority=EventPriority.LOWEST) public void toss(ItemTossEvent event) {
-        if(!(event.getPlayer() instanceof ServerPlayer actor)||!relevant(event.getEntity().getItem()))return;
-        // GUI throw handlers can clear the cursor after this event returns. They need their own
-        // transfer path; do not force-save or refund into that transient cursor here.
+    @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=true) public void toss(ItemTossEvent event) {
+        if(!(event.getPlayer() instanceof ServerPlayer actor))return;
+        if(SaberGuiDrops.defer(event)||!actor.isAlive()||!relevant(event.getEntity().getItem())||event.isCanceled())return;
+        // Foreign menus still need their own aggregate barrier; personal clicks are wrapped above.
         if(!Service.inventoryReady(actor))return;
         event.setCanceled(true);var service=SERVICES.get(actor.server);
-        if(service==null||!service.ready(actor)||identity(event.getEntity().getItem()).isEmpty()) {refund(actor,event.getEntity().getItem());actor.displayClientMessage(Component.translatable(!actor.containerMenu.getCarried().isEmpty()?"saber.legacyoftheforce.transfer_clear_cursor":!Service.inventoryReady(actor)?"saber.legacyoftheforce.transfer_close_menu":"saber.legacyoftheforce.transfer_unavailable"),true);return;}
+        if(service==null||!service.ready(actor)||identity(event.getEntity().getItem()).isEmpty()) {refund(actor,event.getEntity().getItem());actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.transfer_unavailable"),true);return;}
         service.drop(actor,event.getEntity());
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) public void pickup(ItemEntityPickupEvent.Pre event) {
@@ -90,9 +94,7 @@ public final class SaberItemTransfers {
         private boolean pendingActor(UUID owner) {return pending.values().stream().anyMatch(entry->entry.payload().getUUID("actor").equals(owner));}
         private boolean locked(UUID entity) {return pending.values().stream().anyMatch(entry->entry.payload().getUUID("entityId").equals(entity));}
         private static boolean inventoryReady(ServerPlayer actor) {
-            if(actor.containerMenu!=actor.inventoryMenu||!actor.containerMenu.getCarried().isEmpty())return false;
-            for(int slot=1;slot<=4;slot++)if(!actor.inventoryMenu.getSlot(slot).getItem().isEmpty())return false;
-            return true;
+            return actor.containerMenu==actor.inventoryMenu&&SaberMenuState.ready(actor);
         }
         private boolean ready(ServerPlayer actor) {return healthy&&server.isSameThread()&&actor.server==server&&actor.isAlive()&&!actor.isFakePlayer()&&!actor.isSpectator()&&inventoryReady(actor)&&!pendingActor(actor.getUUID())&&actor.getData(SaberContent.TRANSFER_RECEIPT.get()).stamp().isPresent();}
         private CompoundTag payload(ServerPlayer actor,ItemEntity entity,UUID operation,String direction) {
@@ -116,8 +118,8 @@ public final class SaberItemTransfers {
         }
         private void pay(ServerPlayer actor,StoredOperation entry) throws IOException {
             actor.setData(SaberContent.TRANSFER_RECEIPT.get(),new SaberTransferReceipt(entry.payload().getCompound("receipt")));
-            var expected=actor.getInventory().save(new ListTag());NativeInventoryImage.validate(expected);var saved=players.persist(actor);
-            if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected)||!saved.getCompound("neoforge:attachments").getCompound(RECEIPT).equals(entry.payload().getCompound("receipt")))throw new IOException("Native transfer payment read-back mismatch");
+            var expected=actor.getInventory().save(new ListTag());var expectedMenu=SaberMenuState.capture(actor);NativeInventoryImage.validate(expected);var saved=players.persist(actor);
+            if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected)||!saved.getCompound(SaberMenuState.KEY).equals(expectedMenu)||!saved.getCompound("neoforge:attachments").getCompound(RECEIPT).equals(entry.payload().getCompound("receipt")))throw new IOException("Native transfer payment read-back mismatch");
             checkpoint(entry,SaberTransferCheckpoint.Stage.PAYMENT_DURABLE);
             var paid=store.transition(entry.id(),OperationPhase.PREPARED,OperationPhase.HELD,entry.payload());pending.put(entry.id(),paid);
             checkpoint(paid,SaberTransferCheckpoint.Stage.HELD);
@@ -139,8 +141,8 @@ public final class SaberItemTransfers {
             // an unpaid intent could be recovered against an older acquisition snapshot.
             actor.getInventory().setItem(slot,entity.getItem().copy());actor.getInventory().setChanged();
             try {
-                var expected=actor.getInventory().save(new ListTag());NativeInventoryImage.validate(expected);var saved=players.persist(actor);
-                if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected))throw new IOException("Native drop before-image read-back mismatch");
+                var expected=actor.getInventory().save(new ListTag());var expectedMenu=SaberMenuState.capture(actor);NativeInventoryImage.validate(expected);var saved=players.persist(actor);
+                if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(expected)||!saved.getCompound(SaberMenuState.KEY).equals(expectedMenu))throw new IOException("Native drop before-image read-back mismatch");
             }catch(IOException|RuntimeException failure) {
                 actor.containerMenu.broadcastFullState();actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.transfer_unavailable"),true);warn(failure);return false;
             }
@@ -149,19 +151,24 @@ public final class SaberItemTransfers {
         void drop(ServerPlayer actor,ItemEntity entity) {
             if(!ready(actor)||entity.level()!=actor.level()||entity.isRemoved()||identity(entity.getItem()).isEmpty()) {refund(actor,entity.getItem());return;}
             if(!persistDropBeforeImage(actor,entity))return;
+            if(commitDrop(actor,entity)==DropOutcome.REFUSED)refund(actor,entity.getItem());
+        }
+        DropOutcome commitDrop(ServerPlayer actor,ItemEntity entity) {
+            if(!ready(actor)||entity.level()!=actor.level()||!validMenuItem(entity))return DropOutcome.REFUSED;
             StoredOperation entry;
             try {entry=prepare(actor,entity,"DROP");}
-            catch(IOException|RuntimeException failure) {refund(actor,entity.getItem());warn(failure);return;}
+            catch(IOException|RuntimeException failure) {warn(failure);return DropOutcome.REFUSED;}
             try {
                 pay(actor,entry);
                 if(!actor.serverLevel().addFreshEntity(entity))throw new IOException("Saber drop publication refused");
-                entities.persist(entity);checkpoint(entry,SaberTransferCheckpoint.Stage.ENTITY_DURABLE);close(pending.get(entry.id()));actor.inventoryMenu.broadcastChanges();
-            }catch(IOException|RuntimeException failure) {uncertain(actor,failure);}
+                entities.persist(entity);checkpoint(entry,SaberTransferCheckpoint.Stage.ENTITY_DURABLE);close(pending.get(entry.id()));actor.inventoryMenu.broadcastChanges();return DropOutcome.COMMITTED;
+            }catch(IOException|RuntimeException failure) {uncertain(actor,failure);return DropOutcome.PENDING;}
         }
         void pickup(ServerPlayer actor,ItemEntity entity) {
             if(!ready(actor)||entity.level()!=actor.level()||identity(entity.getItem()).isEmpty())return;
             int free=actor.getInventory().getFreeSlot();if(free<0||entity.isRemoved()||!actor.canInteractWithEntity(entity,1.0))return;
             var id=identity(entity.getItem()).orElseThrow();for(int i=0;i<actor.getInventory().getContainerSize();i++)if(identity(actor.getInventory().getItem(i)).filter(id::equals).isPresent())return;
+            for(int slot=0;slot<5;slot++)if(identity(slot==0?actor.inventoryMenu.getCarried():actor.inventoryMenu.getSlot(slot).getItem()).filter(id::equals).isPresent())return;
             StoredOperation entry;
             try {entry=prepare(actor,entity,"PICKUP");}catch(IOException|RuntimeException failure) {warn(failure);return;}
             var original=entity.getItem().copy();actor.getInventory().setItem(free,original.copy());actor.getInventory().setChanged();
@@ -200,7 +207,8 @@ public final class SaberItemTransfers {
             boolean paid=actual.revision()==expected.revision()&&entry.id().equals(actual.operation());
             if(!paid&&actual.revision()>=expected.revision())throw new IOException("Conflicting player transfer revision; no replay allowed");
             var inventory=nativePlayer.getList("Inventory",Tag.TAG_COMPOUND);NativeInventoryImage.validate(inventory);int copies=0;
-            for(var value:inventory) {var stack=(CompoundTag)value;var assembly=stack.getCompound("components").getCompound("legacyoftheforce:saber_assembly");if(assembly.hasUUID("saberId")&&assembly.getUUID("saberId").equals(tag.getUUID("saberId")))copies+=stack.getInt("count");}
+            var allItems=new ListTag();allItems.addAll(inventory);allItems.addAll(SaberMenuState.fromPlayer(nativePlayer));
+            for(var value:allItems) {var stack=(CompoundTag)value;var assembly=stack.getCompound("components").getCompound("legacyoftheforce:saber_assembly");if(assembly.hasUUID("saberId")&&assembly.getUUID("saberId").equals(tag.getUUID("saberId")))copies+=stack.getInt("count");}
             boolean drop=tag.getString("direction").equals("DROP");
             if(copies!=(paid?(drop?0:1):(drop?1:0)))throw new IOException("Native inventory disagrees with transfer receipt; journal retained");
             if(!paid) {if(entry.phase().equals("HELD"))throw new IOException("Paid journal has an older native player receipt");if(drop) {close(entry);return;}}

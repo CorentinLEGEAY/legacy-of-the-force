@@ -1,5 +1,6 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberPickupCrash','SaberIo','SaberCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$DesignGallery, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='ap1', [ValidateSet('Prep','Travel','Journey','Recovery','Progress','ProgressRecovery','Rewards','RewardsRecovery','Block','BlockRecover','Impulse','ImpulseCrash','ImpulseRecover','ImpulseUnload','SaberWorkshop','SaberRecover','SaberCrash','SaberPickup','SaberPickupCrash','SaberIo','SaberCheckpointRecover')][string]$Mode='Prep', [ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$PreparationRun='ap4', [switch]$SmallViewport, [switch]$DesignGallery, [switch]$PersonalMenu, [switch]$Duel, [switch]$KillHeld, [string]$PythonPath='', [ValidatePattern('^(|PREPARED|PAYMENT_DURABLE|HELD|ENTITY_DURABLE|CLOSED)$')][string]$TransferStage='')
 $ErrorActionPreference='Stop'
+if($PersonalMenu -and $Mode -ne 'SaberCrash') {throw 'PersonalMenu requires isolated SaberCrash mode.'}
 if($Mode -eq 'SaberIo' -and $TransferStage -notin @('PREPARED','PAYMENT_DURABLE','HELD','CLOSED')) {throw 'SaberIo requires a supported TransferStage.'}
 if($DesignGallery -and $Mode -ne 'SaberRecover') {throw 'DesignGallery requires isolated SaberRecover mode.'}
 if($Mode -eq 'SaberPickupCrash' -and -not $TransferStage) {throw 'SaberPickupCrash requires TransferStage.'}
@@ -69,6 +70,7 @@ tutorialStep:none
         if($KillHeld) { $argsList.Insert($main,'-Dlotf.validation.blockCrash=true') }
         if($Mode -eq 'BlockRecover') { $argsList.Insert($main,'-Dlotf.validation.blockRecover=true') }
         if($Mode -eq 'ImpulseRecover') { $argsList.Insert($main,'-Dlotf.validation.impulseRecover=true') }
+        if($PersonalMenu) { $argsList.Insert($main,'-Dlotf.validation.saberPersonalMenu=true') }
         if($DesignGallery) { $argsList.Insert($main,'-Dlotf.validation.saberDesignGallery=true') }
         if($Mode -eq 'SaberRecover') { $argsList.Insert($main,'-Dlotf.validation.saberRecover=true') }
         if($Mode -eq 'SaberCrash') { $argsList.Insert($main,'-Dlotf.validation.saberCrash=true') }

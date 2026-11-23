@@ -21,3 +21,6 @@ side="BOTH"
 
 [[mixins]]
 config="legacyoftheforce.mixins.json"
+
+[[mixins]]
+config="legacyoftheforce.lightsaber.mixins.json"

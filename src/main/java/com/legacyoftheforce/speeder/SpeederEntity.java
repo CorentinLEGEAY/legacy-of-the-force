@@ -181,6 +181,10 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     @Override public InteractionResult interact(net.minecraft.world.entity.player.Player actor, InteractionHand hand) {
         if (level().isClientSide) return InteractionResult.SUCCESS;
+        if(actor instanceof ServerPlayer player&&player.isSecondaryUseActive()){
+            boolean opened=SpeederCargoMenu.open(player,this);if(!opened)player.displayClientMessage(Component.translatable("speeder.legacyoftheforce.cargo_denied"),true);
+            return opened?InteractionResult.CONSUME:InteractionResult.FAIL;
+        }
         if (!(actor instanceof ServerPlayer player) || !mayBoard(player)
                 || !protection.mayModify(player, player.serverLevel(), blockPosition(), ModificationKind.MOVE_THROUGH)) return InteractionResult.FAIL;
         if (ownedBy(player) && !owner(player)) {
@@ -236,6 +240,14 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     public boolean isPilotPassenger(Entity actor) { return entityData.get(OWNER).filter(actor.getUUID()::equals).isPresent() && getPassengers().contains(actor); }
     public int seatCapacity(){return 1+passengerSeats().size();}
+    boolean cargoReady(ServerPlayer actor){
+        if(!ownedBy(actor)||actor.isPassenger()||!getPassengers().isEmpty()||guestSavePending||!actor.hasLineOfSight(this)
+                ||actor.distanceToSqr(this)>SpeederConfig.CARGO_ACCESS_RANGE.get()*SpeederConfig.CARGO_ACCESS_RANGE.get())return false;
+        var snapshot=supported().orElseThrow();
+        if(Math.abs(snapshot.motion().speed())>.001||Math.abs(snapshot.motion().verticalSpeed())>.001||getDeltaMovement().lengthSqr()>.000001
+                ||!loadedAndAllowed(getBoundingBox(),actor)||!protection.mayModify(actor,actor.serverLevel(),blockPosition(),ModificationKind.PLACE))return false;
+        return SpeederCargoInventory.capacity(snapshot,false)>0||!snapshot.cargo().items().isEmpty();
+    }
     @Override public void tick() {
         super.tick();
         if (level().isClientSide) {

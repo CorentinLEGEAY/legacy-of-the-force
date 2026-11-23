@@ -44,6 +44,7 @@ public final class SpeederAssemblyService {
         if (server.overworld().getGameTime() < nextBuild || !busy.add(actor.getUUID())) return Result.BUSY;
         try {
             var port = new NativePort(actor); coordinator.recover(port);
+            if(!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor))return Result.UNAVAILABLE;
             var quote = AssemblyMaterials.quote(actor, validated);
             if (!quote.valid()) return switch (quote.error()) { case MISSING_MATERIAL -> Result.MISSING; case INVENTORY_TOO_LARGE -> Result.UNAVAILABLE; default -> Result.INVALID; };
             var receipt = actor.getData(SpeederContent.ASSEMBLY_RECEIPT.get()); if (receipt.stamp().isEmpty()) return Result.UNAVAILABLE;

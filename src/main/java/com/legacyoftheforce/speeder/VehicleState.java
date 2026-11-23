@@ -20,8 +20,9 @@ public record VehicleState(CompoundTag tag) {
         }
     }
     public record Snapshot(UUID id, UUID owner, SpeederBlueprint blueprint, Pose pose,
-            SpeederMotion.State motion, List<Integer> health, boolean garaged) {
+            SpeederMotion.State motion, List<Integer> health, boolean garaged, SpeederCargoData cargo) {
         public Snapshot { health = List.copyOf(health); }
+        public Snapshot(UUID id,UUID owner,SpeederBlueprint blueprint,Pose pose,SpeederMotion.State motion,List<Integer> health,boolean garaged){this(id,owner,blueprint,pose,motion,health,garaged,SpeederCargoData.empty());}
     }
 
     /** Only the server assembly transaction may publish an instance; this value alone spawns nothing. */
@@ -47,6 +48,8 @@ public record VehicleState(CompoundTag tag) {
         if (plan.isEmpty() || plan.get().modules().isEmpty()) return Optional.empty();
         int[] health = tag.getIntArray("moduleHealth");
         if (health.length != plan.get().modules().size() || Arrays.stream(health).anyMatch(hp -> hp < 0 || hp > 100)) return Optional.empty();
+        if(tag.contains("cargo")&&(!tag.contains("cargo",Tag.TAG_COMPOUND)||!new SpeederCargoData(tag.getCompound("cargo")).supported()))return Optional.empty();
+        if(tag.contains("lastMaintenance")&&(!tag.contains("lastMaintenance",Tag.TAG_COMPOUND)||new AssemblyReceipt(tag.getCompound("lastMaintenance")).stamp().filter(s->s.revision()>0).isEmpty()))return Optional.empty();
         if (tag.contains("guests")) {
             if (!tag.contains("guests", Tag.TAG_LIST) || tag.getInt("guestSchemaVersion") != 1) return Optional.empty();
             var guests = (ListTag)tag.get("guests"); var seen = new HashSet<UUID>();
@@ -62,7 +65,7 @@ public record VehicleState(CompoundTag tag) {
             var pose = new Pose(dimension, tag.getDouble("x"), tag.getDouble("y"), tag.getDouble("z"));
             var motion = new SpeederMotion.State(tag.getDouble("speed"), tag.getDouble("verticalSpeed"), tag.getDouble("yaw"), tag.getDouble("energy"));
             return Optional.of(new Snapshot(tag.getUUID("vehicleId"), tag.getUUID("ownerId"), blueprint, pose, motion,
-                    Arrays.stream(health).boxed().toList(), tag.getBoolean("garaged")));
+                    Arrays.stream(health).boxed().toList(), tag.getBoolean("garaged"),cargo()));
         } catch (IllegalArgumentException malformed) { return Optional.empty(); }
     }
 
@@ -84,6 +87,8 @@ public record VehicleState(CompoundTag tag) {
         for (var value : tag.getList("guests", Tag.TAG_COMPOUND)) result.add(((CompoundTag)value).getUUID("id"));
         return Set.copyOf(result);
     }
+    SpeederCargoData cargo(){return tag.contains("cargo",Tag.TAG_COMPOUND)?new SpeederCargoData(tag.getCompound("cargo")):SpeederCargoData.empty();}
+    VehicleState withCargo(SpeederCargoData cargo){snapshot().orElseThrow();if(!cargo.supported())throw new IllegalArgumentException("Unsupported cargo");var updated=tag.copy();updated.put("cargo",cargo.tag());var result=new VehicleState(updated);if(result.snapshot().isEmpty())throw new IllegalArgumentException("Vehicle cargo exceeds bounds");return result;}
     public VehicleState withGuest(UUID guest, boolean allowed) {
         var previous = snapshot().orElseThrow(() -> new IllegalStateException("Unsupported vehicle is read-only"));
         if (nil(guest) || guest.equals(previous.owner())) throw new IllegalArgumentException("Invalid guest identity");

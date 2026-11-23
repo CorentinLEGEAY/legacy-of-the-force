@@ -76,6 +76,12 @@ geometry['armor_plate'] = [box([1,3,1],[15,5,15],'gunmetal'),box([2,5,2],[14,7,1
 geometry['lamp_module'] = [box([4,1,5],[12,3,11],'alloy',True),box([7,3,7],[9,7,9],'gunmetal'),
     box([3,7,4],[13,13,12],'alloy',True),box([4,8,3],[12,12,4],'edge'),box([5,9,2.8],[11,11,3.1],'indicator')]
 for x in (4,6,8,10,12): geometry['lamp_module'].append(box([x,8,12],[x+.5,12,13],'gunmetal'))
+geometry['cargo_crate'] = [box([2,2,2],[14,13,14],'alloy',True),box([3,3,1.7],[13,12,2],'gunmetal'),
+    box([3.5,3.5,1.4],[12.5,11.5,1.8],'alloy',True),box([2,13,2],[14,14,14],'edge'),
+    box([7,6,1],[9,9,1.5],'copper'),box([6.5,8,1],[9.5,8.5,1.3],'edge')]
+for x in (3,12): geometry['cargo_crate'].append(box([x,2,2],[x+1,13,14.2],'gunmetal'))
+for y in (4,7,10): geometry['cargo_crate'].append(box([2.5,y,14],[13.5,y+.5,14.4],'edge'))
+geometry['cargo_crate'] += bolts(14,(3,12),(3,12))
 
 textures = {name: 'legacyoftheforce:item/saber/'+name for name in ('alloy','edge','gunmetal','grip','copper','indicator','button')}
 for name, elements in geometry.items():
@@ -90,16 +96,17 @@ modules = [
     ('seat_passenger','passenger',1,0,0,0,0,0,'leather','iron_ingot'),
     ('body_cowling','body',.5,0,0,0,0,0,'iron_ingot','iron_nugget'),
     ('armor_plate','armor',3,0,0,0,0,.18,'iron_ingot','copper_ingot'),
-    ('lamp_module','decor',.5,0,0,0,0,0,'glass','glowstone_dust')]
+    ('lamp_module','decor',.5,0,0,0,0,0,'glass','glowstone_dust'),
+    ('cargo_crate','cargo',2.5,0,0,0,0,0,'iron_ingot','chest')]
 for name,family,mass,thrust,lift,capacity,stability,armor,a,b in modules:
     write(DATA/f'speeder_modules/{name}.json',{'schemaVersion':1,'family':family,'mass':mass,'thrust':thrust,'lift':lift,'capacity':capacity,
-        'stability':stability,'armor':armor,'connectors':list(FACES), 'salvage':[{'item':'minecraft:'+a,'count':1}]})
+        'stability':stability,'armor':armor,'cargoSlots':9 if family=='cargo' else 0,'connectors':list(FACES), 'salvage':[{'item':'minecraft:'+a,'count':1}]})
     write(DATA/f'recipe/{name}.json',{'type':'minecraft:crafting_shaped','category':'misc','group':'legacyoftheforce_speeder',
         'pattern':[' A ','ABA',' I '],'key':{'A':{'item':'minecraft:'+a},'B':{'item':'minecraft:'+b},'I':{'item':'minecraft:iron_nugget'}},
         'result':{'id':'legacyoftheforce:'+name,'count':1}})
 
-names = {'fr_fr':['Propulseur vectoriel','Stabilisateur gyroscopique','Siège passager','Capot profilé','Plaque de blindage','Projecteur orientable'],
-         'en_us':['Vector thruster','Gyroscopic stabilizer','Passenger seat','Streamlined cowling','Armor plate','Directional lamp']}
+names = {'fr_fr':['Propulseur vectoriel','Stabilisateur gyroscopique','Siège passager','Capot profilé','Plaque de blindage','Projecteur orientable','Coffre de transport'],
+         'en_us':['Vector thruster','Gyroscopic stabilizer','Passenger seat','Streamlined cowling','Armor plate','Directional lamp','Cargo crate']}
 for locale, labels in names.items():
     path=ASSETS/f'lang/{locale}.json'; data=json.loads(path.read_text(encoding='utf-8'))
     for row,label in zip(modules,labels): data['item.legacyoftheforce.'+row[0]]=label
@@ -107,6 +114,15 @@ for locale, labels in names.items():
              'guest_denied':'Placez votre speeder vide et à l’arrêt à moins de six blocs ; trois invités maximum.','error_too_many_seats':'Quatre places maximum.'} if locale=='fr_fr' else {
              'next_parts':'More parts','guest_pending':'Guest save is uncertain: boarding suspended.','guest_saved':'Passenger permission saved.',
              'guest_denied':'Park your empty speeder within six blocks; at most three guests.','error_too_many_seats':'At most four seats.'}
+    for key,value in extra.items(): data['speeder.legacyoftheforce.'+key]=value
+    extra = {'cargo_title':'Cargaison du speeder','cargo_capacity':'%s places · masse %s',
+             'cargo_help':'Clic : transférer la pile. Clic droit : un objet. Sans curseur. Les cases grisées restent récupérables si elles contiennent des objets.',
+             'cargo_denied':'Votre speeder doit avoir un coffre, être proche, vide de passagers et à l’arrêt.',
+             'recharge_cargo_moved':'Transfert sauvegardé','recharge_cargo_full':'Pile vide ou place insuffisante','recharge_cargo_not_empty':'Videz la cargaison avant recyclage'} if locale=='fr_fr' else {
+             'cargo_title':'Speeder cargo','cargo_capacity':'%s slots · mass %s',
+             'cargo_help':'Click: transfer stack. Right click: one item. No cursor. Items in disabled slots can still be retrieved.',
+             'cargo_denied':'Your speeder needs a cargo crate; park it nearby without passengers.',
+             'recharge_cargo_moved':'Transfer saved','recharge_cargo_full':'Empty stack or insufficient space','recharge_cargo_not_empty':'Unload cargo before recycling'}
     for key,value in extra.items(): data['speeder.legacyoftheforce.'+key]=value
     extra = {'grid_help':'Grilles5×3×3 /9×5×4 /12×7×5. Rétrécissement refusé si des pièces seraient perdues ;128 modules maximum.',
              'class_light':'Classe légère','class_utility':'Classe polyvalente','class_heavy':'Classe lourde','seats':'Places :%s',

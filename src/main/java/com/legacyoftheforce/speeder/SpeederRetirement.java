@@ -59,8 +59,10 @@ final class SpeederRetirement {
     /** Unknown vehicle storage/attachments must be implemented before we can destroy it safely. */
     static boolean supportedStorage(SpeederEntity entity) {
         var state = entity.savedState().tag();
-        var known = Set.of("schemaVersion", "vehicleId", "ownerId", "blueprint", "moduleHealth", "garaged", "dimension", "x", "y", "z", "speed", "verticalSpeed", "yaw", "energy");
+        var known = Set.of("schemaVersion", "vehicleId", "ownerId", "blueprint", "moduleHealth", "garaged", "dimension", "x", "y", "z", "speed", "verticalSpeed", "yaw", "energy", "guests", "guestSchemaVersion", "cargo", "lastMaintenance");
         if (!known.containsAll(state.getAllKeys())) return false;
+        var snapshot=entity.savedState().snapshot();if(snapshot.isEmpty()||!snapshot.get().cargo().items().isEmpty())return false;
+        if(!Set.of("schemaVersion","items").containsAll(snapshot.get().cargo().tag().getAllKeys()))return false;
         var raw = new CompoundTag(); if (!entity.save(raw) || raw.sizeInBytes() > 131072) return false;
         for (String key : List.of("ForgeData", "NeoForgeData", "neoforge:attachments")) if (raw.contains(key) && (!(raw.get(key) instanceof CompoundTag compound) || !compound.isEmpty())) return false;
         return Set.of("id", "UUID", "Pos", "Motion", "Rotation", "FallDistance", "Fire", "Air", "OnGround", "Invulnerable", "PortalCooldown",

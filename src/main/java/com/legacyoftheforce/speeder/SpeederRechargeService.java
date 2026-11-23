@@ -22,7 +22,7 @@ import static com.legacyoftheforce.speeder.RechargeTransaction.Phase;
 
 /** Paid garage maintenance. Historical recharge journal/attachment IDs stay stable; schema 2 adds repair. */
 public final class SpeederRechargeService {
-    public enum Result { NONE, CHARGED, FULL, MISSING, PERMISSION, OCCUPIED, MOVING, BUSY, UNAVAILABLE, CLEAR_CURSOR, PENDING, REPAIRED, UNDAMAGED, KIT_MISSING, NEEDS_REPAIR, PAINTED, UNCHANGED, DYE_MISSING, RECYCLED, NOT_WRECKED, INVENTORY_FULL, UNSUPPORTED_STORAGE, CONFIRM_RECYCLE }
+    public enum Result { NONE, CHARGED, FULL, MISSING, PERMISSION, OCCUPIED, MOVING, BUSY, UNAVAILABLE, CLEAR_CURSOR, PENDING, REPAIRED, UNDAMAGED, KIT_MISSING, NEEDS_REPAIR, PAINTED, UNCHANGED, DYE_MISSING, RECYCLED, NOT_WRECKED, INVENTORY_FULL, UNSUPPORTED_STORAGE, CONFIRM_RECYCLE, CARGO_MOVED, CARGO_FULL, CARGO_NOT_EMPTY }
     private enum Operation { RECHARGE, REPAIR, PAINT, RECYCLE }
     enum Checkpoint { PREPARED, FROZEN, PAYMENT_MEMORY, PAYMENT_DURABLE, PAID, ENERGY_MEMORY, ENERGY_DURABLE, APPLIED, ACTIVATED, DONE }
     interface Probe { void reached(Checkpoint checkpoint); }
@@ -60,6 +60,7 @@ public final class SpeederRechargeService {
         if (server.overworld().getGameTime() < nextRecharge.getOrDefault(actor.getUUID(), 0L)) return Result.BUSY;
         try {
             recover(actor);
+            if(!PlayerInventoryHooks.ready(actor))return Result.UNAVAILABLE;
             var entity = actor.serverLevel().getEntity(selected);
             if (!(entity instanceof SpeederEntity vehicle) || !protection.mayModify(actor, actor.serverLevel(), vehicle.blockPosition(), ModificationKind.PLACE)) return Result.PERMISSION;
             var state = vehicle.savedState().snapshot().orElseThrow();
@@ -70,6 +71,7 @@ public final class SpeederRechargeService {
             var blueprint = state.blueprint();
             double target = state.motion().energy();
             if (recycle) {
+                if(!state.cargo().items().isEmpty())return Result.CARGO_NOT_EMPTY;
                 if (!SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow().wrecked()) return Result.NOT_WRECKED;
                 if (!SpeederRetirement.supportedStorage(vehicle)) return Result.UNSUPPORTED_STORAGE;
             } else if (paint) {
@@ -121,6 +123,32 @@ public final class SpeederRechargeService {
         }
     }
     public void forget(UUID owner) { nextRecharge.remove(owner); }
+    public Result cargo(ServerPlayer actor,UUID selected,boolean deposit,int source,boolean one){
+        if(actor.server!=server||!server.isSameThread()||!(actor.containerMenu instanceof SpeederCargoMenu menu)||!menu.vehicleId().equals(selected))return Result.PERMISSION;
+        if(source<0||source>=(deposit?36:SpeederCargoData.MAX_SLOTS))return Result.PERMISSION;
+        if(server.overworld().getGameTime()<nextRecharge.getOrDefault(actor.getUUID(),0L))return Result.BUSY;
+        nextRecharge.put(actor.getUUID(),server.overworld().getGameTime()+SpeederConfig.CARGO_INTERVAL.get());
+        try{
+            recover(actor);
+            var entity=actor.serverLevel().getEntity(selected);
+            if(!(entity instanceof SpeederEntity vehicle)||!vehicle.cargoReady(actor)||!PlayerInventoryHooks.ready(actor))return Result.PERMISSION;
+            var state=vehicle.savedState().snapshot().orElseThrow();var before=payment(actor);AssemblyTransaction.validateImage(before);
+            var quote=SpeederCargoInventory.quote(actor,before,state,deposit,source,one);
+            if(quote.isEmpty())return Result.CARGO_FULL;
+            UUID operation=UUID.randomUUID();var receipt=actor.getData(SpeederContent.RECHARGE_RECEIPT.get());
+            var after=new CompoundTag();after.put("Inventory",quote.get().inventory());after.put("receipt",receipt.next(operation).tag());
+            var record=RechargeTransaction.prepareCargo(actor.getUUID(),operation,before,after,vehicle.savedState(),quote.get().cargo());
+            persistPlayer(actor,before);begin(record);probe.reached(Checkpoint.PREPARED);
+            nextRecharge.put(actor.getUUID(),server.overworld().getGameTime()+SpeederConfig.CARGO_INTERVAL.get());
+            changeVehicle(actor,record,Checkpoint.FROZEN);probe.reached(Checkpoint.FROZEN);
+            applyPayment(actor,after);probe.reached(Checkpoint.PAYMENT_DURABLE);
+            record=advance(record,Phase.PAID);probe.reached(Checkpoint.PAID);finish(actor,record);return Result.CARGO_MOVED;
+        }catch(IOException|RuntimeException failure){
+            LegacyOfTheForce.LOGGER.error("Speeder cargo transfer retained for native recovery",failure);
+            try{recover(actor);}catch(IOException|RuntimeException unresolved){actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("message.legacyoftheforce.recharge_pending"));}
+            return Result.PENDING;
+        }
+    }
     public void recover(ServerPlayer actor) throws IOException {
         if (actor.server != server || !server.isSameThread() || actor.isFakePlayer()) throw new IOException("Wrong recharge recovery context");
         var loaded = read(actor.getUUID()); var live = payment(actor);
@@ -166,6 +194,13 @@ public final class SpeederRechargeService {
         }
         if (!(entity instanceof SpeederEntity vehicle)) throw new IOException("Existing recharge vehicle unavailable; never respawned");
         var raw = vehicle.savedState().tag(); var state = vehicle.savedState().snapshot().orElseThrow();
+        if(action==Checkpoint.ACTIVATED&&raw.getCompound("lastMaintenance").equals(value.after().getCompound("receipt"))){
+            if(!state.id().equals(expected.id())||!state.owner().equals(value.owner())||!state.pose().dimension().equals(expected.pose().dimension())
+                    ||raw.contains("rechargeId")||raw.contains("assemblyId"))throw new IOException("Conflicting maintenance finalization proof");
+            // Activation was natively saved before a crash at DONE. Preserve later hover/charge/pose changes.
+            entities.persist(vehicle);
+            return;
+        }
         var validation = BlueprintValidator.inspect(state.blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits());
         var target = value.vehicle().withHealth(value.health(), expected.motion().energy()).snapshot().orElseThrow();
         var performance = SpeederPerformance.inspect(target, SpeederCatalog.definitions());
@@ -177,16 +212,20 @@ public final class SpeederRechargeService {
                 || raw.contains("rechargeId") && !frozen || !vehicle.getPassengers().isEmpty()) throw new IOException("Conflicting recharge vehicle retained");
         double charge = state.motion().energy();
         boolean beforeHealth = state.health().equals(expected.health()), afterHealth = state.health().equals(value.health());
+        boolean beforeCargo=state.cargo().equals(expected.cargo()),afterCargo=state.cargo().equals(value.cargo());
         if (charge != expected.motion().energy() && charge != value.charge()
                 || (action == Checkpoint.FROZEN || action == Checkpoint.PREPARED) && charge != expected.motion().energy()
                 || action == Checkpoint.ACTIVATED && charge != value.charge()
                 || !beforeHealth && !afterHealth || (action == Checkpoint.FROZEN || action == Checkpoint.PREPARED) && !beforeHealth
                 || action == Checkpoint.ACTIVATED && !afterHealth || !beforeDesign && !afterDesign
                 || (action == Checkpoint.FROZEN || action == Checkpoint.PREPARED) && !beforeDesign
-                || action == Checkpoint.ACTIVATED && !afterDesign) throw new IOException("Conflicting maintenance state retained");
+                || action == Checkpoint.ACTIVATED && !afterDesign||!beforeCargo&&!afterCargo
+                ||(action==Checkpoint.FROZEN||action==Checkpoint.PREPARED)&&!beforeCargo||action==Checkpoint.ACTIVATED&&!afterCargo) throw new IOException("Conflicting maintenance state retained");
         if (action == Checkpoint.FROZEN || action == Checkpoint.ENERGY_DURABLE) raw.putUUID("rechargeId", value.operation()); else raw.remove("rechargeId");
         if (action == Checkpoint.ENERGY_DURABLE) { raw.putDouble("energy", value.charge()); raw.putIntArray("moduleHealth", value.health()); raw.put("blueprint", value.blueprint().tag()); }
-        // Preserve the current native pose and opaque data; only charge and the operation lock change.
+        if(action==Checkpoint.ENERGY_DURABLE&&value.cargoTransfer())raw.put("cargo",value.cargo().tag());
+        if(action==Checkpoint.ACTIVATED)raw.put("lastMaintenance",value.after().getCompound("receipt").copy());
+        // Preserve native pose and opaque data; apply only the journal's absolute targets and finalization receipt.
         vehicle.applyRechargeState(new VehicleState(raw));
         if (action == Checkpoint.ENERGY_DURABLE) probe.reached(Checkpoint.ENERGY_MEMORY);
         entities.persist(vehicle);

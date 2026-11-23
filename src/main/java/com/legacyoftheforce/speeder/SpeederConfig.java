@@ -6,6 +6,8 @@ public final class SpeederConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue ARMOR_CAP;
     public static final ModConfigSpec.DoubleValue LIGHT_CLASS_MASS, UTILITY_CLASS_MASS;
+    public static final ModConfigSpec.IntValue CARGO_MAX_SLOTS,CARGO_INTERVAL;
+    public static final ModConfigSpec.DoubleValue CARGO_MASS_PER_ITEM,CARGO_ACCESS_RANGE;
     public static final ModConfigSpec.DoubleValue MAX_MASS, LIFT_RATIO, STABILITY;
     public static final ModConfigSpec.DoubleValue INITIAL_CHARGE;
     public static final ModConfigSpec.IntValue BUILD_INTERVAL;
@@ -20,6 +22,10 @@ public final class SpeederConfig {
             GRAVITY, IDLE_ENERGY, THRUST_ENERGY, STEERING_ENERGY, MASS_ENERGY;
     static {
         var builder = new ModConfigSpec.Builder();
+        CARGO_MAX_SLOTS=builder.defineInRange("cargo.maximumSlotsPerVehicle",27,1,27);
+        CARGO_INTERVAL=builder.defineInRange("cargo.minimumTransferIntervalTicks",5,1,1200);
+        CARGO_MASS_PER_ITEM=builder.defineInRange("cargo.massPerItem",.02,.001,10);
+        CARGO_ACCESS_RANGE=builder.defineInRange("cargo.accessRangeBlocks",4.0,1,6);
         ARMOR_CAP = builder.defineInRange("damage.maximumArmorReduction",.65,0,.9);
         LIGHT_CLASS_MASS = builder.defineInRange("classes.lightMassCeiling",20.0,1,1000);
         UTILITY_CLASS_MASS = builder.defineInRange("classes.utilityMassCeiling",80.0,1,1000);

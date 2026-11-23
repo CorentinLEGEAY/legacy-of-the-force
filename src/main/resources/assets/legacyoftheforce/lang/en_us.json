@@ -400,5 +400,13 @@
   "speeder.legacyoftheforce.passenger_controls": "Passenger · %s: dismount",
   "rpg.legacyoftheforce.mastery_pending": "Mastery save is uncertain; reconnect to reload your profile.",
   "power.legacyoftheforce.mastery": "Mastery %s/3 · uses %s/%s · energy cost %s%%",
-  "power.legacyoftheforce.mastery_max": "maximum"
+  "power.legacyoftheforce.mastery_max": "maximum",
+  "item.legacyoftheforce.cargo_crate": "Cargo crate",
+  "speeder.legacyoftheforce.cargo_title": "Speeder cargo",
+  "speeder.legacyoftheforce.cargo_capacity": "%s slots · mass %s",
+  "speeder.legacyoftheforce.cargo_help": "Click: transfer stack. Right click: one item. No cursor. Items in disabled slots can still be retrieved.",
+  "speeder.legacyoftheforce.cargo_denied": "Your speeder needs a cargo crate; park it nearby without passengers.",
+  "speeder.legacyoftheforce.recharge_cargo_moved": "Transfer saved",
+  "speeder.legacyoftheforce.recharge_cargo_full": "Empty stack or insufficient space",
+  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Unload cargo before recycling"
 }

@@ -21,6 +21,7 @@ public final class SpeederPerformance {
             if (definition.family() == SpeederModule.Family.PILOT && health > 0) pilot = true;
             if (definition.family() == SpeederModule.Family.CHASSIS && health > 0) chassis = true;
         }
+        mass+=SpeederCargoInventory.mass(state.cargo());
         return Optional.of(new Performance(new BlueprintValidator.Stats(mass, Math.max(0, thrust), lift, capacity, Math.clamp(stability, 0, 1)),
                 healthyThrust > 0 ? Math.clamp(thrust / healthyThrust, 0, 1) : 0, pilot, !chassis));
     }

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "family": "cargo",
+  "mass": 2.5,
+  "thrust": 0,
+  "lift": 0,
+  "capacity": 0,
+  "stability": 0,
+  "armor": 0,
+  "cargoSlots": 9,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_ingot",
+      "count": 1
+    }
+  ]
+}

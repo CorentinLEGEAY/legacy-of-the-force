@@ -39,10 +39,12 @@ public final class SpeederCatalog extends SimpleJsonResourceReloadListener {
                 }
                 if (json.get("schemaVersion").getAsInt() != 1) throw new IllegalArgumentException("Unsupported module schema");
                 var connectors = EnumSet.noneOf(Direction.class);
+                double cargoSlots=json.has("cargoSlots")?json.get("cargoSlots").getAsDouble():0;
+                if(!Double.isFinite(cargoSlots)||cargoSlots<0||cargoSlots>9||cargoSlots!=Math.rint(cargoSlots))throw new IllegalArgumentException("Invalid cargo capacity");
                 for (var face : json.getAsJsonArray("connectors")) connectors.add(Direction.valueOf(face.getAsString().toUpperCase(Locale.ROOT)));
                 loaded.put(entry.getKey(), new SpeederModule(SpeederModule.Family.valueOf(json.get("family").getAsString().toUpperCase(Locale.ROOT)),
                         json.get("mass").getAsDouble(), json.get("thrust").getAsDouble(), json.get("lift").getAsDouble(), json.get("capacity").getAsDouble(), json.get("stability").getAsDouble(), connectors,
-                        json.has("armor") ? json.get("armor").getAsDouble() : 0));
+                        json.has("armor") ? json.get("armor").getAsDouble() : 0,(int)cargoSlots));
             }
             definitions = Map.copyOf(loaded); salvage = Map.copyOf(recycling); LegacyOfTheForce.LOGGER.info("Loaded {} speeder module definitions", definitions.size());
         } catch (RuntimeException invalid) {

@@ -6,7 +6,7 @@ import net.minecraft.nbt.*;
 /** Existing vehicle identity and absolute charge target, never a recipe for spawning another vehicle. */
 record RechargeTransaction(CompoundTag tag) {
     enum Phase { PREPARED, PAID, APPLIED, DONE, ABORTED }
-    record View(UUID owner, UUID operation, Phase phase, CompoundTag before, CompoundTag after, VehicleState vehicle, double charge, List<Integer> health, boolean repair, SpeederBlueprint blueprint, boolean paint, boolean recycle) {
+    record View(UUID owner, UUID operation, Phase phase, CompoundTag before, CompoundTag after, VehicleState vehicle, double charge, List<Integer> health, boolean repair, SpeederBlueprint blueprint, boolean paint, boolean recycle, boolean cargoTransfer, SpeederCargoData cargo) {
         View { health = List.copyOf(health); }
     }
     RechargeTransaction { tag = tag.copy(); }
@@ -29,7 +29,7 @@ record RechargeTransaction(CompoundTag tag) {
         var record = new RechargeTransaction(tag); record.view(); return record;
     }
     View view() {
-        if (tag.sizeInBytes() > 262144 || !tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") < 1 || tag.getInt("schemaVersion") > 4
+        if (tag.sizeInBytes() > 262144 || !tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") < 1 || tag.getInt("schemaVersion") > 5
                 || !tag.hasUUID("owner") || !tag.hasUUID("operation") || !tag.contains("phase", Tag.TAG_STRING)
                 || !tag.contains("before", Tag.TAG_COMPOUND) || !tag.contains("after", Tag.TAG_COMPOUND)
                 || !tag.contains("vehicle", Tag.TAG_COMPOUND) || !tag.contains("charge", Tag.TAG_DOUBLE)) throw new IllegalArgumentException("Unsupported recharge journal");
@@ -41,9 +41,17 @@ record RechargeTransaction(CompoundTag tag) {
         boolean repair = tag.getInt("schemaVersion") == 2;
         boolean paint = tag.getInt("schemaVersion") == 3;
         boolean recycle = tag.getInt("schemaVersion") == 4;
+        boolean cargoTransfer=tag.getInt("schemaVersion")==5;
+        var cargo=state.cargo();
+        if(cargoTransfer){
+            if(!tag.contains("kind",Tag.TAG_STRING)||!tag.getString("kind").equals("cargo")||!tag.contains("cargo",Tag.TAG_COMPOUND)||charge!=state.motion().energy())throw new IllegalArgumentException("Unsupported cargo transaction");
+            cargo=new SpeederCargoData(tag.getCompound("cargo"));SpeederCargoData.conserve(before,state.cargo(),after,cargo);
+            vehicle.withCargo(cargo);
+        }
         if (recycle && (!tag.contains("kind", Tag.TAG_STRING) || !tag.getString("kind").equals("recycle")
                 || charge != state.motion().energy())) throw new IllegalArgumentException("Unsupported recycling operation");
         if (recycle) {
+            if(!state.cargo().items().isEmpty())throw new IllegalArgumentException("Unload cargo before recycling");
             var credited = new HashMap<Integer, CompoundTag>();
             for (var item : after.getList("Inventory", Tag.TAG_COMPOUND)) { var stack = (CompoundTag)item; credited.put(stack.getByte("Slot") & 255, stack); }
             var occupied = new HashSet<Integer>();
@@ -83,8 +91,8 @@ record RechargeTransaction(CompoundTag tag) {
         if (!owner.equals(state.owner()) || operation.equals(new UUID(0, 0)) || previous.revision() == Long.MAX_VALUE
                 || paid.revision() != previous.revision() + 1 || !operation.equals(paid.operation()) || !recycle && before.get("Inventory").equals(after.get("Inventory"))
                 || vehicle.tag().contains("assemblyId") || vehicle.tag().contains("rechargeId") || state.garaged()
-                || !Double.isFinite(charge) || charge < 0 || !repair && !paint && !recycle && charge <= state.motion().energy() || charge > 1_000_000_000) throw new IllegalArgumentException("Inconsistent recharge proof");
-        return new View(owner, operation, Phase.valueOf(tag.getString("phase")), before.copy(), after.copy(), vehicle, charge, health, repair, blueprint, paint, recycle);
+                || !Double.isFinite(charge) || charge < 0 || !repair && !paint && !recycle && !cargoTransfer && charge <= state.motion().energy() || charge > 1_000_000_000) throw new IllegalArgumentException("Inconsistent recharge proof");
+        return new View(owner, operation, Phase.valueOf(tag.getString("phase")), before.copy(), after.copy(), vehicle, charge, health, repair, blueprint, paint, recycle,cargoTransfer,cargo);
     }
     static RechargeTransaction prepareRecycle(UUID owner, UUID operation, CompoundTag before, CompoundTag after, VehicleState vehicle) {
         var tag = new CompoundTag(); tag.putInt("schemaVersion", 4); tag.putString("kind", "recycle");
@@ -92,6 +100,11 @@ record RechargeTransaction(CompoundTag tag) {
         tag.put("before", before.copy()); tag.put("after", after.copy()); tag.put("vehicle", vehicle.tag());
         tag.putDouble("charge", vehicle.snapshot().orElseThrow().motion().energy());
         var record = new RechargeTransaction(tag); record.view(); return record;
+    }
+    static RechargeTransaction prepareCargo(UUID owner,UUID operation,CompoundTag before,CompoundTag after,VehicleState vehicle,SpeederCargoData cargo){
+        var tag=new CompoundTag();tag.putInt("schemaVersion",5);tag.putString("kind","cargo");tag.putUUID("owner",owner);tag.putUUID("operation",operation);tag.putString("phase",Phase.PREPARED.name());
+        tag.put("before",before.copy());tag.put("after",after.copy());tag.put("vehicle",vehicle.tag());tag.putDouble("charge",vehicle.snapshot().orElseThrow().motion().energy());tag.put("cargo",cargo.tag());
+        var record=new RechargeTransaction(tag);record.view();return record;
     }
     RechargeTransaction phase(Phase phase) {
         var current = view().phase();

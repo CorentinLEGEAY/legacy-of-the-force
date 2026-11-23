@@ -400,5 +400,13 @@
   "speeder.legacyoftheforce.passenger_controls": "Passager · %s : descendre",
   "rpg.legacyoftheforce.mastery_pending": "Sauvegarde de maîtrise incertaine ; reconnectez-vous pour relire votre profil.",
   "power.legacyoftheforce.mastery": "Maîtrise %s/3 · usages %s/%s · coût énergétique %s%%",
-  "power.legacyoftheforce.mastery_max": "maximum"
+  "power.legacyoftheforce.mastery_max": "maximum",
+  "item.legacyoftheforce.cargo_crate": "Coffre de transport",
+  "speeder.legacyoftheforce.cargo_title": "Cargaison du speeder",
+  "speeder.legacyoftheforce.cargo_capacity": "%s places · masse %s",
+  "speeder.legacyoftheforce.cargo_help": "Clic : transférer la pile. Clic droit : un objet. Sans curseur. Les cases grisées restent récupérables si elles contiennent des objets.",
+  "speeder.legacyoftheforce.cargo_denied": "Votre speeder doit avoir un coffre, être proche, vide de passagers et à l’arrêt.",
+  "speeder.legacyoftheforce.recharge_cargo_moved": "Transfert sauvegardé",
+  "speeder.legacyoftheforce.recharge_cargo_full": "Pile vide ou place insuffisante",
+  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Videz la cargaison avant recyclage"
 }

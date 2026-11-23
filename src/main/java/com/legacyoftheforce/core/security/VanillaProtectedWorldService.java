@@ -20,6 +20,16 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
         if (policies.size() >= 32) throw new IllegalStateException("Too many protection adapters");
         policies.addIfAbsent(Objects.requireNonNull(policy));
     }
+    @Override public boolean mayAttack(ServerPlayer actor,Entity target){
+        if(actor==null||target==null||actor==target||!actor.server.isSameThread()||!actor.isAlive()||actor.isFakePlayer()||actor.isSpectator()||actor.hasDisconnected()
+                ||!target.isAlive()||actor.level()!=target.level()||target instanceof net.minecraft.world.entity.player.Player player&&player.isSpectator())return false;
+        var level=actor.serverLevel();var position=target.blockPosition();
+        if(!level.hasChunkAt(position)||!level.isInWorldBounds(position)||!level.getWorldBorder().isWithinBounds(position)||level.getServer().isUnderSpawnProtection(level,position,actor))return false;
+        if(target instanceof net.minecraft.server.level.ServerPlayer player&&!actor.canHarmPlayer(player))return false;
+        for(var policy:com.legacyoftheforce.core.api.WorldProtectionHooks.policies())try{if(!policy.allowsEntity(actor,target,position))return false;}catch(RuntimeException unavailable){return false;}
+        for(var policy:policies)try{if(!policy.allowsEntity(actor,target,position))return false;}catch(RuntimeException unavailable){return false;}
+        return true;
+    }
     @Override public boolean mayArrive(ServerPlayer actor, ServerLevel destination, BlockPos position) {
         if (actor == null || destination == null || position == null || !destination.getServer().isSameThread()
                 || actor.server != destination.getServer() || !actor.isAlive() || actor.isFakePlayer() || actor.isSpectator()

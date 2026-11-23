@@ -408,5 +408,19 @@
   "speeder.legacyoftheforce.cargo_denied": "Your speeder needs a cargo crate; park it nearby without passengers.",
   "speeder.legacyoftheforce.recharge_cargo_moved": "Transfer saved",
   "speeder.legacyoftheforce.recharge_cargo_full": "Empty stack or insufficient space",
-  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Unload cargo before recycling"
+  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Unload cargo before recycling",
+  "saber.legacyoftheforce.style_defensive": "Defensive",
+  "saber.legacyoftheforce.style_balanced": "Balanced",
+  "saber.legacyoftheforce.style_aggressive": "Aggressive",
+  "saber.legacyoftheforce.style_changed": "Style selected",
+  "saber.legacyoftheforce.dodged": "Dodge · endurance %s",
+  "saber.legacyoftheforce.countered": "Counter · endurance %s",
+  "saber.legacyoftheforce.combo_hit": "Confirmed hit · endurance %s",
+  "saber.legacyoftheforce.deflected": "Arrow deflected · endurance %s",
+  "saber.legacyoftheforce.technique_unavailable": "Technique unavailable: check guard, target, space and endurance.",
+  "key.legacyoftheforce.saber_style": "Switch saber style",
+  "key.legacyoftheforce.saber_counter": "Counter after parry",
+  "key.legacyoftheforce.dodge_back": "Dodge back",
+  "key.legacyoftheforce.dodge_left": "Dodge left",
+  "key.legacyoftheforce.dodge_right": "Dodge right"
 }

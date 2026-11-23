@@ -408,5 +408,19 @@
   "speeder.legacyoftheforce.cargo_denied": "Votre speeder doit avoir un coffre, être proche, vide de passagers et à l’arrêt.",
   "speeder.legacyoftheforce.recharge_cargo_moved": "Transfert sauvegardé",
   "speeder.legacyoftheforce.recharge_cargo_full": "Pile vide ou place insuffisante",
-  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Videz la cargaison avant recyclage"
+  "speeder.legacyoftheforce.recharge_cargo_not_empty": "Videz la cargaison avant recyclage",
+  "saber.legacyoftheforce.style_defensive": "Défensif",
+  "saber.legacyoftheforce.style_balanced": "Équilibré",
+  "saber.legacyoftheforce.style_aggressive": "Agressif",
+  "saber.legacyoftheforce.style_changed": "Style sélectionné",
+  "saber.legacyoftheforce.dodged": "Esquive · endurance %s",
+  "saber.legacyoftheforce.countered": "Contre · endurance %s",
+  "saber.legacyoftheforce.combo_hit": "Coup confirmé · endurance %s",
+  "saber.legacyoftheforce.deflected": "Flèche déviée · endurance %s",
+  "saber.legacyoftheforce.technique_unavailable": "Technique indisponible : vérifiez garde, cible, espace et endurance.",
+  "key.legacyoftheforce.saber_style": "Changer de style de sabre",
+  "key.legacyoftheforce.saber_counter": "Contre après parade",
+  "key.legacyoftheforce.dodge_back": "Esquive arrière",
+  "key.legacyoftheforce.dodge_left": "Esquive gauche",
+  "key.legacyoftheforce.dodge_right": "Esquive droite"
 }

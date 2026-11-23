@@ -8,6 +8,11 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
 public final class ForceKeys {
+    private static final KeyMapping SABER_STYLE=new KeyMapping("key.legacyoftheforce.saber_style",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_Y,"key.categories.legacyoftheforce");
+    private static final KeyMapping SABER_COUNTER=new KeyMapping("key.legacyoftheforce.saber_counter",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_M,"key.categories.legacyoftheforce");
+    private static final KeyMapping DODGE_BACK=new KeyMapping("key.legacyoftheforce.dodge_back",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_LEFT_ALT,"key.categories.legacyoftheforce");
+    private static final KeyMapping DODGE_LEFT=new KeyMapping("key.legacyoftheforce.dodge_left",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_UNKNOWN,"key.categories.legacyoftheforce");
+    private static final KeyMapping DODGE_RIGHT=new KeyMapping("key.legacyoftheforce.dodge_right",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_UNKNOWN,"key.categories.legacyoftheforce");
     private static final KeyMapping GROUP = new KeyMapping("key.legacyoftheforce.block_group", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
     private static final KeyMapping ROTATE = new KeyMapping("key.legacyoftheforce.block_rotate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
     private static final KeyMapping THROW_BLOCKS = new KeyMapping("key.legacyoftheforce.block_throw", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
@@ -23,9 +28,14 @@ public final class ForceKeys {
     private static final KeyMapping PULL = new KeyMapping("key.legacyoftheforce.force_pull", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, "key.categories.legacyoftheforce");
     private static final KeyMapping STABILIZE = new KeyMapping("key.legacyoftheforce.force_stabilize", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, "key.categories.legacyoftheforce");
     private static final KeyMapping BRAKE = new KeyMapping("key.legacyoftheforce.force_brake", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "key.categories.legacyoftheforce");
-    public void register(RegisterKeyMappingsEvent event) { event.register(GROUP); event.register(ROTATE); event.register(THROW_BLOCKS); event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
+    public void register(RegisterKeyMappingsEvent event) { event.register(SABER_STYLE);event.register(SABER_COUNTER);event.register(DODGE_BACK);event.register(DODGE_LEFT);event.register(DODGE_RIGHT);event.register(GROUP); event.register(ROTATE); event.register(THROW_BLOCKS); event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
     public void tick(ClientTickEvent.Post event) {
         var minecraft = Minecraft.getInstance();
+        while(SABER_STYLE.consumeClick())sendSaber(minecraft,"style");
+        while(SABER_COUNTER.consumeClick())sendSaber(minecraft,"counter");
+        while(DODGE_BACK.consumeClick())sendSaber(minecraft,"dodge back");
+        while(DODGE_LEFT.consumeClick())sendSaber(minecraft,"dodge left");
+        while(DODGE_RIGHT.consumeClick())sendSaber(minecraft,"dodge right");
         while (GROUP.consumeClick()) send(minecraft, "group");
         while (ROTATE.consumeClick()) send(minecraft, "rotate");
         while (THROW_BLOCKS.consumeClick()) send(minecraft, "throw_blocks");
@@ -57,4 +67,5 @@ public final class ForceKeys {
     private void send(Minecraft minecraft, String action) {
         if (minecraft.screen == null && minecraft.player != null && minecraft.getConnection() != null) minecraft.getConnection().sendCommand("lotf force " + action);
     }
+    private void sendSaber(Minecraft minecraft,String action){if(minecraft.screen==null&&minecraft.player!=null&&minecraft.getConnection()!=null)minecraft.getConnection().sendCommand("lotf saber "+action);}
 }

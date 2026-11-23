@@ -3,6 +3,9 @@ package com.legacyoftheforce.lightsaber;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class SaberConfig {
+    public static final ModConfigSpec.DoubleValue DEFENSIVE_DAMAGE,AGGRESSIVE_DAMAGE,DEFENSIVE_ATTACK_COST,AGGRESSIVE_ATTACK_COST,DEFENSIVE_GUARD_COST,AGGRESSIVE_GUARD_COST,DEFENSIVE_PARRY,AGGRESSIVE_PARRY;
+    public static final ModConfigSpec.DoubleValue COUNTER_COST,COUNTER_BONUS,COMBO_BONUS,COMBO_COST,COMBO_MIN_DAMAGE,MELEE_DAMAGE_CAP,DODGE_COST,DODGE_DISTANCE,DEFLECT_COST,DEFLECT_SPEED,DEFLECT_RETENTION,DEFLECT_DAMAGE_CAP;
+    public static final ModConfigSpec.IntValue STYLE_INTERVAL,COUNTER_WINDOW,COMBO_WINDOW,COMBO_HITS,DODGE_COOLDOWN,DEFLECT_GRACE,TECHNIQUE_PATH_CELLS;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue MINED_PURITY_MIN, MINED_PURITY_MAX, MINED_STABILITY_MIN, MINED_STABILITY_MAX;
     public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY, TRANSFER_LOAD_TIMEOUT;
@@ -17,6 +20,33 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        DEFENSIVE_DAMAGE=builder.defineInRange("style.defensiveDamageMultiplier",.85,.5,1);
+        AGGRESSIVE_DAMAGE=builder.defineInRange("style.aggressiveDamageMultiplier",1.15,1,1.5);
+        DEFENSIVE_ATTACK_COST=builder.defineInRange("style.defensiveAttackCostMultiplier",.9,.5,1.5);
+        AGGRESSIVE_ATTACK_COST=builder.defineInRange("style.aggressiveAttackCostMultiplier",1.25,1,2);
+        DEFENSIVE_GUARD_COST=builder.defineInRange("style.defensiveGuardCostMultiplier",.8,.5,1);
+        AGGRESSIVE_GUARD_COST=builder.defineInRange("style.aggressiveGuardCostMultiplier",1.25,1,2);
+        DEFENSIVE_PARRY=builder.defineInRange("style.defensiveParryBonus",.1,0,.2);
+        AGGRESSIVE_PARRY=builder.defineInRange("style.aggressiveParryBonus",-.15,-.3,0);
+        STYLE_INTERVAL=builder.defineInRange("style.switchIntervalTicks",20,1,1200);
+        TECHNIQUE_PATH_CELLS=builder.defineInRange("combat.maximumTechniquePathCells",512,32,2048);
+        COUNTER_WINDOW=builder.defineInRange("combat.counterWindowTicks",12,1,40);
+        COUNTER_COST=builder.defineInRange("combat.counterExtraEndurance",6.0,0,50);
+        COUNTER_BONUS=builder.defineInRange("combat.counterDamageBonus",.2,0,.5);
+        COMBO_WINDOW=builder.defineInRange("combat.comboWindowTicks",24,5,60);
+        COMBO_HITS=builder.defineInRange("combat.maximumComboHits",3,2,5);
+        COMBO_BONUS=builder.defineInRange("combat.comboDamageBonusPerStep",.05,0,.1);
+        COMBO_COST=builder.defineInRange("combat.comboExtraEndurancePerStep",.1,0,.25);
+        COMBO_MIN_DAMAGE=builder.defineInRange("combat.minimumComboHealthDamage",1.0,.1,20);
+        MELEE_DAMAGE_CAP=builder.defineInRange("combat.maximumTechniqueHitDamage",40.0,1,100);
+        DODGE_COST=builder.defineInRange("combat.dodgeEndurance",18.0,1,100);
+        DODGE_DISTANCE=builder.defineInRange("combat.dodgeDistance",1.25,.25,2);
+        DODGE_COOLDOWN=builder.defineInRange("combat.dodgeCooldownTicks",40,10,1200);
+        DEFLECT_COST=builder.defineInRange("combat.deflectExtraEndurance",4.0,0,50);
+        DEFLECT_SPEED=builder.defineInRange("combat.maximumReflectedArrowSpeed",1.5,.1,2);
+        DEFLECT_RETENTION=builder.defineInRange("combat.reflectedArrowRetainedSpeed",.8,.1,1);
+        DEFLECT_DAMAGE_CAP=builder.defineInRange("combat.maximumReflectedArrowBaseDamage",8.0,1,20);
+        DEFLECT_GRACE=builder.defineInRange("combat.reflectedArrowOwnerGraceTicks",5,1,10);
         WEAR_PER_ATTACK = builder.defineInRange("maintenance.wearPerAttack",1,0,5);
         MAINTENANCE_IRON = builder.defineInRange("maintenance.ironCost",2,0,64);
         MAINTENANCE_REDSTONE = builder.defineInRange("maintenance.redstoneCost",1,0,64);

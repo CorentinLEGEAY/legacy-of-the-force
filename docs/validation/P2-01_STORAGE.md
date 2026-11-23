@@ -35,6 +35,27 @@ Les sorties et mondes st1/st2 sont conservés. Cette vérification du JAR prouve
 
 ## Limites et prochaine validation
 
-Les six nouveaux tests de stockage ne prouvent pas encore un parcours à deux sockets ni une reprise dans une JVM distincte après kill à chaque frontière. Ajouter un scénario natif de retrait/dépôt, refus d'écriture avant/après paiement, déconnexion finale et reprise ; recouper inventaires, régions, reçus et UUID sans injecter de second objet. Vérifier également le double coffre à cheval sur deux chunks.
+### Parcours natif à deux clients — sn1
+
+Ajout de `SaberStorageNetworkValidation` et `SaberStorageNetworkClientDriver` exclusivement sous gameTest, modes SaberStorage/SaberStorageRecover des lanceurs et `check-saber-storage-network.py`. Le harnais place seulement un double coffre et un tonneau vides dans une copie arrêtée sw2. Il ne déplace pas les profils et n'attribue ni item ni XP. Les clients non-OP ouvrent les blocs et envoient les vrais clics vanilla ; les accusés de réception de test ne modifient pas les inventaires.
+
+sn1 : serveur23984, clients8920/18604 ; trois sorties0, sans arrêt forcé, monde sauvegardé. Pour chaque acteur : dépôt de son sabre existant, retrait au curseur externe, redépôt puis fermeture. Les reçus progressent0→1→2→3. Vérificateur indépendant PASS : quatre UUID uniques et composants conservés, deux sabres dans les régions et les deux autres chez les joueurs, profils RPG identiques, aucun journal ni sabre au sol. Les projections clientes concordent avec chaque image native. Les logs confirment DISPLAY3 pour les deux fenêtres.
+
+Capture `run-adventure-client-one-sn1/screenshots/saber-storage-withdrawn.png` réellement inspectée : grand coffre vide, sabre sur le curseur et second sabre dans l'inventaire. Les notifications vanilla recouvrent le coin supérieur droit ; l'image n'est pas présentée comme une validation artistique finale. Chaque phase possède sa capture framebuffer native. Compilation/build du harnais : `.tools/saber-storage-network-build1.log`, réussite32s.
+
+Commandes reproductibles (identifiants neufs requis, conserver les anciennes copies) :
+
+```powershell
+.\scripts\test-adventure-preparation.ps1 -Run sn1 -Mode SaberStorage -PreparationRun sw2
+python scripts/check-saber-storage-network.py sn1 --source sw2
+.\scripts\test-adventure-preparation.ps1 -Run snr1 -Mode SaberStorageRecover -PreparationRun sn1
+python scripts/check-saber-storage-network.py snr1 --source sn1 --recovery
+```
+
+snr1 : serveur13792, clients25376/12992 ; trois sorties0, sans arrêt forcé. Nouvelle JVM sur la copie arrêtée sn1, aucune réinjection de conteneur ou d'objet. Chaque client ouvre son stockage persistant, retire le sabre, le redépose et ferme ; reçus3→4→5. Vérificateur indépendant PASS : quatre UUID/composants, mêmes identités des trois BlockEntity, mêmes contenus des régions après le nouveau cycle, profils RPG inchangés et aucun journal résiduel. La capture `run-adventure-client-two-snr1/screenshots/saber-storage-stored.png` a été réellement inspectée : sabre dans le tonneau, autre sabre en inventaire ; notifications vanilla visibles, pas de validation artistique finale.
+
+Les deux vérificateurs ont été exécutés après renforcement de la comparaison de conservation à chaque image et de la séquence exacte des reçus. JAR racine relu : SHA256 identique à `A9DA80B03BF2A34A68C32360BF87C5B46D146139797E322E1F4A89AAB2441BC6` ; les nouveaux harnais restent exclus. Aucun changement de production depuis la régression130GT/133JUnit et le JAR installé st2.
+
+Le parcours normal à deux sockets et son redémarrage sont prouvés ci-dessus. Restent les reprises dans une JVM distincte après kill aux frontières, refus d'écriture avant/après paiement, déconnexion finale et reprise ; recouper inventaires, régions, reçus et UUID sans injecter de second objet. Vérifier également le double coffre à cheval sur deux chunks. Un redémarrage propre ne prouve pas ces pannes.
 
 Les hoppers automatiques, autres menus, mort sans keepInventory, cristaux libres et autres objets rares restent des frontières à traiter. Le verrou protège un conteneur en attente ; il ne constitue pas un journal des transferts automatiques au repos. L'atelier complet et la finition artistique approfondie restent ouverts. Aucune phase supplémentaire n'est déclarée validée sur la base de ce rapport.

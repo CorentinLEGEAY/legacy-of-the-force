@@ -1,5 +1,15 @@
 # 01 — Architecture, interfaces et sauvegardes
 
+### Curseur externe et clics coffre/tonneau — 23 novembre 2026
+
+Cette section actualise le contrat personnel ci-dessous. `legacyoftheforce:personal_menu` est maintenant en version2 ; la lecture1 reste compatible. Les emplacements0–4 gardent le curseur personnel et les quatre entrées2×2. L'emplacement5 contient le curseur externe ou un objet en récupération différée après fermeture pleine. Un objet différé revient dans une place principale libre après sauvegarde native vérifiée ; tant qu'il reste sans place, les nouvelles manipulations externes sont refusées. Les formats inconnus restent conservés, sans migration destructive.
+
+`SaberStorageTransactions` encadre les clics vanilla de `ChestMenu` visant un coffre simple/double ou un tonneau, lorsque l'agrégat contient un sabre. Avant mutation : image joueur et conteneurs, identités persistantes des blocs, sauvegardes natives vérifiées. Après mutation : conservation de tous les stacks et composants, intention PREPARED sous `data/legacyoftheforce/saber_storage`, reçu `saber_storage_receipt` avec l'image joueur, HELD, écriture native des conteneurs puis CLOSED. Un clic de double coffre possède deux endpoints et un seul reçu. Aucun endpoint réseau supplémentaire.
+
+Une reprise attend que le propriétaire soit absent de PlayerList, choisit avant/après d'après son reçu natif, contrôle son agrégat sans réécrire son ancien inventaire, puis réconcilie les conteneurs identifiés. Un bloc remplacé, un contenu divergent, une version inconnue ou une erreur de stockage conserve le journal et le verrou. Les accès vanilla/capabilities et les protections de casse/explosion refusent les modifications d'un conteneur verrouillé. Les transferts automatiques entre conteneurs ne disposent pas encore de leur propre journal.
+
+Un dépôt au sol depuis le coffre effectue d'abord le retrait durable vers la récupération personnelle, puis utilise le journal sabre/sol existant avec la même ItemEntity. Une erreur après validation du retrait ne restaure jamais l'ancien coffre. `core.api.SaberStorageCheckpoint` est une notification immuable des frontières, non annulable et sans promesse de livraison unique. Six mixins de sabres sont requis, en plus des trois mixins d'arène. Preuves et limites : `validation/P2-01_STORAGE.md` ; les parcours natifs à deux clients et les interruptions de ce nouveau stockage restent à valider.
+
 ### Transferts sabre/sol — correctif du 23 novembre 2026
 
 Actualisation inventaire personnel : `SaberMenuState` ajoute `legacyoftheforce:personal_menu` schemaVersion1 dans le même playerdata natif que l'inventaire/reçu. Seuls le curseur personnel et les quatre entrées2×2 sont enregistrés ; jamais le résultat de recette. Les images chargées non vides sont conservées même si un save précède leur restauration au login. Format futur/corrompu : original opaque conservé, connexion refusée, pas de conversion destructive. Ancien fichier sans ce champ : menu vide compatible.

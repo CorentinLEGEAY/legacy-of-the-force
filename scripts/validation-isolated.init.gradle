@@ -1,0 +1,4 @@
+// Keep validation outputs separate while a developer client uses the normal build.
+allprojects {
+    layout.buildDirectory = file("${rootDir}/.tools/build-validation")
+}

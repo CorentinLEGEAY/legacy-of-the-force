@@ -23,6 +23,8 @@ public final class SaberGuiDrops {
         return true;
     }
     public static void clicked(AbstractContainerMenu menu,int slot,int button,ClickType type,Player player,Operation<Void> original) {
+        if(player instanceof ServerPlayer actor&&menu!=actor.inventoryMenu&&!SaberMenuState.foreignReady(actor)) {actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cursor_waiting"),true);menu.broadcastFullState();return;}
+        if(SaberStorageTransactions.clicked(menu,slot,button,type,player,original))return;
         boolean potential=type==ClickType.PICKUP&&slot==-999&&menu.getCarried().is(SaberContent.SABER.get())
                 ||type==ClickType.THROW&&slot>0&&slot<menu.slots.size()&&menu.getSlot(slot).getItem().is(SaberContent.SABER.get());
         if(!(player instanceof ServerPlayer actor)||menu!=actor.inventoryMenu||!potential||FRAMES.containsKey(actor)) {original.call(slot,button,type,player);return;}
@@ -32,6 +34,22 @@ public final class SaberGuiDrops {
         FRAMES.put(actor,frame);boolean completed=false;
         try {original.call(slot,button,type,player);completed=true;}
         finally {FRAMES.remove(actor);if(completed)frame.finish();else frame.restore();}
+    }
+    public static void externalRemoved(AbstractContainerMenu menu,Player player,Operation<Void> original) {
+        if(!(player instanceof ServerPlayer actor)||menu==actor.inventoryMenu||menu!=actor.containerMenu||!actor.isAlive()||!SaberMenuState.ready(actor)||menu.getCarried().isEmpty()||FRAMES.containsKey(actor)) {original.call(player);return;}
+        var frame=new Frame(actor);frame.closing=true;FRAMES.put(actor,frame);boolean completed=false;
+        try {original.call(player);completed=true;}
+        finally {
+            FRAMES.remove(actor);
+            if(!completed||frame.refused) {frame.restore();SaberMenuState.retainExternal(actor);}
+            if(completed) {
+                try {
+                    var inventory=actor.getInventory().save(new ListTag());var expected=SaberMenuState.capture(actor);var saved=new VerifiedPlayerSaveBarrier().persist(actor);
+                    if(!saved.getList("Inventory",Tag.TAG_COMPOUND).equals(inventory)||!saved.getCompound(SaberMenuState.KEY).equals(expected))throw new java.io.IOException("External cursor close read-back differs");
+                    if(SaberMenuState.hasDeferred(actor))actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cursor_waiting"),true);
+                }catch(java.io.IOException|RuntimeException failure) {LegacyOfTheForce.LOGGER.error("External cursor save is uncertain; disconnecting for native recovery",failure);actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.menu_recovery"));}
+            }
+        }
     }
     public static void removed(AbstractContainerMenu menu,Player player,Operation<Void> original) {
         if(!(player instanceof ServerPlayer actor)||menu!=actor.inventoryMenu||!actor.isAlive()||!SaberMenuState.ready(actor)||FRAMES.containsKey(actor)) {original.call(player);return;}

@@ -315,5 +315,7 @@
   "saber.legacyoftheforce.transfer_clear_cursor": "Put down the cursor item first; saber retained.",
   "saber.legacyoftheforce.transfer_close_menu": "Close menus and clear the crafting grid first; saber retained.",
   "saber.legacyoftheforce.menu_recovery": "The saved cursor or crafting grid is unsupported. Original data was preserved; contact an administrator.",
-  "saber.legacyoftheforce.menu_retained": "Inventory full: cursor and crafting items were retained. Reopen your inventory to retrieve them."
+  "saber.legacyoftheforce.menu_retained": "Inventory full: cursor and crafting items were retained. Reopen your inventory to retrieve them.",
+  "saber.legacyoftheforce.cursor_waiting": "An external cursor item is retained safely. Free one inventory slot to retrieve it before using this menu.",
+  "saber.legacyoftheforce.storage_wait": "This storage is recovering, protected or rate limited. Try again shortly."
 }

@@ -18,6 +18,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class SaberContent {
     private static final DeferredRegister<net.neoforged.neoforge.attachment.AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(net.neoforged.neoforge.registries.NeoForgeRegistries.ATTACHMENT_TYPES, LegacyOfTheForce.MOD_ID);
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberTransferReceipt>> TRANSFER_RECEIPT = ATTACHMENTS.register("saber_transfer_receipt", () -> net.neoforged.neoforge.attachment.AttachmentType.builder(SaberTransferReceipt::empty).serialize(SaberTransferReceipt.CODEC).copyOnDeath().build());
+    public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberTransferReceipt>> STORAGE_RECEIPT = ATTACHMENTS.register("saber_storage_receipt", () -> net.neoforged.neoforge.attachment.AttachmentType.builder(SaberTransferReceipt::empty).serialize(SaberTransferReceipt.CODEC).copyOnDeath().build());
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberEndurance>> ENDURANCE = ATTACHMENTS.register("saber_endurance", () -> net.neoforged.neoforge.attachment.AttachmentType.serializable(SaberEndurance::new).copyOnDeath().build());
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(LegacyOfTheForce.MOD_ID);

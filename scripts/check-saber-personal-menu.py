@@ -53,7 +53,7 @@ def verify(repo,crash,recovery):
         expected=stock(items(previous))
         if role==0 and paid:expected+=stock([item])
         assert expected==stock(items(source_workshop[role]))
-        assert previous[KEY]['schemaVersion']==1
+        assert previous[KEY]['schemaVersion'] in (1,2)
         if role==0:
             entries=previous[KEY]['items'];assert len(entries)==(1 if paid else 2)
             grid=[s for s in entries if s['Slot']==1];assert len(grid)==1 and grid[0]['id']=='minecraft:iron_ingot' and grid[0]['count']==1

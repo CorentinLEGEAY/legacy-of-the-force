@@ -1,8 +1,8 @@
-param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='jarfluid1')
+param([ValidatePattern('^[a-z0-9_-]{1,12}$')][string]$Run='jarfluid1',[string]$BuildDirectory='build')
 $ErrorActionPreference='Stop'
 $repoPath=[IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $serverPath=Join-Path $repoPath '.tools/neoforge-prod-21.1.265'
-$jar=Join-Path $repoPath 'build/libs/legacyoftheforce-0.1.0-dev.jar'
+$jar=Join-Path (Join-Path $repoPath $BuildDirectory) 'libs/legacyoftheforce-0.1.0-dev.jar'
 $argsFile=Join-Path $serverPath 'libraries/net/neoforged/neoforge/21.1.265/win_args.txt'
 if(-not (Test-Path -LiteralPath $argsFile) -or -not (Test-Path -LiteralPath $jar)) { throw 'Build the JAR and install the pinned standalone NeoForge server first.' }
 $worldName="jar-smoke-$Run";$world=Join-Path $serverPath $worldName
@@ -59,7 +59,7 @@ foreach($phase in 1,2) {
     try {
         Wait-ProductionMarker 'Done \([0-9.,]+s\)!'
         if($phase -eq 1) {
-            foreach($command in @('fill 0 99 0 1 99 0 minecraft:stone','setblock -1 100 0 minecraft:stone','setblock 0 100 -1 minecraft:stone','setblock 0 100 1 minecraft:stone','setblock 0 100 0 minecraft:water')) { $native.StandardInput.WriteLine($command) }
+            foreach($command in @('fill 0 99 0 1 99 0 minecraft:stone','setblock -1 100 0 minecraft:stone','setblock 0 100 -1 minecraft:stone','setblock 0 100 1 minecraft:stone','setblock 0 100 0 minecraft:water','setblock 4 100 0 minecraft:chest[facing=north,type=left]','setblock 5 100 0 minecraft:chest[facing=north,type=right]','setblock 4 99 0 minecraft:hopper')) { $native.StandardInput.WriteLine($command) }
             $native.StandardInput.Flush()
         }
         $native.WaitForExit(1500) | Out-Null
@@ -74,7 +74,7 @@ foreach($phase in 1,2) {
         $console | Set-Content -LiteralPath (Join-Path $repoPath ".tools/packaged-$Run-phase$phase-console.log")
         if(Test-Path -LiteralPath $log) { Copy-Item -LiteralPath $log -Destination (Join-Path $repoPath ".tools/packaged-$Run-phase$phase.log") }
         $results.Add(@{phase=$phase;pid=$native.Id;exitCode=$native.ExitCode;forced=$forced});$exitCode=$native.ExitCode;$native.Dispose()
-        @{run=$Run;mixinVerbose=$true;jarSha256=$jarHash;serverRoot=$serverPath;world=$world;phases=$results.ToArray()} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $repoPath ".tools/packaged-$Run-result.json")
+        @{run=$Run;mixinVerbose=$true;sourceJar=$jar;jarSha256=$jarHash;serverRoot=$serverPath;world=$world;phases=$results.ToArray()} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $repoPath ".tools/packaged-$Run-result.json")
     }
     if($exitCode -ne 0 -or $forced -or (Get-Content -LiteralPath $log -Raw) -notmatch 'All dimensions are saved') { throw 'Packaged server failed to stop normally.' }
     Write-Output "PASS: packaged NeoForge phase$phase, native exit0 and saved dimensions; inspect logs/artifact before validation."

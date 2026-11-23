@@ -315,5 +315,7 @@
   "saber.legacyoftheforce.transfer_clear_cursor": "Pose d’abord l’objet tenu par la souris ; sabre conservé.",
   "saber.legacyoftheforce.transfer_close_menu": "Ferme les menus et vide la grille de fabrication ; sabre conservé.",
   "saber.legacyoftheforce.menu_recovery": "La sauvegarde du curseur ou de la grille est incompatible. Les données originales sont conservées ; contacte un administrateur.",
-  "saber.legacyoftheforce.menu_retained": "Inventaire plein : les objets du curseur et de la grille restent conservés. Rouvre ton inventaire pour les récupérer."
+  "saber.legacyoftheforce.menu_retained": "Inventaire plein : les objets du curseur et de la grille restent conservés. Rouvre ton inventaire pour les récupérer.",
+  "saber.legacyoftheforce.cursor_waiting": "Un objet du curseur externe reste sauvegardé. Libère une place dans ton inventaire pour le récupérer avant de reprendre ce menu.",
+  "saber.legacyoftheforce.storage_wait": "Ce stockage est en attente de récupération, protégé ou trop sollicité. Réessaie dans un instant."
 }

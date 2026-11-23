@@ -12,9 +12,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class PlayerMenuStateMixin implements SaberMenuStateCarrier {
     @Unique private Tag legacyoftheforce$menuImage;
     @Unique private boolean legacyoftheforce$pendingMenu;
+    @Unique private CompoundTag legacyoftheforce$deferred;
+    public CompoundTag legacyoftheforce$deferredCursor() {return legacyoftheforce$deferred==null?null:legacyoftheforce$deferred.copy();}
+    public void legacyoftheforce$deferredCursor(CompoundTag item) {legacyoftheforce$deferred=item==null?null:item.copy();}
     public Tag legacyoftheforce$loadedMenu() {return legacyoftheforce$menuImage;}
     public void legacyoftheforce$loadedMenu(Tag image) {
-        legacyoftheforce$menuImage=image.copy();legacyoftheforce$pendingMenu=true;
+        legacyoftheforce$menuImage=image.copy();legacyoftheforce$pendingMenu=true;legacyoftheforce$deferred=null;
         try {if(SaberMenuState.validate(image).isEmpty())legacyoftheforce$menuRestored();}catch(IllegalArgumentException unsupported) { /* Preserve opaque future/corrupt images for the login guard. */ }
     }
     public boolean legacyoftheforce$menuPending() {return legacyoftheforce$pendingMenu;}

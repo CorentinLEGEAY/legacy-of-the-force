@@ -38,6 +38,7 @@ public final class SaberItemTransfers {
     static boolean canMenuDrop(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service!=null&&service.ready(actor);}
     static boolean validMenuItem(ItemEntity entity) {return entity!=null&&!entity.isRemoved()&&identity(entity.getItem()).isPresent();}
     static DropOutcome commitMenuDrop(ServerPlayer actor,ItemEntity entity) {var service=SERVICES.get(actor.server);return service==null?DropOutcome.REFUSED:service.commitDrop(actor,entity);}
+    static boolean pending(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service==null||!service.healthy||service.pendingActor(actor.getUUID());}
     private static void refund(ServerPlayer actor,ItemStack stack) {
         var returned=stack.copy();
         if(!actor.getInventory().add(returned)) {
@@ -54,7 +55,7 @@ public final class SaberItemTransfers {
     @SubscribeEvent public void stopping(ServerStoppingEvent event) {var service=SERVICES.get(event.getServer());if(service!=null)service.releaseLease();}
     @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=true) public void toss(ItemTossEvent event) {
         if(!(event.getPlayer() instanceof ServerPlayer actor))return;
-        if(SaberGuiDrops.defer(event)||!actor.isAlive()||!relevant(event.getEntity().getItem())||event.isCanceled())return;
+        if(SaberStorageTransactions.defer(event)||SaberGuiDrops.defer(event)||!actor.isAlive()||!relevant(event.getEntity().getItem())||event.isCanceled())return;
         // Foreign menus still need their own aggregate barrier; personal clicks are wrapped above.
         if(!Service.inventoryReady(actor))return;
         event.setCanceled(true);var service=SERVICES.get(actor.server);
@@ -94,9 +95,9 @@ public final class SaberItemTransfers {
         private boolean pendingActor(UUID owner) {return pending.values().stream().anyMatch(entry->entry.payload().getUUID("actor").equals(owner));}
         private boolean locked(UUID entity) {return pending.values().stream().anyMatch(entry->entry.payload().getUUID("entityId").equals(entity));}
         private static boolean inventoryReady(ServerPlayer actor) {
-            return actor.containerMenu==actor.inventoryMenu&&SaberMenuState.ready(actor);
+            return (actor.containerMenu==actor.inventoryMenu||SaberStorageTransactions.supportedMenu(actor))&&SaberMenuState.ready(actor);
         }
-        private boolean ready(ServerPlayer actor) {return healthy&&server.isSameThread()&&actor.server==server&&actor.isAlive()&&!actor.isFakePlayer()&&!actor.isSpectator()&&inventoryReady(actor)&&!pendingActor(actor.getUUID())&&actor.getData(SaberContent.TRANSFER_RECEIPT.get()).stamp().isPresent();}
+        private boolean ready(ServerPlayer actor) {return healthy&&server.isSameThread()&&actor.server==server&&actor.isAlive()&&!actor.isFakePlayer()&&!actor.isSpectator()&&inventoryReady(actor)&&!pendingActor(actor.getUUID())&&!SaberStorageTransactions.busy(actor)&&actor.getData(SaberContent.TRANSFER_RECEIPT.get()).stamp().isPresent();}
         private CompoundTag payload(ServerPlayer actor,ItemEntity entity,UUID operation,String direction) {
             var next=actor.getData(SaberContent.TRANSFER_RECEIPT.get()).next(operation);var tag=new CompoundTag();tag.putInt("schemaVersion",1);tag.putString("direction",direction);tag.putUUID("actor",actor.getUUID());tag.putUUID("entityId",entity.getUUID());tag.putUUID("saberId",identity(entity.getItem()).orElseThrow());tag.putString("dimension",actor.serverLevel().dimension().location().toString());tag.put("entity",entity.saveWithoutId(new CompoundTag()));tag.put("receipt",next.tag());return tag;
         }
@@ -168,7 +169,7 @@ public final class SaberItemTransfers {
             if(!ready(actor)||entity.level()!=actor.level()||identity(entity.getItem()).isEmpty())return;
             int free=actor.getInventory().getFreeSlot();if(free<0||entity.isRemoved()||!actor.canInteractWithEntity(entity,1.0))return;
             var id=identity(entity.getItem()).orElseThrow();for(int i=0;i<actor.getInventory().getContainerSize();i++)if(identity(actor.getInventory().getItem(i)).filter(id::equals).isPresent())return;
-            for(int slot=0;slot<5;slot++)if(identity(slot==0?actor.inventoryMenu.getCarried():actor.inventoryMenu.getSlot(slot).getItem()).filter(id::equals).isPresent())return;
+            for(var raw:SaberMenuState.capture(actor).getList("items",Tag.TAG_COMPOUND)) {var data=((CompoundTag)raw).getCompound("components").getCompound("legacyoftheforce:saber_assembly");if(data.hasUUID("saberId")&&data.getUUID("saberId").equals(id))return;}
             StoredOperation entry;
             try {entry=prepare(actor,entity,"PICKUP");}catch(IOException|RuntimeException failure) {warn(failure);return;}
             var original=entity.getItem().copy();actor.getInventory().setItem(free,original.copy());actor.getInventory().setChanged();

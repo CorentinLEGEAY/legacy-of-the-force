@@ -27,7 +27,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private final ProjectedFloat instanceEnergy = new ProjectedFloat(), instanceCapacity = new ProjectedFloat();
     private final DataSlot paintDye = DataSlot.standalone(), paintZone = DataSlot.standalone(), dyeCost = DataSlot.standalone();
     private final ProjectedColor draftPrimary = new ProjectedColor(), draftSecondary = new ProjectedColor(), instancePrimary = new ProjectedColor(), instanceSecondary = new ProjectedColor();
-    private final DataSlot[] cells = new DataSlot[45], owned = new DataSlot[4];
+    private final DataSlot[] cells = new DataSlot[420], owned = new DataSlot[SpeederContent.PART_NAMES.size()];
+    private final DataSlot gridWidth=DataSlot.standalone(),gridHeight=DataSlot.standalone(),gridDepth=DataSlot.standalone(),vehicleClass=DataSlot.standalone(),seats=DataSlot.standalone();
     private final DataSlot selected = DataSlot.standalone(), rotation = DataSlot.standalone(), status = DataSlot.standalone(), error = DataSlot.standalone();
     private final ProjectedFloat mass = new ProjectedFloat(), thrust = new ProjectedFloat(), lift = new ProjectedFloat(), capacity = new ProjectedFloat(), stability = new ProjectedFloat();
     private final class ProjectedFloat {
@@ -48,11 +49,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         var held = inventory.getSelected(); if (inventory.player instanceof ServerPlayer actor) BlueprintItem.identify(held, actor);
         var data = held.is(SpeederContent.BLUEPRINT_ITEM.get()) && held.getCount() == 1 ? held.get(SpeederContent.BLUEPRINT.get()) : null;
         originalId = data != null && data.plan().isPresent() ? data.plan().get().id() : null;
-        readOnly = data != null && (data.plan().isEmpty() || data.plan().get().width() != 5 || data.plan().get().height() != 3 || data.plan().get().depth() != 3
-                || data.plan().get().modules().stream().anyMatch(module -> SpeederContent.index(module.kind()) < 0));
+        readOnly = data != null && (data.plan().isEmpty() || data.plan().get().modules().stream().anyMatch(module -> SpeederContent.index(module.kind()) < 0));
         draft = data != null && !readOnly ? data : SpeederBlueprint.blank(UUID.randomUUID(), inventory.player.getUUID());
         for (int i = 0; i < cells.length; i++) { cells[i] = DataSlot.standalone(); addDataSlot(cells[i]); }
         for (int i = 0; i < owned.length; i++) { owned[i] = DataSlot.standalone(); addDataSlot(owned[i]); }
+        for(var projection:List.of(gridWidth,gridHeight,gridDepth,vehicleClass,seats))addDataSlot(projection);
         addDataSlot(selected); addDataSlot(rotation); addDataSlot(status); addDataSlot(error);
         for (var projection : List.of(diagnostic, diagnosticStatus, integrity, damaged, modules, rechargeStatus)) addDataSlot(projection);
         addDataSlot(paintDye); addDataSlot(paintZone); addDataSlot(dyeCost);
@@ -62,8 +63,15 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col + row * 9 + 9, 47 + col * 18, 142 + row * 18));
         for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 47 + col * 18, 200));
     }
-    public int moduleAt(int cell) { return cell >= 0 && cell < cells.length ? (cells[cell].get() & 7) - 1 : -1; }
-    public int rotationAt(int cell) { return cell >= 0 && cell < cells.length ? cells[cell].get() >>> 3 & 3 : 0; }
+    public int moduleAt(int cell) { return cell>=0&&cell<45 ? gridModuleAt(cell%5,cell/15,cell/5%3) : -1; }
+    public int rotationAt(int cell) { return cell>=0&&cell<45 ? gridRotationAt(cell%5,cell/15,cell/5%3) : 0; }
+    public int gridModuleAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? (cells[x+12*(z+5*y)].get()&15)-1 : -1; }
+    public int gridRotationAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? cells[x+12*(z+5*y)].get()>>>4&3 : 0; }
+    public int gridWidth(){return Math.clamp(gridWidth.get(),1,12);}
+    public int gridHeight(){return Math.clamp(gridHeight.get(),1,7);}
+    public int gridDepth(){return Math.clamp(gridDepth.get(),1,5);}
+    public SpeederClass vehicleClass(){return SpeederClass.values()[Math.clamp(vehicleClass.get(),0,2)];}
+    public int seats(){return seats.get();}
     public int selected() { return selected.get(); }
     public int rotation() { return rotation.get(); }
     public boolean diagnostic() { return diagnostic.get() != 0; }
@@ -86,7 +94,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         return new UUID(high, low);
     }
     public int owned(int part) { return owned[part].get(); }
-    public int required(int part) { int count = 0; for (int i = 0; i < cells.length; i++) if (moduleAt(i) == part) count++; return count; }
+    public int required(int part) { int count = 0; for (var cell:cells) if ((cell.get()&15)-1 == part) count++; return count; }
     public float mass() { return mass.get(); } public float thrust() { return thrust.get(); }
     public float lift() { return lift.get(); } public float capacity() { return capacity.get(); } public float stability() { return stability.get(); }
     public Status status() { return Status.values()[Math.clamp(status.get(), 0, Status.values().length - 1)]; }
@@ -112,13 +120,15 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
                 nextInspection = actor.server.overworld().getGameTime() + 10;
             }
             for (var cell : cells) cell.set(0);
+            draft.plan().ifPresent(plan->{gridWidth.set(plan.width());gridHeight.set(plan.height());gridDepth.set(plan.depth());});
             draft.plan().ifPresent(plan -> plan.modules().forEach(module -> {
-                var at = module.at(); int index = at.x() + 5 * (at.z() + 3 * at.y()); int kind = SpeederContent.index(module.kind());
-                if (at.x() >= 0 && at.x() < 5 && at.y() >= 0 && at.y() < 3 && at.z() >= 0 && at.z() < 3 && kind >= 0)
-                    cells[index].set(kind + 1 | module.rotation() << 3);
+                var at = module.at(); int index = at.x() + 12 * (at.z() + 5 * at.y()); int kind = SpeederContent.index(module.kind());
+                if (at.x() >= 0 && at.x() < 12 && at.y() >= 0 && at.y() < 7 && at.z() >= 0 && at.z() < 5 && kind >= 0)
+                    cells[index].set(kind + 1 | module.rotation() << 4);
             }));
-            for (int part = 0; part < 4; part++) { int count = 0; for (int slot = 0; slot < inventory.getContainerSize(); slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
+            for (int part = 0; part < owned.length; part++) { int count = 0; for (int slot = 0; slot < inventory.getContainerSize(); slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
             var result = BlueprintValidator.inspect(draft, SpeederCatalog.definitions(), SpeederConfig.limits()); error.set(result.error().ordinal());
+            if(result.valid()) {var plan=draft.plan().orElseThrow();vehicleClass.set(SpeederClass.of(plan,result.stats().mass(),SpeederCatalog.definitions()).ordinal());seats.set((int)plan.modules().stream().filter(p->{var family=SpeederCatalog.definitions().get(p.kind()).family();return family==SpeederModule.Family.PILOT||family==SpeederModule.Family.PASSENGER;}).count());} else seats.set(0);
             mass.set(result.stats().mass()); thrust.set(result.stats().thrust()); lift.set(result.stats().lift()); capacity.set(result.stats().capacity()); stability.set(result.stats().stability());
         }
         super.broadcastChanges();
@@ -126,7 +136,9 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.server.isSameThread() || actor.containerMenu != this || inventory.player != actor) return false;
         if (!stillValid(actor)) { status.set(Status.TOO_FAR.ordinal()); return false; }
-        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 66)) return false;
+        if (!(button >= 0 && button < 45) && !(button >= 50 && button <= 66)
+                && !(button>=1000&&button<1420) && !(button>=2000&&button<=2002)
+                && !(button >= 2100 && button <= 2100 + SpeederContent.PART_NAMES.size())) return false;
         long tick = actor.server.overworld().getGameTime();
         if (tick < nextAction) { status.set(Status.COOLDOWN.ordinal()); return false; }
         if (button == 66) {
@@ -159,6 +171,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         }
         if (diagnostic()) return false;
         if (readOnly) { status.set(Status.READ_ONLY.ordinal()); return false; }
+        if(button>=2000&&button<=2002) {
+            int[][] grids={{5,3,3},{9,5,4},{12,7,5}};var size=grids[button-2000];
+            try {draft=draft.withGrid(size[0],size[1],size[2]);}catch(IllegalArgumentException refused){status.set(Status.BUILD_INVALID.ordinal());return false;}
+            nextAction=tick+5;status.set(Status.EDITING.ordinal());broadcastChanges();return true;
+        }
         if (button == 64) {
             if (originalId == null) { status.set(Status.HOLD_BLUEPRINT.ordinal()); return false; }
             var plan = draft.plan().orElseThrow(); int color = paintDye().getTextureDiffuseColor() & 0xffffff;
@@ -184,12 +201,16 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
             actor.inventoryMenu.broadcastChanges(); broadcastChanges(); return true;
         }
         if (button == 57) { draft = draft.withModules(SpeederContent.starterModules()); selected.set(0); rotation.set(0); }
-        else if (button >= 50 && button <= 54) selected.set(button - 50);
+        else if (button >= 50 && button <= 54) selected.set(button == 54 ? SpeederContent.PART_NAMES.size() : button - 50);
+        else if (button >= 2100) selected.set(button - 2100);
         else if (button == 55) rotation.set((rotation.get() + 1) % 4);
         else {
-            var at = new SpeederBlueprint.Cell(button % 5, button / 15, button / 5 % 3);
+            int cell=button>=1000 ? button-1000 : -1;
+            var at = cell>=0 ? new SpeederBlueprint.Cell(cell%12,cell/60,cell/12%5) : new SpeederBlueprint.Cell(button % 5, button / 15, button / 5 % 3);
+            var plan=draft.plan().orElseThrow();if(at.x()>=plan.width()||at.y()>=plan.height()||at.z()>=plan.depth())return false;
             var parts = new ArrayList<>(draft.plan().orElseThrow().modules()); parts.removeIf(part -> part.at().equals(at));
-            if (selected.get() < 4) parts.add(new SpeederBlueprint.PlacedModule(SpeederContent.id(SpeederContent.PART_NAMES.get(selected.get())), at, rotation.get()));
+            if(selected.get()<SpeederContent.PART_NAMES.size()&&parts.size()>=128)return false;
+            if (selected.get() >= 0 && selected.get() < SpeederContent.PART_NAMES.size()) parts.add(new SpeederBlueprint.PlacedModule(SpeederContent.id(SpeederContent.PART_NAMES.get(selected.get())), at, rotation.get()));
             draft = draft.withModules(parts);
         }
         nextAction = tick + 1; status.set(Status.EDITING.ordinal()); broadcastChanges(); return true;

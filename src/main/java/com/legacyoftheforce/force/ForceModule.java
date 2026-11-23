@@ -29,6 +29,7 @@ public final class ForceModule {
     private final ChunkDurabilityBarrier barrier;
     private final Map<UUID, Long> nextAction = new HashMap<>();
     private BlockMoveCoordinator coordinator;
+    private BlockGroupCoordinator groups;
     private final MobForceController mobs;
     private final VehicleForceController vehicles;
     private final AdvancedPowers advanced;
@@ -44,27 +45,34 @@ public final class ForceModule {
             coordinator = new BlockMoveCoordinator(event.getServer(), event.getServer().getWorldPath(LevelResource.ROOT)
                     .resolve("data/legacyoftheforce/block_moves"), progress, protection, anchors, barrier);
             if (!coordinator.recoverAll()) LegacyOfTheForce.LOGGER.error("Force block actions disabled pending recovery");
+            groups = new BlockGroupCoordinator(event.getServer(), event.getServer().getWorldPath(LevelResource.ROOT)
+                    .resolve("data/legacyoftheforce/block_groups"), progress, protection, anchors, barrier);
+            if (!groups.recoverAll()) LegacyOfTheForce.LOGGER.error("Force group actions disabled pending recovery");
         } catch (IOException failure) {
             LegacyOfTheForce.LOGGER.error("Cannot open Force block journal; actions disabled", failure);
         }
     }
-    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); mobs.stopAll(); advanced.stop(); }
-    @SubscribeEvent public void stopped(ServerStoppedEvent event) { coordinator = null; nextAction.clear(); nextGlobalAction = 0; }
+    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); if (groups != null) groups.cancelAll(); mobs.stopAll(); advanced.stop(); }
+    @SubscribeEvent public void stopped(ServerStoppedEvent event) { coordinator = null; groups = null; nextAction.clear(); nextGlobalAction = 0; }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.tick(player);
+        if (groups != null && event.getEntity() instanceof ServerPlayer player) groups.tick(player);
     }
     @SubscribeEvent public void logout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
+        if (groups != null) groups.cancel(event.getEntity().getUUID());
         nextAction.remove(event.getEntity().getUUID());
         mobs.cancelActor(event.getEntity().getUUID());
         advanced.cancel(event.getEntity().getUUID());
     }
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (groups != null) groups.cancel(event.getEntity().getUUID());
         advanced.cancel(event.getEntity().getUUID());
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
         mobs.cancelActor(event.getEntity().getUUID());
     }
     @SubscribeEvent public void death(LivingDeathEvent event) {
+        if (groups != null && event.getEntity() instanceof ServerPlayer player) groups.cancel(player.getUUID());
         if(event.getEntity() instanceof ServerPlayer actor)advanced.cancel(actor.getUUID());
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.cancel(player.getUUID());
         if (event.getEntity() instanceof ServerPlayer player) mobs.cancelActor(player.getUUID());
@@ -83,12 +91,13 @@ public final class ForceModule {
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         advanced.commands(event);
         var force = Commands.literal("force");
-        for (String action : new String[]{"grab", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake"}) {
+        for (String action : new String[]{"grab", "group", "rotate", "throw_blocks", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake"}) {
             var command = Commands.literal(action);
             if (action.equals("recover")) command.requires(source -> source.hasPermission(2));
             command.executes(context -> {
                 if (action.equals("recover")) {
                     boolean recovered = coordinator != null && coordinator.recoverAll();
+                    recovered = groups != null && groups.recoverAll() && recovered;
                     var message = Component.translatable("force.legacyoftheforce." + (recovered ? "recovered" : "recovery_pending"));
                     if (recovered) context.getSource().sendSuccess(() -> message, false); else context.getSource().sendFailure(message);
                     return recovered ? 1 : 0;
@@ -98,11 +107,18 @@ public final class ForceModule {
                 long tick = player.server.overworld().getGameTime();
                 if (!action.equals("cancel") && (tick < nextAction.getOrDefault(player.getUUID(), 0L) || tick < nextGlobalAction)) return respond(player, ForceResult.no("cooldown"));
                 nextAction.put(player.getUUID(), tick + ForceConfig.ACTION_INTERVAL.get());
+                boolean groupHeld = groups != null && groups.holding(player.getUUID());
+                if (groupHeld && java.util.Set.of("grab", "group", "push", "pull", "stabilize", "brake").contains(action)) return respond(player, ForceResult.no("already_holding"));
+                if ((action.equals("grab") || (action.equals("toggle") && !groupHeld && !coordinator.holding(player.getUUID())))
+                        && groups != null && groups.blockCount(player.level().dimension()) + coordinator.blockCount(player.level().dimension()) >= com.legacyoftheforce.core.config.ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return respond(player, ForceResult.no("budget"));
                 ForceResult result = switch (action) {
                     case "grab" -> coordinator.grab(player);
-                    case "drop" -> coordinator.drop(player);
-                    case "toggle" -> coordinator.holding(player.getUUID()) ? coordinator.drop(player) : coordinator.grab(player);
-                    case "cancel" -> coordinator.cancel(player.getUUID());
+                    case "group" -> coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding") : groups == null ? ForceResult.no("recovery_pending") : groups.grab(player, coordinator.blockCount(player.level().dimension()));
+                    case "rotate" -> groups == null ? ForceResult.no("not_holding") : groups.rotate(player);
+                    case "throw_blocks" -> groups == null ? ForceResult.no("not_holding") : groups.throwGroup(player);
+                    case "drop" -> groupHeld ? groups.drop(player) : coordinator.drop(player);
+                    case "toggle" -> groupHeld ? groups.drop(player) : coordinator.holding(player.getUUID()) ? coordinator.drop(player) : coordinator.grab(player);
+                    case "cancel" -> groupHeld ? groups.cancel(player.getUUID()) : coordinator.cancel(player.getUUID());
                     case "push", "pull" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
                             : mobs.cast(player, action.equals("push") ? ForceAction.PUSH : ForceAction.PULL);
                     case "stabilize", "brake" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")

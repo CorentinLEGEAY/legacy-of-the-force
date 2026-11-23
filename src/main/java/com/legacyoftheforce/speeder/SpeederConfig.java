@@ -4,6 +4,8 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class SpeederConfig {
     public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.DoubleValue ARMOR_CAP;
+    public static final ModConfigSpec.DoubleValue LIGHT_CLASS_MASS, UTILITY_CLASS_MASS;
     public static final ModConfigSpec.DoubleValue MAX_MASS, LIFT_RATIO, STABILITY;
     public static final ModConfigSpec.DoubleValue INITIAL_CHARGE;
     public static final ModConfigSpec.IntValue BUILD_INTERVAL;
@@ -18,7 +20,10 @@ public final class SpeederConfig {
             GRAVITY, IDLE_ENERGY, THRUST_ENERGY, STEERING_ENERGY, MASS_ENERGY;
     static {
         var builder = new ModConfigSpec.Builder();
-        MAX_MASS = builder.defineInRange("prototype.maximumMass", 20.0, 1.0, 100.0);
+        ARMOR_CAP = builder.defineInRange("damage.maximumArmorReduction",.65,0,.9);
+        LIGHT_CLASS_MASS = builder.defineInRange("classes.lightMassCeiling",20.0,1,1000);
+        UTILITY_CLASS_MASS = builder.defineInRange("classes.utilityMassCeiling",80.0,1,1000);
+        MAX_MASS = builder.defineInRange("prototype.maximumMass", 160.0, 1.0, 1000.0);
         LIFT_RATIO = builder.defineInRange("prototype.minimumLiftToMass", 1.2, 0.1, 10.0);
         STABILITY = builder.defineInRange("prototype.minimumStability", .25, 0.0, 1.0);
         INITIAL_CHARGE = builder.defineInRange("assembly.initialChargeFraction", 1.0, 0.0, 1.0);
@@ -56,7 +61,7 @@ public final class SpeederConfig {
         builder.pop();
         SPEC = builder.build();
     }
-    public static BlueprintValidator.Limits limits() { return new BlueprintValidator.Limits(5, 3, 3, 45, MAX_MASS.get(), LIFT_RATIO.get(), STABILITY.get()); }
+    public static BlueprintValidator.Limits limits() { return new BlueprintValidator.Limits(12, 7, 5, 128, MAX_MASS.get(), LIFT_RATIO.get(), STABILITY.get()); }
     public static SpeederMotion.Settings motion() {
         return new SpeederMotion.Settings(FORWARD_SPEED.get(), Math.min(REVERSE_SPEED.get(), FORWARD_SPEED.get()),
                 ACCELERATION_SCALE.get(), MAX_ACCELERATION.get(), TURN_DEGREES.get(), DRAG.get(),

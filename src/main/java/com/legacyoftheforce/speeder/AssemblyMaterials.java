@@ -23,9 +23,9 @@ public final class AssemblyMaterials {
     /** Call on the server thread after blueprint, station, permissions and spawn validation. */
     public static Quote quote(ServerPlayer actor, BlueprintValidator.Result validated) {
         if (!actor.server.isSameThread()) throw new IllegalStateException("Assembly quote off server thread");
-        if (!validated.valid() || validated.bill().isEmpty() || validated.bill().size() > 45
-                || validated.bill().values().stream().anyMatch(count -> count < 1 || count > 45)
-                || validated.bill().values().stream().mapToInt(Integer::intValue).sum() > 45) return fail(Error.INVALID_DESIGN);
+        if (!validated.valid() || validated.bill().isEmpty() || validated.bill().size() > 128
+                || validated.bill().values().stream().anyMatch(count -> count < 1 || count > 128)
+                || validated.bill().values().stream().mapToInt(Integer::intValue).sum() > 128) return fail(Error.INVALID_DESIGN);
         var source = actor.getInventory(); var copy = new Inventory(actor);
         for (int slot = 0; slot < source.getContainerSize(); slot++) copy.setItem(slot, source.getItem(slot).copy());
         var before = image(source);

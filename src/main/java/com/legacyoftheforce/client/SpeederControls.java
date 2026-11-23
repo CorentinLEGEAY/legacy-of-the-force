@@ -18,7 +18,7 @@ public final class SpeederControls {
         boolean forward = tapped(minecraft.options.keyUp), back = tapped(minecraft.options.keyDown);
         boolean left = tapped(minecraft.options.keyLeft), right = tapped(minecraft.options.keyRight);
         if (connection != minecraft.getConnection()) { connection = minecraft.getConnection(); sequence = 0; tick = 0; }
-        if (connection == null || minecraft.player == null || !(minecraft.player.getVehicle() instanceof SpeederEntity vehicle) || minecraft.screen != null) {
+        if (connection == null || minecraft.player == null || !(minecraft.player.getVehicle() instanceof SpeederEntity vehicle) || !vehicle.isPilotPassenger(minecraft.player) || minecraft.screen != null) {
             forwardTap = false; backTap = false; leftTap = false; rightTap = false; tick = 0; return;
         }
         forwardTap |= forward; backTap |= back; leftTap |= left; rightTap |= right;

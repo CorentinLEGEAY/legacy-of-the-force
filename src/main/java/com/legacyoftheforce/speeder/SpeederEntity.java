@@ -27,11 +27,14 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     private static final EntityDataAccessor<Float> CHARGE = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> SPEED = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<CompoundTag> HEALTH = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.COMPOUND_TAG);
+    private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(SpeederEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private VehicleState state = new VehicleState(new CompoundTag());
     private final ProtectedWorldService protection;
     private SpeederMotion.Input intent = SpeederMotion.Input.parked();
     private long lastInput = Long.MIN_VALUE;
     private long nextDamage;
+    private boolean guestSavePending;
+    private long nextGuestChange;
     private int lerpSteps;
     private double lerpX, lerpY, lerpZ, lerpYaw, lerpPitch;
     private long retirementEpoch = -1;
@@ -51,11 +54,11 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         super(type, level); this.protection = Objects.requireNonNull(protection); blocksBuilding = true;
     }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(DESIGN, new CompoundTag()); builder.define(CHARGE, 0f); builder.define(SPEED, 0f); builder.define(HEALTH, new CompoundTag());
+        builder.define(DESIGN, new CompoundTag()); builder.define(CHARGE, 0f); builder.define(SPEED, 0f); builder.define(HEALTH, new CompoundTag()); builder.define(OWNER,Optional.empty());
     }
     public SpeederBlueprint design() { return new SpeederBlueprint(entityData.get(DESIGN)); }
     public Optional<SpeederBlueprint.Plan> visualPlan() {
-        return design().plan().filter(plan -> plan.width() <= 5 && plan.height() <= 3 && plan.depth() <= 3 && plan.modules().size() <= 45
+        return design().plan().filter(plan -> plan.width() <= 12 && plan.height() <= 7 && plan.depth() <= 5 && plan.modules().size() <= 128
                 && plan.modules().stream().allMatch(part -> part.at().x() >= 0 && part.at().x() < plan.width()
                 && part.at().y() >= 0 && part.at().y() < plan.height() && part.at().z() >= 0 && part.at().z() < plan.depth()));
     }
@@ -111,6 +114,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     private void project() {
         state.snapshot().ifPresent(snapshot -> {
+            entityData.set(OWNER,Optional.of(snapshot.owner()));
             var layout = snapshot.blueprint().tag(); if (!layout.equals(entityData.get(DESIGN))) entityData.set(DESIGN, layout);
             entityData.set(CHARGE, (float)snapshot.motion().energy()); entityData.set(SPEED, (float)snapshot.motion().speed());
             var health = new CompoundTag(); health.putIntArray("values", snapshot.health()); if (!health.equals(entityData.get(HEALTH))) entityData.set(HEALTH, health);
@@ -167,6 +171,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         var snapshot = supported(); if (snapshot.isEmpty() || loss <= 0 || level().getGameTime() < nextDamage) return false;
         if (!BlueprintValidator.inspect(snapshot.get().blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()) return false;
         var health = new ArrayList<>(snapshot.get().health()); if (health.get(index) == 0) return false;
+        loss = (int)Math.max(1, Math.ceil(loss * (1 - SpeederPerformance.armor(snapshot.get(),SpeederCatalog.definitions()))));
         health.set(index, Math.max(0, health.get(index) - loss));
         var damaged = state.withHealth(health, snapshot.get().motion().energy());
         var performance = SpeederPerformance.inspect(damaged.snapshot().orElseThrow(), SpeederCatalog.definitions()); if (performance.isEmpty()) return false;
@@ -176,28 +181,61 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     @Override public InteractionResult interact(net.minecraft.world.entity.player.Player actor, InteractionHand hand) {
         if (level().isClientSide) return InteractionResult.SUCCESS;
-        if (!(actor instanceof ServerPlayer player) || !ownedBy(player) || !getPassengers().isEmpty()
+        if (!(actor instanceof ServerPlayer player) || !mayBoard(player)
                 || !protection.mayModify(player, player.serverLevel(), blockPosition(), ModificationKind.MOVE_THROUGH)) return InteractionResult.FAIL;
-        if (!owner(player)) {
+        if (ownedBy(player) && !owner(player)) {
             player.sendSystemMessage(Component.translatable("message.legacyoftheforce.speeder_disabled")); return InteractionResult.FAIL;
         }
         if (!BlueprintValidator.inspect(state.snapshot().orElseThrow().blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()) {
             player.sendSystemMessage(Component.translatable("message.legacyoftheforce.speeder_unsupported")); return InteractionResult.FAIL;
         }
-        intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE;
+        if (ownedBy(player)) { intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE; }
         return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.FAIL;
     }
-    @Override protected boolean canAddPassenger(Entity passenger) { return passenger instanceof ServerPlayer actor && owner(actor) && getPassengers().isEmpty(); }
+    private boolean mayBoard(ServerPlayer actor) {
+        if (guestSavePending || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || actor.serverLevel() != level()
+                || actor.isPassenger() || Math.abs(speed()) > .02 || actor.distanceToSqr(this) > 16 || supported().isEmpty()) return false;
+        if(state.snapshot().flatMap(s->SpeederPerformance.inspect(s,SpeederCatalog.definitions())).filter(p->p.pilotWorking()&&!p.wrecked()).isEmpty())return false;
+        if (ownedBy(actor)) return owner(actor) && getPassengers().stream().noneMatch(p -> p.getUUID().equals(actor.getUUID()));
+        return state.guests().contains(actor.getUUID()) && getPassengers().stream().filter(p -> !entityData.get(OWNER).filter(p.getUUID()::equals).isPresent()).count() < passengerSeats().size();
+    }
+    @Override protected boolean canAddPassenger(Entity passenger) { return passenger instanceof ServerPlayer actor && mayBoard(actor); }
+    private List<SpeederBlueprint.PlacedModule> passengerSeats() {
+        var result = new ArrayList<SpeederBlueprint.PlacedModule>(); var plan = visualPlan();
+        if (plan.isEmpty()) return result;
+        for (int i = 0; i < plan.get().modules().size(); i++) {
+            var part = plan.get().modules().get(i);
+            if (part.kind().equals(SpeederContent.id("seat_passenger")) && moduleHealth(i) > 0) result.add(part);
+        }
+        return result;
+    }
+    public boolean setGuest(ServerPlayer actor, UUID guest, boolean allowed) {
+        if (!actor.server.isSameThread() || !ownedBy(actor) || !getPassengers().isEmpty() || actor.distanceToSqr(this) > 36
+                || level().getGameTime() < nextGuestChange || !actor.hasLineOfSight(this)
+                || Math.abs(speed()) > .02 || !protection.mayModify(actor, actor.serverLevel(), blockPosition(), ModificationKind.PLACE)) return false;
+        nextGuestChange = level().getGameTime() + SpeederConfig.RECHARGE_INTERVAL.get();
+        try {
+            state = state.withGuest(guest,allowed);
+            guestSavePending = true;
+            new com.legacyoftheforce.core.operation.VerifiedEntitySaveBarrier().persist(this); guestSavePending = false; return true;
+        } catch (java.io.IOException | IllegalArgumentException failure) {
+            // Revoking all riders on an uncertain save is safer than assuming a failed write means a rollback.
+            com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Cannot prove durable speeder guest change",failure);
+            actor.sendSystemMessage(Component.translatable("speeder.legacyoftheforce.guest_pending")); return false;
+        }
+    }
     // Deliberately null: vanilla ServerboundMoveVehiclePacket must never authorize a pilot's position.
     @Override public LivingEntity getControllingPassenger() { return null; }
     // World-owned persistence: never embed another mutable vehicle copy in the pilot's RootVehicle save.
     // Vanilla also uses this virtual hook to skip/remove mounts from entity storage; speeders stay in the world.
     @Override public boolean hasExactlyOnePlayerPassenger() { return false; }
     boolean acceptInput(ServerPlayer actor, double throttle, double steering) {
-        if (!owner(actor) || getFirstPassenger() != actor || !Double.isFinite(throttle) || !Double.isFinite(steering)
+        if (!owner(actor) || !getPassengers().contains(actor) || !Double.isFinite(throttle) || !Double.isFinite(steering)
                 || Math.abs(throttle) > 1 || Math.abs(steering) > 1) return false;
         intent = new SpeederMotion.Input(throttle, steering, true); lastInput = level().getGameTime(); return true;
     }
+    public boolean isPilotPassenger(Entity actor) { return entityData.get(OWNER).filter(actor.getUUID()::equals).isPresent() && getPassengers().contains(actor); }
+    public int seatCapacity(){return 1+passengerSeats().size();}
     @Override public void tick() {
         super.tick();
         if (level().isClientSide) {
@@ -205,6 +243,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
             return;
         }
         if (retired() && retirementStatus == SpeederRetirement.Status.RETIRED) { ejectPassengers(); discard(); return; }
+        if (guestSavePending) { ejectPassengers(); return; }
         var snapshot = supported(); if (snapshot.isEmpty()) { ejectPassengers(); return; }
         var layout = snapshot.get().blueprint(); var validated = BlueprintValidator.inspect(layout, SpeederCatalog.definitions(), SpeederConfig.limits());
         if (!validated.valid() || snapshot.get().motion().energy() > validated.stats().capacity()) { ejectPassengers(); return; }
@@ -212,16 +251,20 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         if (snapshot.get().motion().energy() > performance.stats().capacity()) {
             state = state.withHealth(snapshot.get().health(), performance.stats().capacity()); snapshot = supported();
         }
-        var pilot = getFirstPassenger() instanceof ServerPlayer actor && owner(actor) ? actor : null;
-        if (getFirstPassenger() != null && pilot == null) ejectPassengers();
+        var pilot = getPassengers().stream().filter(p -> p instanceof ServerPlayer player && owner(player)).map(p -> (ServerPlayer)p).findFirst().orElse(null);
+        int guests = 0;
+        for (var rider : List.copyOf(getPassengers())) if (rider != pilot && (!(rider instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator()
+                || !state.guests().contains(player.getUUID()) || ++guests > passengerSeats().size())) rider.stopRiding();
         // A dropped/stalled input stream brakes and parks after eight server ticks.
         var command = pilot != null && level().getGameTime() - lastInput >= 0 && level().getGameTime() - lastInput <= 8 ? intent : SpeederMotion.Input.parked();
         var stats = performance.stats();
         var loadedStats = new BlueprintValidator.Stats(stats.mass() + getPassengers().size() * SpeederConfig.PILOT_MASS.get(), stats.thrust(), stats.lift(), stats.capacity(), stats.stability());
         var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor());
         double dx = step.dx(), dy = step.dy(), dz = step.dz();
-        var target = getBoundingBox().move(dx, dy, dz);
+        var target = getBoundingBox().expandTowards(dx, dy, dz);
+        for(var rider:getPassengers()) target=target.minmax(rider.getBoundingBox().expandTowards(dx,dy,dz));
         boolean blocked = !loadedAndAllowed(target, pilot);
+        if(!blocked)for(var rider:getPassengers())if(level().getBlockCollisions(rider,rider.getBoundingBox().expandTowards(dx,dy,dz)).iterator().hasNext()){blocked=true;break;}
         if (blocked) { dx = 0; dy = 0; dz = 0; }
         var before = position(); setYRot((float)step.state().yaw());
         setDeltaMovement(dx, dy, dz); move(MoverType.SELF, getDeltaMovement());
@@ -252,7 +295,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         var minimum = BlockPos.containing(box.minX, box.minY, box.minZ);
         var maximum = BlockPos.containing(Math.nextDown(box.maxX), Math.nextDown(box.maxY), Math.nextDown(box.maxZ));
         long cells = (long)(maximum.getX() - minimum.getX() + 1) * (maximum.getY() - minimum.getY() + 1) * (maximum.getZ() - minimum.getZ() + 1);
-        if (cells < 1 || cells > 64) return false;
+        if (cells < 1 || cells > 1024) return false;
         for (var pos : BlockPos.betweenClosed(minimum, maximum)) {
             if (!level().hasChunkAt(pos) || pilot != null && !protection.mayModify(pilot, (ServerLevel)level(), pos, ModificationKind.MOVE_THROUGH)) return false;
         }
@@ -268,7 +311,13 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     @Override protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
         var plan = visualPlan(); if (plan.isEmpty() || plan.get().modules().isEmpty()) return new Vec3(0, dimensions.height(), 0);
-        var parts = plan.get().modules(); var seat = parts.stream().filter(part -> part.kind().equals(SpeederContent.id("seat_pilot"))).findFirst();
+        var parts = plan.get().modules();
+        boolean pilot = entityData.get(OWNER).filter(passenger.getUUID()::equals).isPresent();
+        int guestIndex = 0;
+        for (var rider : getPassengers()) { if (rider == passenger) break; if (!entityData.get(OWNER).filter(rider.getUUID()::equals).isPresent()) guestIndex++; }
+        var seats = passengerSeats();
+        var seat = pilot ? parts.stream().filter(part -> part.kind().equals(SpeederContent.id("seat_pilot"))).findFirst()
+                : guestIndex < seats.size() ? Optional.of(seats.get(guestIndex)) : Optional.<SpeederBlueprint.PlacedModule>empty();
         if (seat.isEmpty()) return new Vec3(0, dimensions.height(), 0);
         double centerX = (parts.stream().mapToInt(p -> p.at().x()).min().orElse(0) + parts.stream().mapToInt(p -> p.at().x()).max().orElse(0)) / 2.0;
         double centerZ = (parts.stream().mapToInt(p -> p.at().z()).min().orElse(0) + parts.stream().mapToInt(p -> p.at().z()).max().orElse(0)) / 2.0;

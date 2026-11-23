@@ -8,6 +8,9 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
 public final class ForceKeys {
+    private static final KeyMapping GROUP = new KeyMapping("key.legacyoftheforce.block_group", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
+    private static final KeyMapping ROTATE = new KeyMapping("key.legacyoftheforce.block_rotate", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
+    private static final KeyMapping THROW_BLOCKS = new KeyMapping("key.legacyoftheforce.block_throw", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
     private static final KeyMapping POWER_NEXT=new KeyMapping("key.legacyoftheforce.power_next",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_K,"key.categories.legacyoftheforce");
     private static final KeyMapping POWER_CAST=new KeyMapping("key.legacyoftheforce.power_cast",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_O,"key.categories.legacyoftheforce");
     private static final KeyMapping SKILLS=new KeyMapping("key.legacyoftheforce.skills",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_I,"key.categories.legacyoftheforce");
@@ -20,9 +23,12 @@ public final class ForceKeys {
     private static final KeyMapping PULL = new KeyMapping("key.legacyoftheforce.force_pull", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_H, "key.categories.legacyoftheforce");
     private static final KeyMapping STABILIZE = new KeyMapping("key.legacyoftheforce.force_stabilize", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, "key.categories.legacyoftheforce");
     private static final KeyMapping BRAKE = new KeyMapping("key.legacyoftheforce.force_brake", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "key.categories.legacyoftheforce");
-    public void register(RegisterKeyMappingsEvent event) { event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
+    public void register(RegisterKeyMappingsEvent event) { event.register(GROUP); event.register(ROTATE); event.register(THROW_BLOCKS); event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
     public void tick(ClientTickEvent.Post event) {
         var minecraft = Minecraft.getInstance();
+        while (GROUP.consumeClick()) send(minecraft, "group");
+        while (ROTATE.consumeClick()) send(minecraft, "rotate");
+        while (THROW_BLOCKS.consumeClick()) send(minecraft, "throw_blocks");
         while(SKILLS.consumeClick())if(minecraft.screen==null&&minecraft.player!=null&&minecraft.getConnection()!=null)minecraft.getConnection().sendCommand("lotf skill menu");
         while(POWER_NEXT.consumeClick())if(minecraft.screen==null&&minecraft.player!=null) {selectedPower=(selectedPower+1)%POWERS.length;minecraft.player.displayClientMessage(net.minecraft.network.chat.Component.translatable("power.legacyoftheforce.selected",net.minecraft.network.chat.Component.translatable("power.legacyoftheforce."+POWERS[selectedPower])),true);}
         while(POWER_CAST.consumeClick())if(minecraft.screen==null&&minecraft.player!=null&&minecraft.getConnection()!=null)minecraft.getConnection().sendCommand("lotf force power "+POWERS[selectedPower]);
@@ -47,5 +53,8 @@ public final class ForceKeys {
         while (PULL.consumeClick()) {
             if (minecraft.screen == null && minecraft.player != null && minecraft.getConnection() != null) minecraft.getConnection().sendCommand("lotf force pull");
         }
+    }
+    private void send(Minecraft minecraft, String action) {
+        if (minecraft.screen == null && minecraft.player != null && minecraft.getConnection() != null) minecraft.getConnection().sendCommand("lotf force " + action);
     }
 }

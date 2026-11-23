@@ -3,6 +3,9 @@ package com.legacyoftheforce.force;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class ForceConfig {
+    public static final ModConfigSpec.ConfigValue<java.util.List<? extends Integer>> GROUP_LEVELS, GROUP_COUNTS, GROUP_RANGES;
+    public static final ModConfigSpec.IntValue GROUP_RADIUS, GROUP_PATH_CELLS, GROUP_THROW_LEVEL, GROUP_FLIGHT_TICKS;
+    public static final ModConfigSpec.DoubleValue GROUP_THROW_BASE, GROUP_THROW_MASS, GROUP_THROW_SPEED, GROUP_GRAVITY, GROUP_DAMAGE_CAP, GROUP_DAMAGE_SCALE;
     public static final ModConfigSpec.IntValue CHANNEL_INTERVAL, AREA_TARGETS, CHAIN_TARGETS;
     public static final ModConfigSpec.DoubleValue CHANNEL_COST_FRACTION, CHAIN_RADIUS;
     public static final ModConfigSpec SPEC;
@@ -15,6 +18,19 @@ public final class ForceConfig {
             MOB_COST_PER_MASS, MOB_VOLUME_UNIT, MOB_MIN_MASS, MOB_MAX_MASS, MOB_RESISTANCE_LIMIT;
     static {
         var builder = new ModConfigSpec.Builder();
+        GROUP_LEVELS = builder.defineList("group.levels", java.util.List.of(15,35,60,85,100), v -> v instanceof Integer i && i >= 1 && i <= 100);
+        GROUP_COUNTS = builder.defineList("group.maximumBlocks", java.util.List.of(1,3,8,16,32), v -> v instanceof Integer i && i >= 1 && i <= 32);
+        GROUP_RANGES = builder.defineList("group.ranges", java.util.List.of(6,10,15,20,24), v -> v instanceof Integer i && i >= 2 && i <= 24);
+        GROUP_RADIUS = builder.defineInRange("group.maximumSelectionManhattanRadius",8,1,24);
+        GROUP_PATH_CELLS = builder.defineInRange("group.maximumSweptCells",8192,256,32768);
+        GROUP_THROW_LEVEL = builder.defineInRange("group.throwLevel",45,15,100);
+        GROUP_FLIGHT_TICKS = builder.defineInRange("group.maximumFlightTicks",40,1,100);
+        GROUP_THROW_BASE = builder.defineInRange("group.throwBaseCost",7.0,0,1000);
+        GROUP_THROW_MASS = builder.defineInRange("group.throwCostPerMass",3.0,0,1000);
+        GROUP_THROW_SPEED = builder.defineInRange("group.throwSpeed",1.2,.1,1.5);
+        GROUP_GRAVITY = builder.defineInRange("group.gravityPerTick",.03,0,.1);
+        GROUP_DAMAGE_CAP = builder.defineInRange("group.maximumImpactDamage",12.0,0,100);
+        GROUP_DAMAGE_SCALE = builder.defineInRange("group.impactDamagePerMassSpeed",2.0,0,10);
         VEHICLE_STABILIZE_LEVEL = builder.defineInRange("vehicle.stabilizeLevel", 25, 1, 100);
         VEHICLE_BRAKE_LEVEL = builder.defineInRange("vehicle.brakeLevel", 45, 1, 100);
         VEHICLE_COOLDOWN = builder.defineInRange("vehicle.cooldownTicks", 80, 20, 72000);

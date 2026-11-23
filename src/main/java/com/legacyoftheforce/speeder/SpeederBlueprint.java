@@ -56,4 +56,10 @@ public record SpeederBlueprint(CompoundTag tag) {
         if (plan().isEmpty() || primary < 0 || primary > 0xffffff || secondary < 0 || secondary > 0xffffff) throw new IllegalArgumentException("Unsupported palette");
         var updated = tag.copy(); updated.putInt("primary", primary); updated.putInt("secondary", secondary); return new SpeederBlueprint(updated);
     }
+    public SpeederBlueprint withGrid(int width, int height, int depth) {
+        var plan = plan().orElseThrow(() -> new IllegalArgumentException("Unsupported blueprint"));
+        if (width < 1 || width > 12 || height < 1 || height > 7 || depth < 1 || depth > 5
+                || plan.modules().stream().anyMatch(p -> p.at().x() >= width || p.at().y() >= height || p.at().z() >= depth)) throw new IllegalArgumentException("Grid would discard modules");
+        var updated = tag.copy(); updated.putIntArray("gridSize",new int[]{width,height,depth}); return new SpeederBlueprint(updated);
+    }
 }

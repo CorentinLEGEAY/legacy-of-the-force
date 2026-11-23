@@ -12,6 +12,25 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.*;
 
 public final class SpeederAssemblyLifecycle {
+    @SubscribeEvent public void commands(net.neoforged.neoforge.event.RegisterCommandsEvent event) {
+        var root = net.minecraft.commands.Commands.literal("guests");
+        for (boolean allow : new boolean[]{true,false}) root.then(net.minecraft.commands.Commands.literal(allow ? "allow" : "revoke")
+                .then(net.minecraft.commands.Commands.argument("player",net.minecraft.commands.arguments.EntityArgument.player()).executes(context -> {
+                    var actor = context.getSource().getPlayerOrException(); var guest = net.minecraft.commands.arguments.EntityArgument.getPlayer(context,"player");
+                    return changeGuest(actor, guest.getUUID(), allow);
+                })));
+        root.then(net.minecraft.commands.Commands.literal("revoke_uuid").then(net.minecraft.commands.Commands.argument("id",net.minecraft.commands.arguments.UuidArgument.uuid())
+                .executes(context -> changeGuest(context.getSource().getPlayerOrException(),net.minecraft.commands.arguments.UuidArgument.getUuid(context,"id"),false))));
+        event.getDispatcher().register(net.minecraft.commands.Commands.literal("lotf").then(net.minecraft.commands.Commands.literal("speeder").then(root)));
+    }
+    private static int changeGuest(ServerPlayer actor, UUID guest, boolean allow) {
+        var vehicle = actor.serverLevel().getEntitiesOfClass(SpeederEntity.class,actor.getBoundingBox().inflate(6),
+                v -> v.savedState().snapshot().map(s -> s.owner().equals(actor.getUUID())).orElse(false)).stream()
+                .min(java.util.Comparator.comparingDouble(actor::distanceToSqr)).orElse(null);
+        boolean changed = vehicle != null && vehicle.setGuest(actor,guest,allow);
+        actor.sendSystemMessage(Component.translatable("speeder.legacyoftheforce." + (changed ? "guest_saved" : "guest_denied")));
+        return changed ? 1 : 0;
+    }
     private static final Map<MinecraftServer, SpeederAssemblyService> SERVICES = new IdentityHashMap<>();
     private static final Map<MinecraftServer, SpeederRechargeService> RECHARGE = new IdentityHashMap<>();
     @SubscribeEvent public void start(ServerStartedEvent event) {

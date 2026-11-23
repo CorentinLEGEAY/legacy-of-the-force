@@ -38,7 +38,8 @@ public final class SpeederContent {
     public static final Supplier<SpeederGarageBlock> GARAGE = BLOCKS.register("speeder_garage", () -> new SpeederGarageBlock(BlockBehaviour.Properties.of().strength(4).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> GARAGE_ITEM = ITEMS.register("speeder_garage", () -> new BlockItem(GARAGE.get(), new Item.Properties()));
     public static final Supplier<MenuType<SpeederGarageMenu>> MENU = MENUS.register("speeder_garage", () -> new MenuType<>(SpeederGarageMenu::new, FeatureFlags.DEFAULT_FLAGS));
-    public static final List<String> PART_NAMES = List.of("chassis_light", "engine_standard", "battery_small", "seat_pilot");
+    public static final List<String> PART_NAMES = List.of("chassis_light", "engine_standard", "battery_small", "seat_pilot",
+            "thruster_vector", "stabilizer_gyro", "seat_passenger", "body_cowling", "armor_plate", "lamp_module");
     private static final Map<String, Supplier<Item>> PARTS = new LinkedHashMap<>();
     static { for (var name : PART_NAMES) PARTS.put(name, ITEMS.register(name, () -> new Item(new Item.Properties()))); }
     public static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, name); }

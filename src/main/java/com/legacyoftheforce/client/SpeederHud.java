@@ -14,10 +14,11 @@ public final class SpeederHud {
         int top = HudLayout.vehicleTop();
         event.getGuiGraphics().drawString(minecraft.font, Component.translatable("hud.legacyoftheforce.speeder",
                 String.format(Locale.ROOT, "%.1f", Math.abs(vehicle.speed()) * 20), Math.round(vehicle.charge())), 6, top, 0xFFFFFFFF);
-        event.getGuiGraphics().drawString(minecraft.font, Component.translatable("hud.legacyoftheforce.speeder_integrity", vehicle.integrity(), vehicle.damagedModules()), 6, top + 12, 0xFFFFFFFF);
-        event.getGuiGraphics().drawWordWrap(minecraft.font, Component.translatable("hud.legacyoftheforce.speeder_controls",
+        event.getGuiGraphics().drawString(minecraft.font, Component.translatable("hud.legacyoftheforce.speeder_integrity", vehicle.integrity(), vehicle.damagedModules())
+                .append(Component.translatable("speeder.legacyoftheforce.occupancy",vehicle.getPassengers().size(),vehicle.seatCapacity())), 6, top + 12, 0xFFFFFFFF);
+        event.getGuiGraphics().drawWordWrap(minecraft.font, vehicle.isPilotPassenger(minecraft.player) ? Component.translatable("hud.legacyoftheforce.speeder_controls",
                 minecraft.options.keyUp.getTranslatedKeyMessage(), minecraft.options.keyDown.getTranslatedKeyMessage(),
                 minecraft.options.keyLeft.getTranslatedKeyMessage(), minecraft.options.keyRight.getTranslatedKeyMessage(),
-                minecraft.options.keyShift.getTranslatedKeyMessage()), 6, top + 24, Math.max(1, event.getGuiGraphics().guiWidth() - 12), 0xFFFFFFFF);
+                minecraft.options.keyShift.getTranslatedKeyMessage()) : Component.translatable("speeder.legacyoftheforce.passenger_controls",minecraft.options.keyShift.getTranslatedKeyMessage()), 6, top + 24, Math.max(1, event.getGuiGraphics().guiWidth() - 12), 0xFFFFFFFF);
     }
 }

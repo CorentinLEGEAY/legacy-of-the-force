@@ -8,7 +8,7 @@ import static com.legacyoftheforce.speeder.SpeederModule.Family;
 
 /** Ordered checks mirror SPEED-03; station/material/spawn transactions belong to the garage/vehicle layer. */
 public final class BlueprintValidator {
-    public enum Error { NONE, FORMAT, TOO_LARGE, UNKNOWN_MODULE, OUTSIDE, OVERLAP, REQUIRED, PILOTS, DETACHED, SEAT_BLOCKED, PROPULSION, TOO_HEAVY, LIFT, ENERGY, STABILITY }
+    public enum Error { NONE, FORMAT, TOO_LARGE, UNKNOWN_MODULE, OUTSIDE, OVERLAP, REQUIRED, PILOTS, DETACHED, SEAT_BLOCKED, PROPULSION, TOO_HEAVY, LIFT, ENERGY, STABILITY, TOO_MANY_SEATS }
     public record Limits(int width, int height, int depth, int modules, double maxMass, double liftRatio, double stability) {
         public Limits {
             if (width < 1 || width > 12 || height < 1 || height > 7 || depth < 1 || depth > 5 || modules < 4 || modules > 128
@@ -36,9 +36,9 @@ public final class BlueprintValidator {
             if (definition.family() == Family.CHASSIS && root == null) root = part;
             if (definition.family() == Family.PILOT) { pilot = part; pilots++; }
             bill.merge(part.kind(), 1, Integer::sum); mass += definition.mass(); lift += definition.lift(); capacity += definition.capacity(); stability += definition.stability();
-            if (definition.family() == Family.ENGINE) thrust += switch (part.rotation()) { case 0 -> definition.thrust(); case 2 -> -definition.thrust(); default -> 0; };
+            if (definition.family() == Family.ENGINE || definition.family() == Family.THRUSTER) thrust += switch (part.rotation()) { case 0 -> definition.thrust(); case 2 -> -definition.thrust(); default -> 0; };
         }
-        if (families.size() != Family.values().length) return fail(Error.REQUIRED);
+        if (!families.containsAll(EnumSet.of(Family.CHASSIS,Family.ENGINE,Family.BATTERY,Family.PILOT))) return fail(Error.REQUIRED);
         if (pilots != 1) return fail(Error.PILOTS);
         var reached = new HashSet<Cell>(); var queue = new ArrayDeque<PlacedModule>(); queue.add(root); reached.add(root.at());
         while (!queue.isEmpty()) {
@@ -50,6 +50,17 @@ public final class BlueprintValidator {
             }
         }
         if (reached.size() != cells.size()) return fail(Error.DETACHED);
+        int seats = 1;
+        for (var part : plan.modules()) if (catalog.get(part.kind()).family() == Family.PASSENGER) {
+            if (++seats > 4) return fail(Error.TOO_MANY_SEATS);
+            var direction = Direction.NORTH; for (int i = 0; i < part.rotation(); i++) direction = direction.getClockWise();
+            if (part.rotation() != 0 || cells.containsKey(offset(part.at(), Direction.UP)) || cells.containsKey(offset(part.at(), direction))) return fail(Error.SEAT_BLOCKED);
+            for(var other:plan.modules()) {
+                var family=catalog.get(other.kind()).family();if(other==part||(family!=Family.PILOT&&family!=Family.PASSENGER))continue;
+                int dx=other.at().x()-part.at().x(),dy=other.at().y()-part.at().y(),dz=other.at().z()-part.at().z();
+                if(Math.abs(dy)<3&&dx*dx+dz*dz<4)return fail(Error.SEAT_BLOCKED);
+            }
+        }
         var front = Direction.NORTH; for (int i = 0; i < pilot.rotation(); i++) front = front.getClockWise();
         if (cells.containsKey(offset(pilot.at(), Direction.UP)) || cells.containsKey(offset(pilot.at(), front))) return fail(Error.SEAT_BLOCKED);
         if (thrust <= 0 || pilot.rotation() != 0) return fail(Error.PROPULSION);

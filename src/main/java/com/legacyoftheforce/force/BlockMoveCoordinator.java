@@ -50,6 +50,9 @@ public final class BlockMoveCoordinator {
     public boolean holding(UUID actor) { return sessions.containsKey(actor); }
     public boolean ownsDisplay(UUID operation) { return sessions.values().stream().anyMatch(s -> s.record.id().equals(operation)); }
     public int activeCount() { return sessions.size(); }
+    public int blockCount(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
+        return (int) sessions.values().stream().filter(s -> s.record.dimension().equals(dimension)).count();
+    }
 
     public ForceResult grab(ServerPlayer actor) {
         var hit = trace(actor);

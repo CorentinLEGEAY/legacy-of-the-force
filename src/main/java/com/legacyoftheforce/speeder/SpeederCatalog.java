@@ -41,7 +41,8 @@ public final class SpeederCatalog extends SimpleJsonResourceReloadListener {
                 var connectors = EnumSet.noneOf(Direction.class);
                 for (var face : json.getAsJsonArray("connectors")) connectors.add(Direction.valueOf(face.getAsString().toUpperCase(Locale.ROOT)));
                 loaded.put(entry.getKey(), new SpeederModule(SpeederModule.Family.valueOf(json.get("family").getAsString().toUpperCase(Locale.ROOT)),
-                        json.get("mass").getAsDouble(), json.get("thrust").getAsDouble(), json.get("lift").getAsDouble(), json.get("capacity").getAsDouble(), json.get("stability").getAsDouble(), connectors));
+                        json.get("mass").getAsDouble(), json.get("thrust").getAsDouble(), json.get("lift").getAsDouble(), json.get("capacity").getAsDouble(), json.get("stability").getAsDouble(), connectors,
+                        json.has("armor") ? json.get("armor").getAsDouble() : 0));
             }
             definitions = Map.copyOf(loaded); salvage = Map.copyOf(recycling); LegacyOfTheForce.LOGGER.info("Loaded {} speeder module definitions", definitions.size());
         } catch (RuntimeException invalid) {

@@ -70,8 +70,12 @@ public final class SpeederAssemblyService {
     }
     private Optional<VehicleState> findSpawn(ServerPlayer actor, BlockPos garage, SpeederBlueprint blueprint, double charge, UUID operation) {
         var level = actor.serverLevel(); var facing = actor.getDirection();
+        var parts=blueprint.plan().orElseThrow().modules();
+        int width=parts.stream().mapToInt(p->p.at().x()).max().orElse(0)-parts.stream().mapToInt(p->p.at().x()).min().orElse(0)+1;
+        int depth=parts.stream().mapToInt(p->p.at().z()).max().orElse(0)-parts.stream().mapToInt(p->p.at().z()).min().orElse(0)+1;
+        int distance=Math.max(3,(int)Math.ceil(Math.max(width,depth)*.25)+1);
         for (var direction : List.of(facing.getClockWise(), facing.getCounterClockWise(), facing, facing.getOpposite())) {
-            var target = garage.relative(direction, 3); if (!level.hasChunkAt(target)) continue;
+            var target = garage.relative(direction, distance); if (!level.hasChunkAt(target)) continue;
             var top = Vec3.atCenterOf(target).add(0, 3, 0);
             var hit = level.clip(new ClipContext(top, top.add(0, -6, 0), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor));
             if (hit.getType() != HitResult.Type.BLOCK || !level.getFluidState(hit.getBlockPos()).isEmpty()
@@ -88,7 +92,7 @@ public final class SpeederAssemblyService {
         if (actor.serverLevel() != level || !level.getWorldBorder().isWithinBounds(box) || box.minY < level.getMinBuildHeight() || box.maxY >= level.getMaxBuildHeight()) return false;
         var minimum = BlockPos.containing(box.minX, box.minY, box.minZ); var maximum = BlockPos.containing(Math.nextDown(box.maxX), Math.nextDown(box.maxY), Math.nextDown(box.maxZ));
         long volume = (long)(maximum.getX() - minimum.getX() + 1) * (maximum.getY() - minimum.getY() + 1) * (maximum.getZ() - minimum.getZ() + 1);
-        if (volume < 1 || volume > 64) return false;
+        if (volume < 1 || volume > 1024) return false;
         for (var pos : BlockPos.betweenClosed(minimum, maximum)) if (!level.hasChunkAt(pos) || !protection.mayModify(actor, level, pos, ModificationKind.PLACE)) return false;
         return true;
     }

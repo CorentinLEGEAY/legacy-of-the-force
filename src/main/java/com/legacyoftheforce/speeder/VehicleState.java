@@ -47,6 +47,15 @@ public record VehicleState(CompoundTag tag) {
         if (plan.isEmpty() || plan.get().modules().isEmpty()) return Optional.empty();
         int[] health = tag.getIntArray("moduleHealth");
         if (health.length != plan.get().modules().size() || Arrays.stream(health).anyMatch(hp -> hp < 0 || hp > 100)) return Optional.empty();
+        if (tag.contains("guests")) {
+            if (!tag.contains("guests", Tag.TAG_LIST) || tag.getInt("guestSchemaVersion") != 1) return Optional.empty();
+            var guests = (ListTag)tag.get("guests"); var seen = new HashSet<UUID>();
+            if (guests.size() > 3 || (!guests.isEmpty() && guests.getElementType() != Tag.TAG_COMPOUND)) return Optional.empty();
+            for (var value : guests) {
+                var guest = (CompoundTag)value;
+                if (!guest.hasUUID("id") || nil(guest.getUUID("id")) || guest.getUUID("id").equals(tag.getUUID("ownerId")) || !seen.add(guest.getUUID("id"))) return Optional.empty();
+            }
+        }
         for (var field : List.of("x", "y", "z", "speed", "verticalSpeed", "yaw", "energy")) if (!tag.contains(field, Tag.TAG_DOUBLE)) return Optional.empty();
         var dimension = ResourceLocation.tryParse(tag.getString("dimension")); if (dimension == null) return Optional.empty();
         try {
@@ -68,6 +77,21 @@ public record VehicleState(CompoundTag tag) {
         if (health.size() != previous.health().size() || health.stream().anyMatch(hp -> hp == null || hp < 0 || hp > 100)
                 || !Double.isFinite(charge) || charge < 0 || charge > previous.motion().energy()) throw new IllegalArgumentException("Invalid health/charge change");
         var updated = tag.copy(); updated.putIntArray("moduleHealth", health); updated.putDouble("energy", charge); return new VehicleState(updated);
+    }
+    public Set<UUID> guests() {
+        if (snapshot().isEmpty()) return Set.of();
+        var result = new HashSet<UUID>();
+        for (var value : tag.getList("guests", Tag.TAG_COMPOUND)) result.add(((CompoundTag)value).getUUID("id"));
+        return Set.copyOf(result);
+    }
+    public VehicleState withGuest(UUID guest, boolean allowed) {
+        var previous = snapshot().orElseThrow(() -> new IllegalStateException("Unsupported vehicle is read-only"));
+        if (nil(guest) || guest.equals(previous.owner())) throw new IllegalArgumentException("Invalid guest identity");
+        var guests = new HashSet<>(guests()); if (allowed) guests.add(guest); else guests.remove(guest);
+        if (guests.size() > 3) throw new IllegalArgumentException("Guest list full");
+        var list = new ListTag();
+        guests.stream().sorted().forEach(id -> { var item = new CompoundTag(); item.putUUID("id", id); list.add(item); });
+        var updated = tag.copy(); updated.putInt("guestSchemaVersion",1); updated.put("guests",list); return new VehicleState(updated);
     }
 
     private static void writePose(CompoundTag tag, Pose pose) {

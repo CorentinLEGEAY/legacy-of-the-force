@@ -120,3 +120,7 @@ for lang, strings in [("en_us", english), ("fr_fr", french)]:
     entries.update({key if ".legacyoftheforce." in key else "speeder.legacyoftheforce." + key: value for key, value in strings.items()})
     write(path, entries)
 print("Generated 4 module definitions, 6 recipes, original garage/module geometry and FR/EN labels.")
+
+# Keep the historical entry point from replacing the current module designs with prototypes.
+import runpy
+runpy.run_path(str(Path(__file__).with_name("generate_speeder_expansion.py")), run_name="__main__")

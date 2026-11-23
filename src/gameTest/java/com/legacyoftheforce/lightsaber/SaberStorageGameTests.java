@@ -28,7 +28,10 @@ import net.neoforged.neoforge.gametest.*;
 public final class SaberStorageGameTests {
     private record Fixture(ServerPlayer actor, BlockEntity entity, Container container, ChestMenu menu) {}
     private static Fixture fixture(GameTestHelper helper, boolean barrel) {
-        var level=helper.getLevel();var pos=helper.absolutePos(new BlockPos(2,2,2));
+        return fixture(helper,barrel,helper.absolutePos(new BlockPos(2,2,2)));
+    }
+    private static Fixture fixture(GameTestHelper helper,boolean barrel,BlockPos pos) {
+        var level=helper.getLevel();
         level.setBlock(pos,(barrel?Blocks.BARREL:Blocks.CHEST).defaultBlockState(),3);
         var entity=level.getBlockEntity(pos);var container=(Container)entity;
         var profile=new GameProfile(UUID.randomUUID(),"StorageTest");
@@ -102,6 +105,31 @@ public final class SaberStorageGameTests {
         var saved=new VerifiedPlayerSaveBarrier().read(f.actor).getCompound("neoforge:attachments");
         helper.assertTrue(saved.getCompound(SaberStorageTransactions.RECEIPT).getLong("revision")==1&&saved.getCompound(SaberItemTransfers.RECEIPT).getLong("revision")==1,"Storage withdrawal and world publication need their own durable receipts");
         entities.getFirst().discard();helper.succeed();
+    }
+    @GameTest(template="empty",timeoutTicks=160)
+    public static void doubleChestAcrossChunkBoundaryPersistsBothHalves(GameTestHelper helper) throws Exception {
+        // Above structure cleanup, so the adjacent native chunk is not another test's floor.
+        var origin=helper.absolutePos(new BlockPos(2,66,2));var pos=new BlockPos((origin.getX()&~15)+15,origin.getY(),origin.getZ());
+        var f=fixture(helper,false,pos);var rightPos=pos.east();
+        helper.getLevel().setBlock(pos,Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING,net.minecraft.core.Direction.NORTH).setValue(net.minecraft.world.level.block.ChestBlock.TYPE,net.minecraft.world.level.block.state.properties.ChestType.LEFT),2);
+        helper.getLevel().setBlock(rightPos,Blocks.CHEST.defaultBlockState().setValue(net.minecraft.world.level.block.ChestBlock.FACING,net.minecraft.core.Direction.NORTH).setValue(net.minecraft.world.level.block.ChestBlock.TYPE,net.minecraft.world.level.block.state.properties.ChestType.RIGHT),2);var rightEntity=helper.getLevel().getBlockEntity(rightPos);var right=(Container)rightEntity;
+        var original=saber();f.container.setItem(0,original.copy());right.setItem(0,new ItemStack(Items.IRON_INGOT,7));
+        var menu=ChestMenu.sixRows(19,f.actor.getInventory(),new net.minecraft.world.CompoundContainer(f.container,right));f.actor.containerMenu=menu;
+        helper.assertTrue(new net.minecraft.world.level.ChunkPos(pos).x!=new net.minecraft.world.level.ChunkPos(rightPos).x,"The fixture must really span two native chunks");
+        menu.clicked(0,0,ClickType.PICKUP,f.actor);
+        helper.assertTrue(f.container.isEmpty()&&same(menu.getCarried(),original)&&right.getItem(0).getCount()==7,"Withdrawal must preserve the other chunk's unrelated stack");
+        var firstIdentity=SaberStorageImages.identity(f.entity);var secondIdentity=SaberStorageImages.identity(rightEntity);
+        helper.runAfterDelay(2,()->{try {
+            menu.clicked(28,0,ClickType.PICKUP,f.actor);
+            helper.assertTrue(menu.getCarried().isEmpty()&&f.container.isEmpty()&&same(right.getItem(1),original)&&right.getItem(0).getCount()==7,"The same saber must be deposited into the other native chunk");
+            for(var entity:java.util.List.of(f.entity,rightEntity)) {
+                var at=entity.getBlockPos();var chunk=helper.getLevel().getChunkSource().chunkMap.read(new net.minecraft.world.level.ChunkPos(at)).join().orElseThrow();CompoundTag found=null;
+                for(var raw:chunk.getList("block_entities",Tag.TAG_COMPOUND)) {var value=(CompoundTag)raw;if(value.getInt("x")==at.getX()&&value.getInt("y")==at.getY()&&value.getInt("z")==at.getZ())found=value;}
+                helper.assertTrue(found!=null&&found.getList("Items",Tag.TAG_COMPOUND).equals(SaberStorageImages.items(entity)),"Each separate native chunk must contain its final complete endpoint image");
+                helper.assertTrue(found.getCompound("NeoForgeData").getCompound(SaberStorageImages.ID).getUUID("id").equals(entity==f.entity?firstIdentity:secondIdentity),"Both durable endpoint identities must survive the exchange");
+            }
+            helper.assertTrue(new VerifiedPlayerSaveBarrier().read(f.actor).getCompound("neoforge:attachments").getCompound(SaberStorageTransactions.RECEIPT).getLong("revision")==2,"Two exchanges spanning both chunks must pay exactly twice");helper.succeed();
+        }catch(Exception failure) {throw new RuntimeException(failure);}});
     }
     @GameTest(template="empty",timeoutTicks=240)
     public static void windowsJournalDenialAfterPlayerPaymentLocksStorageThenReconciles(GameTestHelper helper) throws Exception {

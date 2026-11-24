@@ -12,6 +12,8 @@ public final class TravelConfig {
     public static final ModConfigSpec.IntValue VOLCANIC_EXPOSURE, VOLCANIC_DURATION;
     public static final ModConfigSpec.BooleanValue MUD_DRAG;
     public static final ModConfigSpec.IntValue MUD_DURATION;
+    public static final ModConfigSpec.IntValue RUNE_INTERVAL, RUNE_FAILURE;
+    public static final ModConfigSpec.DoubleValue RUNE_MINING_HARDNESS;
     static {
         var builder = new ModConfigSpec.Builder();
         OUTBOUND_CELLS = builder.defineInRange("outboundEnergyCells", 1, 1, 32);
@@ -30,6 +32,9 @@ public final class TravelConfig {
         VOLCANIC_DURATION = builder.defineInRange("environment.mustafar.weaknessTicks", 60, 20, 100);
         MUD_DRAG = builder.define("environment.dagobah.mudSlowdownEnabled", true);
         MUD_DURATION = builder.defineInRange("environment.dagobah.mudSlowdownTicks", 30, 20, 60);
+        RUNE_INTERVAL = builder.defineInRange("jedha.runeInputIntervalTicks", 10, 10, 60);
+        RUNE_FAILURE = builder.defineInRange("jedha.runeFailureDelayTicks", 40, 20, 200);
+        RUNE_MINING_HARDNESS = builder.defineInRange("jedha.unlockedMiningHardness", 4d, 1, 20);
         SPEC = builder.build();
     }
     private TravelConfig() {}

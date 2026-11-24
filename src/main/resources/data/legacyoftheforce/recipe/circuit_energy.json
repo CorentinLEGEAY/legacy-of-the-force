@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DCD",
+    "ABA",
+    "DCD"
+  ],
+  "key": {
+    "D": {
+      "item": "legacyoftheforce:jedha_relic_dust"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "B": {
+      "item": "legacyoftheforce:battery_small"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:circuit_energy",
+    "count": 1
+  }
+}

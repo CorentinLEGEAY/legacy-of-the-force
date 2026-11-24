@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:cave",
+  "config": {
+    "probability": 0.12,
+    "y": {
+      "type": "minecraft:uniform",
+      "min_inclusive": {
+        "absolute": -16
+      },
+      "max_inclusive": {
+        "absolute": 120
+      }
+    },
+    "yScale": 0.6,
+    "lava_level": {
+      "above_bottom": 8
+    },
+    "replaceable": "#legacyoftheforce:jedha_carver_replaceables",
+    "horizontal_radius_multiplier": 1.1,
+    "vertical_radius_multiplier": 0.8,
+    "floor_level": -0.7
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "textures": {
+    "body": "legacyoftheforce:block/jedha_relic_ore",
+    "glyph": "legacyoftheforce:item/navigation/jedha",
+    "particle": "legacyoftheforce:block/jedha_relic_ore"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        3,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        3
+      ],
+      "to": [
+        13,
+        10,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        10,
+        2
+      ],
+      "to": [
+        14,
+        13,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glyph"
+        },
+        "down": {
+          "texture": "#glyph"
+        },
+        "north": {
+          "texture": "#glyph"
+        },
+        "south": {
+          "texture": "#glyph"
+        },
+        "east": {
+          "texture": "#glyph"
+        },
+        "west": {
+          "texture": "#glyph"
+        }
+      }
+    }
+  ]
+}

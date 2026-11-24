@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "legacyoftheforce:blocks/jedha_crystal_cluster",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "legacyoftheforce:ilum_crystal",
+          "functions": [
+            {
+              "function": "legacyoftheforce:identify_ilum_crystal",
+              "planet": "legacyoftheforce:jedha"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:location_check",
+          "predicate": {
+            "dimension": "legacyoftheforce:jedha"
+          }
+        },
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "legacyoftheforce:jedha_crystal_cluster",
+          "properties": {
+            "attuned": "true"
+          }
+        },
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "items": "#minecraft:pickaxes"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "type": "legacyoftheforce:jedha",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "legacyoftheforce:jedha",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "legacyoftheforce:jedha_sacred_dunes",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              -1,
+              0
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        },
+        {
+          "biome": "legacyoftheforce:jedha_calcite_cliffs",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              0,
+              1
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        }
+      ]
+    }
+  }
+}

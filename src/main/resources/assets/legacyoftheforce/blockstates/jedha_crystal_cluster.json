@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "attuned=false": {
+      "model": "legacyoftheforce:block/jedha_crystal_sealed"
+    },
+    "attuned=true": {
+      "model": "legacyoftheforce:block/jedha_crystal_open"
+    }
+  }
+}

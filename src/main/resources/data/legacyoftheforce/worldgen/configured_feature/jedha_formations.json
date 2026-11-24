@@ -1,0 +1,7 @@
+{
+  "type": "legacyoftheforce:jedha_landscape",
+  "config": {
+    "formation_chance": 12,
+    "maximum_height": 12
+  }
+}

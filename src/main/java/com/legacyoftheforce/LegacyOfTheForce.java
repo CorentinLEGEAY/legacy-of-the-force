@@ -49,6 +49,7 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.PlanetEnvironment());
+        com.legacyoftheforce.core.api.WorldProtectionHooks.register(new com.legacyoftheforce.planets.RuneProtectionPolicy());
         com.legacyoftheforce.speeder.SpeederContent.register(modBus);
         com.legacyoftheforce.content.PlanetaryMaterials.register(modBus);
         com.legacyoftheforce.core.api.PlayerProgressAccess.install(new ProgressService()::get);

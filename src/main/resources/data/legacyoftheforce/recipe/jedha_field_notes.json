@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "minecraft:charcoal"
+    },
+    {
+      "item": "minecraft:calcite"
+    }
+  ],
+  "result": {
+    "id": "legacyoftheforce:jedha_field_notes",
+    "count": 1
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "type": "legacyoftheforce:jedha_site",
+  "site_kind": 2,
+  "biomes": [
+    "legacyoftheforce:jedha_sacred_dunes",
+    "legacyoftheforce:jedha_calcite_cliffs"
+  ],
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

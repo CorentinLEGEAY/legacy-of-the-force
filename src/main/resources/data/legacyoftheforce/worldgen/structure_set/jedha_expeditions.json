@@ -1,0 +1,23 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:jedha_crystal_chamber",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:jedha_rune_archive",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:jedha_ruins",
+      "weight": 3
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 826391,
+    "spacing": 14,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}

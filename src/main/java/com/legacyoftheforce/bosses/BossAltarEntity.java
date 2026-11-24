@@ -91,6 +91,19 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
                 }
             }
         }
+        if (getBlockState().getBlock() instanceof BossAltarBlock block && block.kind().sacred()) {
+            planned.set(0, new ItemStack(BossContent.SACRED_RELIC.get()));
+            planned.set(2, new ItemStack(com.legacyoftheforce.content.PlanetaryMaterials.item("jedha_relic_dust"), BossConfig.SACRED_MATERIALS.get()));
+            var design = com.legacyoftheforce.core.api.SaberDesigns.create(block.kind().dark() ? "crossguard" : "curved");
+            if (design.isEmpty()) throw new IllegalStateException("Missing sacred design reward");
+            planned.set(3, design);
+            if (Math.floorMod(event.hashCode(), 100) < BossConfig.SACRED_CRYSTAL_CHANCE.get()) {
+                var identity = UUID.nameUUIDFromBytes(("expedition-crystal/" + block.kind().dimension() + "/" + event).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                var crystal = com.legacyoftheforce.core.api.PlanetaryCrystals.create(block.kind().dimension(), identity);
+                if (crystal.isEmpty()) throw new IllegalStateException("Missing sacred crystal reward");
+                planned.set(5, crystal);
+            }
+        }
         items = planned; lootVictory = event; setChanged();
     }
 

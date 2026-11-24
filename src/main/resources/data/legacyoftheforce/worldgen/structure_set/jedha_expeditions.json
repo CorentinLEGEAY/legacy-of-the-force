@@ -11,6 +11,14 @@
     {
       "structure": "legacyoftheforce:jedha_ruins",
       "weight": 3
+    },
+    {
+      "structure": "legacyoftheforce:jedha_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:jedha_sith_sanctum",
+      "weight": 1
     }
   ],
   "placement": {

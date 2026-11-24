@@ -637,5 +637,22 @@
   "notes.legacyoftheforce.jedha.1": "Touchez la console pour lire son inscription. Les trois symboles sont le Soleil, la Lune et la Colonne ; suivez l’ordre des mots.",
   "notes.legacyoftheforce.jedha.2": "Une erreur efface la séquence. Plusieurs voyageurs peuvent coopérer, mais la source de cristal est partagée.",
   "notes.legacyoftheforce.jedha.3": "Une fois le sceau stabilisé, minez le cristal violet avec une pioche de fer. Le mécanisme ne crée pas de nouveau gisement.",
-  "notes.legacyoftheforce.jedha.4": "Les poussières de reliques servent à purifier un cristal corrompu. Le circuit de Jedha stocke plus d’énergie par module, mais pèse plus lourd."
+  "notes.legacyoftheforce.jedha.4": "Les poussières de reliques servent à purifier un cristal corrompu. Le circuit de Jedha stocke plus d’énergie par module, mais pèse plus lourd.",
+  "entity.legacyoftheforce.jedha_temple_guardian": "Gardien du Temple",
+  "entity.legacyoftheforce.jedha_relic_lord": "Seigneur des Reliques",
+  "block.legacyoftheforce.jedha_jedi_altar": "Autel du Gardien du Temple",
+  "block.legacyoftheforce.jedha_sith_altar": "Autel du Seigneur des Reliques",
+  "item.legacyoftheforce.jedha_boss_relic": "Reliquaire de Jedha",
+  "boss.legacyoftheforce.attack.temple_cut": "Coupe du Temple",
+  "boss.legacyoftheforce.attack.temple_guard": "Boucliers du Temple",
+  "boss.legacyoftheforce.attack.temple_push": "Poussée du Gardien",
+  "boss.legacyoftheforce.attack.temple_step": "Pas technique",
+  "boss.legacyoftheforce.attack.temple_riposte": "Riposte du Temple",
+  "boss.legacyoftheforce.attack.temple_wave": "Onde du sanctuaire",
+  "boss.legacyoftheforce.attack.relic_cut": "Coupe des Reliques",
+  "boss.legacyoftheforce.attack.relic_shield": "Bouclier reliquaire",
+  "boss.legacyoftheforce.attack.relic_lightning": "Éclairs des Reliques",
+  "boss.legacyoftheforce.attack.relic_drain": "Drain limité",
+  "boss.legacyoftheforce.attack.relic_step": "Pas des Reliques",
+  "boss.legacyoftheforce.attack.relic_storm": "Tempête du reliquaire"
 }

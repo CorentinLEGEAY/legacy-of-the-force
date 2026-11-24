@@ -9,7 +9,7 @@ import net.minecraft.world.level.levelgen.structure.*;
 
 public final class JedhaSiteStructure extends Structure {
     public static final MapCodec<JedhaSiteStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            settingsCodec(instance), Codec.intRange(0, 2).fieldOf("site_kind").forGetter(site -> site.kind)).apply(instance, JedhaSiteStructure::new));
+            settingsCodec(instance), Codec.intRange(0, 4).fieldOf("site_kind").forGetter(site -> site.kind)).apply(instance, JedhaSiteStructure::new));
     private final int kind;
     public JedhaSiteStructure(StructureSettings settings, int kind) { super(settings); this.kind = kind; }
     @Override protected Optional<GenerationStub> findGenerationPoint(GenerationContext context) {

@@ -1,4 +1,4 @@
-"""Original plateau terrain and a real, one-chunk rune puzzle; encounter additions follow separately."""
+"""Original Jedha plateaus, rune puzzles, native arenas and encounter artwork."""
 import json
 import runpy
 from pathlib import Path
@@ -40,9 +40,9 @@ def terrain():
             'spawners': {'creature': [{'type': 'minecraft:rabbit', 'weight': 6, 'minCount': 1, 'maxCount': 3}], 'monster': [{'type': 'minecraft:husk', 'weight': 30, 'minCount': 1, 'maxCount': 3}, {'type': 'minecraft:skeleton', 'weight': 25, 'minCount': 1, 'maxCount': 2}], 'ambient': [{'type': 'minecraft:bat', 'weight': 3, 'minCount': 1, 'maxCount': 2}]}})
     write(DATA / 'worldgen/configured_feature/jedha_formations.json', {'type': NS + 'jedha_landscape', 'config': {'formation_chance': 12, 'maximum_height': 12}})
     write(DATA / 'worldgen/placed_feature/jedha_formations.json', {'feature': NS + 'jedha_formations', 'placement': []})
-    sites = ['jedha_crystal_chamber', 'jedha_rune_archive', 'jedha_ruins']
+    sites = ['jedha_crystal_chamber', 'jedha_rune_archive', 'jedha_ruins', 'jedha_jedi_temple', 'jedha_sith_sanctum']
     for kind, name in enumerate(sites): write(DATA / f'worldgen/structure/{name}.json', {'type': NS + 'jedha_site', 'site_kind': kind, 'biomes': [NS + name for name in biomes], 'spawn_overrides': {}, 'step': 'surface_structures', 'terrain_adaptation': 'none'})
-    write(DATA / 'worldgen/structure_set/jedha_expeditions.json', {'structures': [{'structure': NS + name, 'weight': weight} for name, weight in zip(sites, [1, 1, 3])], 'placement': {'type': 'minecraft:random_spread', 'salt': 826391, 'spacing': 14, 'separation': 7, 'spread_type': 'linear'}})
+    write(DATA / 'worldgen/structure_set/jedha_expeditions.json', {'structures': [{'structure': NS + name, 'weight': weight} for name, weight in zip(sites, [1, 1, 3, 1, 1])], 'placement': {'type': 'minecraft:random_spread', 'salt': 826391, 'spacing': 14, 'separation': 7, 'spread_type': 'linear'}})
 
 
 def resources():
@@ -129,6 +129,58 @@ def language():
         path = ASSETS / f'lang/{lang}.json'; content = json.loads(path.read_text(encoding='utf-8')); content.update({key: value[column] for key, value in entries.items()}); write(path, content)
 
 
+def encounters():
+    path = DATA / 'tags/entity_type/boss_mobs.json'
+    content = json.loads(path.read_text(encoding='utf-8'))
+    content['values'] = list(dict.fromkeys(content['values'] + [NS + 'jedha_temple_guardian', NS + 'jedha_relic_lord']))
+    write(path, content)
+    tag('mineable/pickaxe', [NS + 'jedha_jedi_altar', NS + 'jedha_sith_altar'])
+    tag('needs_iron_tool', [NS + 'jedha_jedi_altar', NS + 'jedha_sith_altar'])
+    # Original brushed bronze and machined pale stone, shared across both reliquaries.
+    bronze = Image.new('RGB', (32, 32)); stone = Image.new('RGB', (32, 32))
+    for y in range(32):
+        for x in range(32):
+            brush = ((x * 37 + y * 3) % 11) - 5
+            seam = -23 if x in [0, 15, 16, 31] or y in [0, 31] else 0
+            bronze.putpixel((x, y), tuple(max(0, min(255, c + brush + seam)) for c in (168, 137, 83)))
+            grain = ((x * 19 + y * 23) % 13) - 6
+            stone.putpixel((x, y), (215 + grain, 206 + grain, 182 + grain))
+    draw = ImageDraw.Draw(bronze)
+    for x, y in [(3, 3), (27, 3), (3, 27), (27, 27)]:
+        draw.ellipse((x - 1, y - 1, x + 1, y + 1), fill=(80, 64, 44)); draw.point((x, y - 1), fill=(230, 207, 147))
+    texture('item/navigation/jedha_bronze', bronze); texture('block/jedha_reliquary_stone', stone)
+    display = json.loads((ASSETS / 'models/item/jedha_coordinates.json').read_text(encoding='utf-8'))['display']
+    materials = {'stone': NS + 'block/jedha_reliquary_stone', 'bronze': NS + 'item/navigation/jedha_bronze', 'glyph': NS + 'block/jedha_rune_0', 'particle': NS + 'block/jedha_reliquary_stone'}
+    for name, dark in [('jedha_jedi_altar', False), ('jedha_sith_altar', True)]:
+        elements = [cube([1, 0, 1], [15, 2, 15], 'stone'), cube([2, 2, 2], [14, 3, 14], 'bronze'), cube([3, 3, 3], [13, 10, 13], 'stone'), cube([2, 10, 2], [14, 12, 14], 'bronze'), cube([4, 12, 4], [12, 13, 12], 'glyph')]
+        for x in [3, 11]:
+            for z in [3, 11]: elements.append(cube([x, 12, z], [x + 2, 16 if dark else 15, z + 2], 'bronze'))
+        write(ASSETS / f'models/block/{name}.json', {'textures': materials, 'elements': elements})
+        write(ASSETS / f'blockstates/{name}.json', {'variants': {'': {'model': NS + 'block/' + name}}})
+    elements = [cube([4, 1, 4], [12, 2, 12], 'bronze'), cube([5, 2, 5], [11, 4, 11], 'stone'), cube([5, 4, 5], [11, 5, 11], 'bronze'), cube([6, 5, 6], [10, 11, 10], 'glyph'), cube([5, 11, 5], [11, 12, 11], 'bronze'), cube([5, 12, 5], [11, 14, 11], 'stone'), cube([4, 14, 4], [12, 15, 12], 'bronze')]
+    for x in [4.5, 10.5]:
+        for z in [4.5, 10.5]: elements.append(cube([x, 4, z], [x + 1, 12, z + 1], 'bronze'))
+    write(ASSETS / 'models/item/jedha_boss_relic.json', {'textures': materials, 'elements': elements, 'display': display})
+    for name, base in [('jedha_temple_guardian', (202, 188, 151)), ('jedha_relic_lord', (69, 52, 75))]:
+        image = Image.new('RGB', (16, 16))
+        for y in range(16):
+            for x in range(16):
+                grain = ((x * 11 + y * 19) % 9) - 4
+                edge = -22 if x in [0, 15] or y in [1, 12] else 0
+                image.putpixel((x, y), tuple(max(0, min(255, c + grain + edge)) for c in base))
+        draw = ImageDraw.Draw(image); draw.line((3, 5, 12, 5), fill=(175, 144, 84)); draw.rectangle((6, 8, 9, 10), outline=(150, 108, 192))
+        texture('entity/' + name, image)
+    entries = {
+        'entity.legacyoftheforce.jedha_temple_guardian': ('Gardien du Temple', 'Temple Guardian'),
+        'entity.legacyoftheforce.jedha_relic_lord': ('Seigneur des Reliques', 'Relic Lord'),
+        'block.legacyoftheforce.jedha_jedi_altar': ('Autel du Gardien du Temple', 'Temple Guardian altar'),
+        'block.legacyoftheforce.jedha_sith_altar': ('Autel du Seigneur des Reliques', 'Relic Lord altar'),
+        'item.legacyoftheforce.jedha_boss_relic': ('Reliquaire de Jedha', 'Jedha reliquary')}
+    for key, fr, en in [('temple_cut', 'Coupe du Temple', 'Temple cut'), ('temple_guard', 'Boucliers du Temple', 'Temple shields'), ('temple_push', 'Poussée du Gardien', 'Guardian push'), ('temple_step', 'Pas technique', 'Technical step'), ('temple_riposte', 'Riposte du Temple', 'Temple riposte'), ('temple_wave', 'Onde du sanctuaire', 'Sanctuary wave'), ('relic_cut', 'Coupe des Reliques', 'Relic cut'), ('relic_shield', 'Bouclier reliquaire', 'Relic shield'), ('relic_lightning', 'Éclairs des Reliques', 'Relic lightning'), ('relic_drain', 'Drain limité', 'Limited drain'), ('relic_step', 'Pas des Reliques', 'Relic step'), ('relic_storm', 'Tempête du reliquaire', 'Reliquary storm')]: entries['boss.legacyoftheforce.attack.' + key] = (fr, en)
+    for lang, column in [('fr_fr', 0), ('en_us', 1)]:
+        path = ASSETS / f'lang/{lang}.json'; content = json.loads(path.read_text(encoding='utf-8')); content.update({key: value[column] for key, value in entries.items()}); write(path, content)
+
+
 if __name__ == '__main__':
-    terrain(); resources(); artwork(); language()
-    print('Jedha terrain and rune puzzle resources generated; encounters and native validation remain pending.')
+    terrain(); resources(); artwork(); language(); encounters()
+    print('Jedha terrain, puzzle and encounter resources generated; native validation remains pending.')

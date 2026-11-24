@@ -637,5 +637,22 @@
   "notes.legacyoftheforce.jedha.1": "Touch a console to read its inscription. Its symbols are Sun, Moon and Pillar; follow their order in the words.",
   "notes.legacyoftheforce.jedha.2": "A mistake resets the sequence. Travelers may cooperate, but the crystal source is shared.",
   "notes.legacyoftheforce.jedha.3": "Once the seal is stable, mine the purple crystal with an iron pickaxe. The mechanism does not create a new deposit.",
-  "notes.legacyoftheforce.jedha.4": "Relic dust helps purify corrupted crystals. Jedha circuits store more energy per module but are heavier."
+  "notes.legacyoftheforce.jedha.4": "Relic dust helps purify corrupted crystals. Jedha circuits store more energy per module but are heavier.",
+  "entity.legacyoftheforce.jedha_temple_guardian": "Temple Guardian",
+  "entity.legacyoftheforce.jedha_relic_lord": "Relic Lord",
+  "block.legacyoftheforce.jedha_jedi_altar": "Temple Guardian altar",
+  "block.legacyoftheforce.jedha_sith_altar": "Relic Lord altar",
+  "item.legacyoftheforce.jedha_boss_relic": "Jedha reliquary",
+  "boss.legacyoftheforce.attack.temple_cut": "Temple cut",
+  "boss.legacyoftheforce.attack.temple_guard": "Temple shields",
+  "boss.legacyoftheforce.attack.temple_push": "Guardian push",
+  "boss.legacyoftheforce.attack.temple_step": "Technical step",
+  "boss.legacyoftheforce.attack.temple_riposte": "Temple riposte",
+  "boss.legacyoftheforce.attack.temple_wave": "Sanctuary wave",
+  "boss.legacyoftheforce.attack.relic_cut": "Relic cut",
+  "boss.legacyoftheforce.attack.relic_shield": "Relic shield",
+  "boss.legacyoftheforce.attack.relic_lightning": "Relic lightning",
+  "boss.legacyoftheforce.attack.relic_drain": "Limited drain",
+  "boss.legacyoftheforce.attack.relic_step": "Relic step",
+  "boss.legacyoftheforce.attack.relic_storm": "Reliquary storm"
 }

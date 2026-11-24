@@ -16,13 +16,13 @@ public final class JedhaSitePiece extends StructurePiece {
     private final CompoundTag retained;
     public JedhaSitePiece(BlockPos origin, int kind) {
         super(PlanetContent.SACRED_PIECE.get(), 0, new BoundingBox(origin.getX(), origin.getY(), origin.getZ(), origin.getX() + 12, origin.getY() + 16, origin.getZ() + 12));
-        if (kind < 0 || kind > 2) throw new IllegalArgumentException("Invalid sacred site");
+        if (kind < 0 || kind > 4) throw new IllegalArgumentException("Invalid sacred site");
         this.kind = kind; retained = new CompoundTag(); setOrientation(Direction.SOUTH);
     }
     public JedhaSitePiece(StructurePieceSerializationContext context, CompoundTag tag) {
         super(PlanetContent.SACRED_PIECE.get(), tag); retained = tag.copy();
         kind = tag.contains("schemaVersion", Tag.TAG_INT) && tag.getInt("schemaVersion") == 1 && tag.contains("siteKind", Tag.TAG_INT)
-                && tag.getInt("siteKind") >= 0 && tag.getInt("siteKind") <= 2 && getBoundingBox().getXSpan() == 13
+                && tag.getInt("siteKind") >= 0 && tag.getInt("siteKind") <= 4 && getBoundingBox().getXSpan() == 13
                 && getBoundingBox().getZSpan() == 13 && getBoundingBox().getYSpan() == 17 ? tag.getInt("siteKind") : -1;
     }
     @Override protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
@@ -32,9 +32,9 @@ public final class JedhaSitePiece extends StructurePiece {
     private void put(WorldGenLevel world, BoundingBox clip, Block block, int x, int y, int z) { placeBlock(world, block.defaultBlockState(), x, y, z, clip); }
     @Override public void postProcess(WorldGenLevel world, StructureManager manager, ChunkGenerator generator, RandomSource random, BoundingBox clip, ChunkPos chunk, BlockPos pivot) {
         if (kind < 0) return;
-        if (kind == 0) chamber(world, clip); else if (kind == 1) archive(world, clip); else ruins(world, clip);
+        if (kind == 0) chamber(world, clip); else if (kind == 1) archive(world, clip); else if (kind == 2) ruins(world, clip); else arena(world, clip);
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/jedha_expedition"));
-        createChest(world, clip, random, 9, 1, 9, loot);
+        if (kind < 3) createChest(world, clip, random, 9, 1, 9, loot);
     }
     private void puzzle(WorldGenLevel world, BoundingBox clip) {
         put(world, clip, PlanetContent.RUNE_CONSOLE.get(), 6, 1, 6);
@@ -65,6 +65,23 @@ public final class JedhaSitePiece extends StructurePiece {
         for (int x : new int[]{1, 11}) for (int z : new int[]{2, 10}) for (int y = 1; y <= 7; y++) put(world, clip, Blocks.CHISELED_SANDSTONE, x, y, z);
         for (int z = 4; z <= 8; z++) { put(world, clip, Blocks.BOOKSHELF, 1, 1, z); put(world, clip, Blocks.BOOKSHELF, 11, 1, z); }
         puzzle(world, clip); put(world, clip, Blocks.SHROOMLIGHT, 10, 7, 10);
+    }
+    private void arena(WorldGenLevel world, BoundingBox clip) {
+        boolean dark = kind == 4;
+        for (int x = 0; x <= 12; x++) for (int z = 0; z <= 12; z++) for (int y = 0; y <= 12; y++) {
+            Block block = y == 0 ? dark ? Blocks.POLISHED_DEEPSLATE : Blocks.SMOOTH_SANDSTONE : Blocks.AIR;
+            if (y > 0 && y <= 3 && (x == 0 || x == 12 || z == 0 || z == 12)) block = dark ? Blocks.DEEPSLATE_BRICKS : Blocks.CUT_SANDSTONE;
+            if ((z == 0 || z == 12) && x >= 5 && x <= 7 && y > 0 && y <= 3) block = Blocks.AIR;
+            put(world, clip, block, x, y, z);
+        }
+        // Physical cover remains outside the arrival and altar cells; no puzzle source in the arena.
+        for (int x : new int[]{3, 9}) for (int z : new int[]{3, 8}) for (int y = 1; y <= 4; y++)
+            put(world, clip, dark ? Blocks.CHISELED_DEEPSLATE : Blocks.CHISELED_SANDSTONE, x, y, z);
+        for (int x : new int[]{0, 12}) for (int z : new int[]{0, 12}) {
+            for (int y = 1; y <= 8; y++) put(world, clip, dark ? Blocks.POLISHED_BLACKSTONE : Blocks.CALCITE, x, y, z);
+            put(world, clip, Blocks.SHROOMLIGHT, x, 8, z);
+        }
+        put(world, clip, com.legacyoftheforce.core.api.BossArenaSites.altar(PlanetContent.id("jedha"), dark), 6, 1, 9);
     }
     private void ruins(WorldGenLevel world, BoundingBox clip) {
         for (int x = 1; x <= 11; x++) for (int z = 1; z <= 11; z++) for (int y = 0; y <= 8; y++) {

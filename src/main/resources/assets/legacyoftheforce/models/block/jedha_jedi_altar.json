@@ -1,0 +1,298 @@
+{
+  "textures": {
+    "stone": "legacyoftheforce:block/jedha_reliquary_stone",
+    "bronze": "legacyoftheforce:item/navigation/jedha_bronze",
+    "glyph": "legacyoftheforce:block/jedha_rune_0",
+    "particle": "legacyoftheforce:block/jedha_reliquary_stone"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        2,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        2,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        3,
+        3
+      ],
+      "to": [
+        13,
+        10,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#stone"
+        },
+        "down": {
+          "texture": "#stone"
+        },
+        "north": {
+          "texture": "#stone"
+        },
+        "south": {
+          "texture": "#stone"
+        },
+        "east": {
+          "texture": "#stone"
+        },
+        "west": {
+          "texture": "#stone"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        10,
+        2
+      ],
+      "to": [
+        14,
+        12,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        12,
+        4
+      ],
+      "to": [
+        12,
+        13,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glyph"
+        },
+        "down": {
+          "texture": "#glyph"
+        },
+        "north": {
+          "texture": "#glyph"
+        },
+        "south": {
+          "texture": "#glyph"
+        },
+        "east": {
+          "texture": "#glyph"
+        },
+        "west": {
+          "texture": "#glyph"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        12,
+        3
+      ],
+      "to": [
+        5,
+        15,
+        5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        12,
+        11
+      ],
+      "to": [
+        5,
+        15,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        12,
+        3
+      ],
+      "to": [
+        13,
+        15,
+        5
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    },
+    {
+      "from": [
+        11,
+        12,
+        11
+      ],
+      "to": [
+        13,
+        15,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#bronze"
+        },
+        "down": {
+          "texture": "#bronze"
+        },
+        "north": {
+          "texture": "#bronze"
+        },
+        "south": {
+          "texture": "#bronze"
+        },
+        "east": {
+          "texture": "#bronze"
+        },
+        "west": {
+          "texture": "#bronze"
+        }
+      }
+    }
+  ]
+}

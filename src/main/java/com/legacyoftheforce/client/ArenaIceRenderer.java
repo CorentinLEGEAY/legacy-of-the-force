@@ -15,7 +15,7 @@ public final class ArenaIceRenderer extends EntityRenderer<ArenaIceEntity> {
     @Override public void render(ArenaIceEntity ice, float yaw, float partial, PoseStack poses, MultiBufferSource buffers, int light) {
         if (ice.material() < 0) return;
         poses.pushPose(); poses.translate(-.475,0,-.475); poses.scale(.95f,.95f,.95f);
-        var material = ice.material() == 7 ? Blocks.AMETHYST_BLOCK : ice.material() == 6 ? Blocks.CLAY : ice.material() == 4 ? Blocks.MAGMA_BLOCK : ice.material() == 5 ? Blocks.POLISHED_BASALT : ice.material() == 3 ? Blocks.OAK_WOOD : ice.material() == 1 ? Blocks.CHISELED_SANDSTONE : ice.material() == 2 ? Blocks.CHISELED_RED_SANDSTONE : Blocks.BLUE_ICE;
+        var material = ice.material() == 8 ? Blocks.CHISELED_QUARTZ_BLOCK : ice.material() == 7 ? Blocks.AMETHYST_BLOCK : ice.material() == 6 ? Blocks.CLAY : ice.material() == 4 ? Blocks.MAGMA_BLOCK : ice.material() == 5 ? Blocks.POLISHED_BASALT : ice.material() == 3 ? Blocks.OAK_WOOD : ice.material() == 1 ? Blocks.CHISELED_SANDSTONE : ice.material() == 2 ? Blocks.CHISELED_RED_SANDSTONE : Blocks.BLUE_ICE;
         blocks.renderSingleBlock(material.defaultBlockState(), poses, buffers, ice.material() == 4 || ice.material() == 7 ? 15728880 : light, OverlayTexture.NO_OVERLAY); poses.popPose(); super.render(ice,yaw,partial,poses,buffers,light);
     }
 }

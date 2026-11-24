@@ -160,8 +160,8 @@
   "speeder.legacyoftheforce.paint_secondary": "Secondary: engine and battery",
   "speeder.legacyoftheforce.paint_apply": "Paint",
   "speeder.legacyoftheforce.paint_plan": "Plan",
-  "speeder.legacyoftheforce.paint_vehicle_help": "Applies the selected dye to the selected vehicle's palette zone. Consumes %s dye(s); identical color consumes nothing.",
-  "speeder.legacyoftheforce.paint_plan_help": "Colors the draft without consuming dye. Save the blueprint to keep its palette; does not repaint an existing vehicle.",
+  "speeder.legacyoftheforce.paint_vehicle_help": "Repaint the selected zone or pattern for %s dye(s) of the selected color. Modules, charge and performance are unchanged.",
+  "speeder.legacyoftheforce.paint_plan_help": "Apply the color or pattern to the draft. Save to retain all four zones; build to create a vehicle with this appearance.",
   "speeder.legacyoftheforce.paint_cost": "Cost: %s dye(s)",
   "speeder.legacyoftheforce.paint_draft": "Draft: save to keep",
   "speeder.legacyoftheforce.recharge_painted": "Paint applied",
@@ -831,5 +831,16 @@
   "quest.legacyoftheforce.path.mounted": "Install identified kyber in a compatible saber.",
   "quest.legacyoftheforce.path.force": "Actually move and deposit a permitted block or group using the Force.",
   "quest.legacyoftheforce.path.speeder": "Fabricate a paid, published and activated speeder from a valid blueprint.",
-  "quest.legacyoftheforce.path.help": "Optional: confirm help for an NPC, earning separate relational reputation."
+  "quest.legacyoftheforce.path.help": "Optional: confirm help for an NPC, earning separate relational reputation.",
+  "speeder.legacyoftheforce.paint_accent": "Accents / decals",
+  "speeder.legacyoftheforce.paint_lighting": "Lighting / lenses",
+  "speeder.legacyoftheforce.paint_pattern": "Decorative pattern",
+  "speeder.legacyoftheforce.pattern_select": "Pattern",
+  "speeder.legacyoftheforce.paint_cost_short": "Dye ×%s",
+  "speeder.legacyoftheforce.paint_draft_short": "Draft",
+  "speeder.legacyoftheforce.pattern_0": "Plain",
+  "speeder.legacyoftheforce.pattern_1": "Twin stripes",
+  "speeder.legacyoftheforce.pattern_2": "Chevrons",
+  "speeder.legacyoftheforce.pattern_3": "Circuit",
+  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · consumed dye: %2$s (selected in a color zone)."
 }

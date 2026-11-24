@@ -8,7 +8,9 @@
     "copper": "legacyoftheforce:item/saber/copper",
     "indicator": "legacyoftheforce:item/saber/indicator",
     "button": "legacyoftheforce:item/saber/button",
-    "particle": "legacyoftheforce:item/saber/alloy"
+    "particle": "legacyoftheforce:item/saber/alloy",
+    "lighting": "legacyoftheforce:item/speeder_lens",
+    "motif": "minecraft:block/white_concrete"
   },
   "display": {
     "gui": {
@@ -214,58 +216,64 @@
       ],
       "faces": {
         "up": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             4,
             0.25
-          ]
+          ],
+          "tintindex": 2
         },
         "down": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             4,
             0.25
-          ]
+          ],
+          "tintindex": 2
         },
         "north": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             4,
             2
-          ]
+          ],
+          "tintindex": 2
         },
         "south": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             4,
             2
-          ]
+          ],
+          "tintindex": 2
         },
         "east": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             0.25,
             2
-          ]
+          ],
+          "tintindex": 2
         },
         "west": {
-          "texture": "#indicator",
+          "texture": "#lighting",
           "uv": [
             0,
             0,
             0.25,
             2
-          ]
+          ],
+          "tintindex": 2
         }
       }
     },
@@ -288,7 +296,8 @@
             0,
             2,
             5
-          ]
+          ],
+          "tintindex": 1
         },
         "down": {
           "texture": "#edge",
@@ -297,7 +306,8 @@
             0,
             2,
             5
-          ]
+          ],
+          "tintindex": 1
         },
         "north": {
           "texture": "#edge",
@@ -306,7 +316,8 @@
             0,
             2,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "south": {
           "texture": "#edge",
@@ -315,7 +326,8 @@
             0,
             2,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "east": {
           "texture": "#edge",
@@ -324,7 +336,8 @@
             0,
             5,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "west": {
           "texture": "#edge",
@@ -333,7 +346,8 @@
             0,
             5,
             2
-          ]
+          ],
+          "tintindex": 1
         }
       }
     },
@@ -356,7 +370,8 @@
             0,
             2,
             5
-          ]
+          ],
+          "tintindex": 1
         },
         "down": {
           "texture": "#edge",
@@ -365,7 +380,8 @@
             0,
             2,
             5
-          ]
+          ],
+          "tintindex": 1
         },
         "north": {
           "texture": "#edge",
@@ -374,7 +390,8 @@
             0,
             2,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "south": {
           "texture": "#edge",
@@ -383,7 +400,8 @@
             0,
             2,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "east": {
           "texture": "#edge",
@@ -392,7 +410,8 @@
             0,
             5,
             2
-          ]
+          ],
+          "tintindex": 1
         },
         "west": {
           "texture": "#edge",
@@ -401,7 +420,8 @@
             0,
             5,
             2
-          ]
+          ],
+          "tintindex": 1
         }
       }
     },
@@ -677,5 +697,6 @@
         }
       }
     }
-  ]
+  ],
+  "overrides": []
 }

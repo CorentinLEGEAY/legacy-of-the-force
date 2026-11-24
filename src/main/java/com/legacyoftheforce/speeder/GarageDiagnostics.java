@@ -10,7 +10,8 @@ import net.minecraft.world.phys.AABB;
 /** Read-only inspection of a loaded, owned instance. Selection never loads or creates an entity. */
 public final class GarageDiagnostics {
     public enum Status { NONE, READY, OCCUPIED, UNSUPPORTED, DENIED, LOST }
-    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules, int primary, int secondary) {
+    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules, int primary, int secondary,int accent,int lighting,int pattern) {
+        public Report(Status status,UUID vehicle,double energy,double capacity,int integrity,int damaged,int modules,int primary,int secondary){this(status,vehicle,energy,capacity,integrity,damaged,modules,primary,secondary,SpeederBlueprint.DEFAULT_ACCENT,SpeederBlueprint.DEFAULT_LIGHTING,0);}
         static Report unavailable(Status status) { return new Report(status, null, 0, 0, 0, 0, 0, 0, 0); }
     }
     public static Report inspect(ServerPlayer actor, BlockPos garage, UUID selected, ProtectedWorldService protection) {
@@ -38,7 +39,7 @@ public final class GarageDiagnostics {
         var performance = SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow();
         return new Report(vehicle.getPassengers().isEmpty() ? Status.READY : Status.OCCUPIED, vehicle.getUUID(),
                 state.motion().energy(), performance.stats().capacity(), integrity, damaged, state.health().size(),
-                state.blueprint().plan().orElseThrow().primary(), state.blueprint().plan().orElseThrow().secondary());
+                state.blueprint().plan().orElseThrow().primary(), state.blueprint().plan().orElseThrow().secondary(),state.blueprint().plan().orElseThrow().accent(),state.blueprint().plan().orElseThrow().lighting(),state.blueprint().plan().orElseThrow().pattern());
     }
     private GarageDiagnostics() {}
 }

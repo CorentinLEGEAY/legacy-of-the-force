@@ -100,9 +100,10 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         repairButton.visible = menu.diagnostic(); repairButton.active = rechargeButton.active;
         recycleButton.visible = menu.diagnostic(); recycleButton.active = rechargeButton.active;
         recycleButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.recycleArmed() ? "recycle_confirm" : "recycle")));
-        dyeButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(new ItemStack(net.minecraft.world.item.DyeItem.byColor(menu.paintDye())).getHoverName()));
-        zoneButton.setMessage(Component.translatable("speeder.legacyoftheforce.paint_zone", menu.primaryZone() ? 1 : 2));
-        zoneButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.paint_" + (menu.primaryZone() ? "primary" : "secondary"))));
+        dyeButton.setMessage(Component.translatable(menu.paintZone()==4?"speeder.legacyoftheforce.pattern_select":"speeder.legacyoftheforce.paint_dye_short"));
+        dyeButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(menu.paintZone()==4?Component.translatable("speeder.legacyoftheforce.pattern_cost_hint",Component.translatable("speeder.legacyoftheforce.pattern_"+menu.chosenPattern()),new ItemStack(net.minecraft.world.item.DyeItem.byColor(menu.paintDye())).getHoverName()):new ItemStack(net.minecraft.world.item.DyeItem.byColor(menu.paintDye())).getHoverName()));
+        zoneButton.setMessage(Component.translatable("speeder.legacyoftheforce.paint_zone", menu.paintZone()+1));
+        zoneButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce.paint_" + new String[]{"primary","secondary","accent","lighting","pattern"}[menu.paintZone()])));
         paintButton.setMessage(Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_apply" : "paint_plan")));
         paintButton.active = menu.diagnostic() ? rechargeButton.active : menu.status() != SpeederGarageMenu.Status.READ_ONLY && menu.status() != SpeederGarageMenu.Status.HOLD_BLUEPRINT;
         paintButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_vehicle_help" : "paint_plan_help"), menu.dyeCost())));
@@ -112,18 +113,18 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         graphics.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xff142332);
         graphics.fill(leftPos + 253, topPos + 4, leftPos + 254, topPos + imageHeight - 4, 0xff52687a);
         int dye = menu.paintDye().getTextureDiffuseColor(); graphics.fill(leftPos + 260, topPos + 40, leftPos + 260 + paintWidth, topPos + 54, dye | 0xff000000);
-        graphics.fill(leftPos + 260, topPos + 110, leftPos + 260 + paintWidth, topPos + 123, menu.primaryColor() | 0xff000000);
-        graphics.fill(leftPos + 260, topPos + 128, leftPos + 260 + paintWidth, topPos + 141, menu.secondaryColor() | 0xff000000);
+        int[] palette={menu.primaryColor(),menu.secondaryColor(),menu.accentColor(),menu.lightingColor()};
+        for(int i=0;i<4;i++)graphics.fill(leftPos+260,topPos+110+i*12,leftPos+260+paintWidth,topPos+120+i*12,palette[i]|0xff000000);
         for (var slot : menu.slots) graphics.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff52687a);
     }
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         graphics.drawString(font, font.plainSubstrByWidth(title.getString(), 156), 8, 7, 0xc9f5ff, false);
         graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.paint_title"), 260, 7, 0xc9f5ff, false);
         int dye = menu.paintDye().getTextureDiffuseColor();
-        graphics.drawString(font, String.format(Locale.ROOT, "#%06X", dye & 0xffffff), 264, 43, contrast(dye), false);
-        graphics.drawString(font, "1", 264, 113, contrast(menu.primaryColor()), false);
-        graphics.drawString(font, "2", 264, 131, contrast(menu.secondaryColor()), false);
-        graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_cost" : "paint_draft"), menu.dyeCost()), 260, 150, paintWidth, 0xd5e9e9);
+        graphics.drawString(font, menu.paintZone()==4?"M"+menu.chosenPattern():String.format(Locale.ROOT, "#%06X", dye & 0xffffff), 264, 43, contrast(dye), false);
+        int[] palette={menu.primaryColor(),menu.secondaryColor(),menu.accentColor(),menu.lightingColor()};
+        for(int i=0;i<4;i++)graphics.drawString(font,Integer.toString(i+1),264,111+i*12,contrast(palette[i]),false);
+        graphics.drawWordWrap(font, Component.translatable("speeder.legacyoftheforce." + (menu.diagnostic() ? "paint_cost_short" : "paint_draft_short"), menu.dyeCost()), 260, 162, paintWidth, 0xd5e9e9);
         if (menu.diagnostic()) {
             graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.diagnostic_" + menu.diagnosticStatus().name().toLowerCase(Locale.ROOT)), 8, 26, 0xffd085, false);
             if (menu.diagnosticStatus() == GarageDiagnostics.Status.READY || menu.diagnosticStatus() == GarageDiagnostics.Status.OCCUPIED) {
@@ -153,7 +154,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
             int part = menu.gridModuleAt(x,layer,z);
             if (part >= 0 && part < SpeederContent.PART_NAMES.size()) {
                 graphics.pose().pushPose();graphics.pose().translate(leftPos+9+x*step,topPos+39+z*step,0);float scale=Math.min(1,(step-3)/16f);graphics.pose().scale(scale,scale,1);
-                graphics.renderItem(SpeederColors.module(part, menu.primaryColor(), menu.secondaryColor()),0,0);graphics.pose().popPose();
+                graphics.renderItem(SpeederColors.module(part, menu.primaryColor(), menu.secondaryColor(),menu.accentColor(),menu.lightingColor(),menu.pattern(),true),0,0);graphics.pose().popPose();
                 if(step>=18)graphics.drawString(font,Integer.toString(menu.gridRotationAt(x,layer,z)),leftPos+23+x*step,topPos+50+z*step,0xffffff,true);
             }
         }

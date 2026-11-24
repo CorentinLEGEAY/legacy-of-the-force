@@ -38,19 +38,23 @@ public final class SpeederRechargeService {
         this.server = server; this.directory = directory.toAbsolutePath().normalize(); this.protection = protection; this.probe = probe;
     }
     public Result recharge(ServerPlayer actor, BlockPos garage, UUID selected) {
-        return maintain(actor, garage, selected, Operation.RECHARGE, true, null);
+        return maintain(actor, garage, selected, Operation.RECHARGE, 0,0, null);
     }
     public Result repair(ServerPlayer actor, BlockPos garage, UUID selected) {
-        return maintain(actor, garage, selected, Operation.REPAIR, true, null);
+        return maintain(actor, garage, selected, Operation.REPAIR, 0,0, null);
     }
     public Result recycle(ServerPlayer actor, BlockPos garage, UUID selected) {
-        return maintain(actor, garage, selected, Operation.RECYCLE, true, null);
+        return maintain(actor, garage, selected, Operation.RECYCLE, 0,0, null);
     }
     public Result paint(ServerPlayer actor, BlockPos garage, UUID selected, boolean primary, DyeColor dye) {
         if (dye == null) return Result.PERMISSION;
-        return maintain(actor, garage, selected, Operation.PAINT, primary, dye);
+        return paint(actor,garage,selected,primary?0:1,0,dye);
     }
-    private Result maintain(ServerPlayer actor, BlockPos garage, UUID selected, Operation operationKind, boolean primary, DyeColor dye) {
+    public Result paint(ServerPlayer actor,BlockPos garage,UUID selected,int zone,int pattern,DyeColor dye){
+        if(dye==null||zone<0||zone>4||pattern<0||pattern>3)return Result.PERMISSION;
+        return maintain(actor,garage,selected,Operation.PAINT,zone,pattern,dye);
+    }
+    private Result maintain(ServerPlayer actor, BlockPos garage, UUID selected, Operation operationKind,int zone,int pattern, DyeColor dye) {
         boolean repair = operationKind == Operation.REPAIR, paint = operationKind == Operation.PAINT, recycle = operationKind == Operation.RECYCLE;
         if (actor.server != server || !server.isSameThread() || selected == null || actor.isPassenger()) return Result.PERMISSION;
         if (!actor.containerMenu.getCarried().isEmpty()) return Result.CLEAR_CURSOR;
@@ -76,8 +80,9 @@ public final class SpeederRechargeService {
                 if (!SpeederRetirement.supportedStorage(vehicle)) return Result.UNSUPPORTED_STORAGE;
             } else if (paint) {
                 var plan = blueprint.plan().orElseThrow(); int color = dye.getTextureDiffuseColor() & 0xffffff;
-                if ((primary ? plan.primary() : plan.secondary()) == color) return Result.UNCHANGED;
-                blueprint = blueprint.withColors(primary ? color : plan.primary(), primary ? plan.secondary() : color);
+                var painted=zone==4?blueprint.withPattern(pattern):blueprint.withColorZone(zone,color);
+                if(painted.equals(blueprint))return Result.UNCHANGED;
+                blueprint=painted;
             } else if (repair) {
                 int damaged = -1;
                 for (int i = 0; i < health.size(); i++) if (health.get(i) < 100 && (damaged < 0 || health.get(i) < health.get(damaged))) damaged = i;

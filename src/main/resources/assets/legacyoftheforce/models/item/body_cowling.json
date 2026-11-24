@@ -8,7 +8,9 @@
     "copper": "legacyoftheforce:item/saber/copper",
     "indicator": "legacyoftheforce:item/saber/indicator",
     "button": "legacyoftheforce:item/saber/button",
-    "particle": "legacyoftheforce:item/saber/alloy"
+    "particle": "legacyoftheforce:item/saber/alloy",
+    "lighting": "legacyoftheforce:item/speeder_lens",
+    "motif": "minecraft:block/white_concrete"
   },
   "display": {
     "gui": {
@@ -300,7 +302,8 @@
             0,
             8,
             6
-          ]
+          ],
+          "tintindex": 1
         },
         "down": {
           "texture": "#edge",
@@ -309,7 +312,8 @@
             0,
             8,
             6
-          ]
+          ],
+          "tintindex": 1
         },
         "north": {
           "texture": "#edge",
@@ -318,7 +322,8 @@
             0,
             8,
             0.40000000000000036
-          ]
+          ],
+          "tintindex": 1
         },
         "south": {
           "texture": "#edge",
@@ -327,7 +332,8 @@
             0,
             8,
             0.40000000000000036
-          ]
+          ],
+          "tintindex": 1
         },
         "east": {
           "texture": "#edge",
@@ -336,7 +342,8 @@
             0,
             6,
             0.40000000000000036
-          ]
+          ],
+          "tintindex": 1
         },
         "west": {
           "texture": "#edge",
@@ -345,7 +352,8 @@
             0,
             6,
             0.40000000000000036
-          ]
+          ],
+          "tintindex": 1
         }
       }
     },
@@ -756,6 +764,26 @@
           ]
         }
       }
+    }
+  ],
+  "overrides": [
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 1
+      },
+      "model": "legacyoftheforce:item/speeder_style/body_cowling_pattern_1"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 2
+      },
+      "model": "legacyoftheforce:item/speeder_style/body_cowling_pattern_2"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 3
+      },
+      "model": "legacyoftheforce:item/speeder_style/body_cowling_pattern_3"
     }
   ]
 }

@@ -295,4 +295,5 @@ if __name__ == '__main__':
     runpy.run_path(str(Path(__file__).with_name('generate_environment_data.py')), run_name='__main__')
     runpy.run_path(str(Path(__file__).with_name('generate_people_assets.py')), run_name='__main__')
     runpy.run_path(str(Path(__file__).with_name('generate_business_guides.py')), run_name='__main__')
+    runpy.run_path(str(Path(__file__).with_name('generate_speeder_style.py')), run_name='__main__')
     print('Authored navigation and Tatooine resources generated; runtime verification remains pending.')

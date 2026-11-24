@@ -160,8 +160,8 @@
   "speeder.legacyoftheforce.paint_secondary": "Secondaire : moteur et batterie",
   "speeder.legacyoftheforce.paint_apply": "Peindre",
   "speeder.legacyoftheforce.paint_plan": "Plan",
-  "speeder.legacyoftheforce.paint_vehicle_help": "Applique la teinte à la zone choisie du véhicule sélectionné. Consomme %s teinture(s) ; aucune si la couleur est déjà identique.",
-  "speeder.legacyoftheforce.paint_plan_help": "Colore le brouillon sans consommer de teinture. Enregistrer le plan pour conserver cette palette ; ne repeint pas un véhicule existant.",
+  "speeder.legacyoftheforce.paint_vehicle_help": "Repeindre la zone choisie ou le motif pour %s teinture(s) de la couleur sélectionnée. Aucun changement de pièces, de charge ou de performances.",
+  "speeder.legacyoftheforce.paint_plan_help": "Appliquer la couleur ou le motif au brouillon. Enregistrer pour conserver les quatre zones ; construire pour créer un véhicule avec cette apparence.",
   "speeder.legacyoftheforce.paint_cost": "Coût : %s teinture(s)",
   "speeder.legacyoftheforce.paint_draft": "Brouillon à enregistrer",
   "speeder.legacyoftheforce.recharge_painted": "Peinture appliquée",
@@ -831,5 +831,16 @@
   "quest.legacyoftheforce.path.mounted": "Sertir un cristal identifié dans un sabre compatible.",
   "quest.legacyoftheforce.path.force": "Déplacer puis déposer réellement un bloc ou groupe autorisé avec la Force.",
   "quest.legacyoftheforce.path.speeder": "Fabriquer un speeder payé, publié et activé depuis un plan valide.",
-  "quest.legacyoftheforce.path.help": "Facultatif : confirmer une aide à un PNJ, avec réputation relationnelle distincte."
+  "quest.legacyoftheforce.path.help": "Facultatif : confirmer une aide à un PNJ, avec réputation relationnelle distincte.",
+  "speeder.legacyoftheforce.paint_accent": "Accents / décors",
+  "speeder.legacyoftheforce.paint_lighting": "Éclairage / lentilles",
+  "speeder.legacyoftheforce.paint_pattern": "Motif décoratif",
+  "speeder.legacyoftheforce.pattern_select": "Motif",
+  "speeder.legacyoftheforce.paint_cost_short": "Teinture ×%s",
+  "speeder.legacyoftheforce.paint_draft_short": "Brouillon",
+  "speeder.legacyoftheforce.pattern_0": "Uni",
+  "speeder.legacyoftheforce.pattern_1": "Doubles bandes",
+  "speeder.legacyoftheforce.pattern_2": "Chevrons",
+  "speeder.legacyoftheforce.pattern_3": "Circuit",
+  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · teinture consommée : %2$s (choisie dans une zone couleur)."
 }

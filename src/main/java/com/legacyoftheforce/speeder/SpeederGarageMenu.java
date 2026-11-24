@@ -25,6 +25,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private final DataSlot diagnostic = DataSlot.standalone(), diagnosticStatus = DataSlot.standalone(), integrity = DataSlot.standalone(), damaged = DataSlot.standalone(), modules = DataSlot.standalone();
     private final DataSlot[] vehicleId = new DataSlot[8];
     private final ProjectedFloat instanceEnergy = new ProjectedFloat(), instanceCapacity = new ProjectedFloat();
+    private final DataSlot chosenPattern=DataSlot.standalone(),draftPattern=DataSlot.standalone(),instancePattern=DataSlot.standalone();
+    private final ProjectedColor draftAccent=new ProjectedColor(),draftLighting=new ProjectedColor(),instanceAccent=new ProjectedColor(),instanceLighting=new ProjectedColor();
     private final DataSlot paintDye = DataSlot.standalone(), paintZone = DataSlot.standalone(), dyeCost = DataSlot.standalone();
     private final ProjectedColor draftPrimary = new ProjectedColor(), draftSecondary = new ProjectedColor(), instancePrimary = new ProjectedColor(), instanceSecondary = new ProjectedColor();
     private final DataSlot[] cells = new DataSlot[420], owned = new DataSlot[SpeederContent.PART_NAMES.size()];
@@ -56,7 +58,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         for(var projection:List.of(gridWidth,gridHeight,gridDepth,vehicleClass,seats))addDataSlot(projection);
         addDataSlot(selected); addDataSlot(rotation); addDataSlot(status); addDataSlot(error);
         for (var projection : List.of(diagnostic, diagnosticStatus, integrity, damaged, modules, rechargeStatus)) addDataSlot(projection);
-        addDataSlot(paintDye); addDataSlot(paintZone); addDataSlot(dyeCost);
+        addDataSlot(paintDye); addDataSlot(paintZone); addDataSlot(dyeCost);addDataSlot(chosenPattern);addDataSlot(draftPattern);addDataSlot(instancePattern);
         addDataSlot(recycleArmed);
         for (int i = 0; i < vehicleId.length; i++) { vehicleId[i] = DataSlot.standalone(); addDataSlot(vehicleId[i]); }
         status.set((readOnly ? Status.READ_ONLY : originalId == null ? Status.HOLD_BLUEPRINT : Status.EDITING).ordinal());
@@ -65,8 +67,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     }
     public int moduleAt(int cell) { return cell>=0&&cell<45 ? gridModuleAt(cell%5,cell/15,cell/5%3) : -1; }
     public int rotationAt(int cell) { return cell>=0&&cell<45 ? gridRotationAt(cell%5,cell/15,cell/5%3) : 0; }
-    public int gridModuleAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? (cells[x+12*(z+5*y)].get()&15)-1 : -1; }
-    public int gridRotationAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? cells[x+12*(z+5*y)].get()>>>4&3 : 0; }
+    public int gridModuleAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? (cells[x+12*(z+5*y)].get()&255)-1 : -1; }
+    public int gridRotationAt(int x,int y,int z) { return x>=0&&x<12&&y>=0&&y<7&&z>=0&&z<5 ? cells[x+12*(z+5*y)].get()>>>8&3 : 0; }
     public int gridWidth(){return Math.clamp(gridWidth.get(),1,12);}
     public int gridHeight(){return Math.clamp(gridHeight.get(),1,7);}
     public int gridDepth(){return Math.clamp(gridDepth.get(),1,5);}
@@ -84,6 +86,11 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public int primaryColor() { return diagnostic() ? instancePrimary.get() : draftPrimary.get(); }
     public int secondaryColor() { return diagnostic() ? instanceSecondary.get() : draftSecondary.get(); }
     public net.minecraft.world.item.DyeColor paintDye() { return net.minecraft.world.item.DyeColor.byId(Math.clamp(paintDye.get(), 0, 15)); }
+    public int paintZone(){return Math.clamp(paintZone.get(),0,4);}
+    public int chosenPattern(){return Math.clamp(chosenPattern.get(),0,3);}
+    public int pattern(){return Math.clamp(diagnostic()?instancePattern.get():draftPattern.get(),0,3);}
+    public int accentColor(){return diagnostic()?instanceAccent.get():draftAccent.get();}
+    public int lightingColor(){return diagnostic()?instanceLighting.get():draftLighting.get();}
     public boolean primaryZone() { return paintZone.get() == 0; }
     public int dyeCost() { return dyeCost.get(); }
     public boolean recycleArmed() { return recycleArmed.get() != 0; }
@@ -94,7 +101,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         return new UUID(high, low);
     }
     public int owned(int part) { return owned[part].get(); }
-    public int required(int part) { int count = 0; for (var cell:cells) if ((cell.get()&15)-1 == part) count++; return count; }
+    public int required(int part) { int count = 0; for (var cell:cells) if ((cell.get()&255)-1 == part) count++; return count; }
     public float mass() { return mass.get(); } public float thrust() { return thrust.get(); }
     public float lift() { return lift.get(); } public float capacity() { return capacity.get(); } public float stability() { return stability.get(); }
     public Status status() { return Status.values()[Math.clamp(status.get(), 0, Status.values().length - 1)]; }
@@ -107,6 +114,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
             }
             recycleArmed.set(recycleTarget != null && inventory.player.level().getGameTime() <= recycleUntil ? 1 : 0);
             dyeCost.set(SpeederConfig.PAINT_DYE_COST.get());
+            draftAccent.set(draft.plan().map(SpeederBlueprint.Plan::accent).orElse(0));draftLighting.set(draft.plan().map(SpeederBlueprint.Plan::lighting).orElse(0));draftPattern.set(draft.plan().map(SpeederBlueprint.Plan::pattern).orElse(0));
             draftPrimary.set(draft.plan().map(SpeederBlueprint.Plan::primary).orElse(0)); draftSecondary.set(draft.plan().map(SpeederBlueprint.Plan::secondary).orElse(0));
             if (diagnostic() && inventory.player instanceof ServerPlayer actor && actor.server.overworld().getGameTime() >= nextInspection) {
                 var report = access.evaluate((level, pos) -> GarageDiagnostics.inspect(actor, pos, inspectedVehicle,
@@ -114,7 +122,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
                 if (inspectedVehicle == null && report.vehicle() != null) inspectedVehicle = report.vehicle();
                 diagnosticStatus.set(report.status().ordinal()); instanceEnergy.set(report.energy()); instanceCapacity.set(report.capacity());
                 integrity.set(report.integrity()); damaged.set(report.damaged()); modules.set(report.modules());
-                instancePrimary.set(report.primary()); instanceSecondary.set(report.secondary());
+                instancePrimary.set(report.primary()); instanceSecondary.set(report.secondary());instanceAccent.set(report.accent());instanceLighting.set(report.lighting());instancePattern.set(report.pattern());
                 var id = report.vehicle() == null ? new UUID(0, 0) : report.vehicle();
                 for (int i = 0; i < 4; i++) { vehicleId[i].set((short)(id.getMostSignificantBits() >>> (48 - i * 16))); vehicleId[i + 4].set((short)(id.getLeastSignificantBits() >>> (48 - i * 16))); }
                 nextInspection = actor.server.overworld().getGameTime() + 10;
@@ -124,7 +132,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
             draft.plan().ifPresent(plan -> plan.modules().forEach(module -> {
                 var at = module.at(); int index = at.x() + 12 * (at.z() + 5 * at.y()); int kind = SpeederContent.index(module.kind());
                 if (at.x() >= 0 && at.x() < 12 && at.y() >= 0 && at.y() < 7 && at.z() >= 0 && at.z() < 5 && kind >= 0)
-                    cells[index].set(kind + 1 | module.rotation() << 4);
+                    cells[index].set(kind + 1 | module.rotation() << 8);
             }));
             for (int part = 0; part < owned.length; part++) { int count = 0; for (int slot = 0; slot < inventory.getContainerSize(); slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
             var result = BlueprintValidator.inspect(draft, SpeederCatalog.definitions(), SpeederConfig.limits()); error.set(result.error().ordinal());
@@ -154,7 +162,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         }
         recycleTarget = null;
         if (button == 62 || button == 63) {
-            if (button == 62) paintDye.set((paintDye.get() + 1) % 16); else paintZone.set(primaryZone() ? 1 : 0);
+            if (button == 62) {if(paintZone()==4)chosenPattern.set((chosenPattern.get()+1)%4);else paintDye.set((paintDye.get() + 1) % 16);} else paintZone.set((paintZone()+1)%5);
             nextAction = tick + 2; broadcastChanges(); return true;
         }
         if (button == 59) {
@@ -165,7 +173,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
             if (!diagnostic() || inspectedVehicle == null) return false;
             var result = access.evaluate((level, pos) -> button == 60 ? SpeederAssemblyLifecycle.recharge(actor, pos, inspectedVehicle)
                     : button == 61 ? SpeederAssemblyLifecycle.repair(actor, pos, inspectedVehicle)
-                    : SpeederAssemblyLifecycle.paint(actor, pos, inspectedVehicle, primaryZone(), paintDye()), SpeederRechargeService.Result.UNAVAILABLE);
+                    : SpeederAssemblyLifecycle.paint(actor, pos, inspectedVehicle, paintZone(),chosenPattern(), paintDye()), SpeederRechargeService.Result.UNAVAILABLE);
             rechargeStatus.set(result.ordinal()); nextAction = tick + 10; nextInspection = 0; broadcastChanges();
             return result == SpeederRechargeService.Result.CHARGED || result == SpeederRechargeService.Result.REPAIRED || result == SpeederRechargeService.Result.PAINTED;
         }
@@ -179,7 +187,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
         if (button == 64) {
             if (originalId == null) { status.set(Status.HOLD_BLUEPRINT.ordinal()); return false; }
             var plan = draft.plan().orElseThrow(); int color = paintDye().getTextureDiffuseColor() & 0xffffff;
-            draft = draft.withColors(primaryZone() ? color : plan.primary(), primaryZone() ? plan.secondary() : color);
+            draft = paintZone()==4?draft.withPattern(chosenPattern()):draft.withColorZone(paintZone(),color);
             status.set(Status.EDITING.ordinal()); nextAction = tick + 2; broadcastChanges(); return true;
         }
         if (button == 58) {

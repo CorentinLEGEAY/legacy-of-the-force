@@ -23,13 +23,15 @@ record RechargeTransaction(CompoundTag tag) {
         var record = new RechargeTransaction(tag); record.view(); return record;
     }
     static RechargeTransaction preparePaint(UUID owner, UUID operation, CompoundTag before, CompoundTag after, VehicleState vehicle, SpeederBlueprint blueprint) {
-        var tag = new CompoundTag(); tag.putInt("schemaVersion", 3); tag.putString("kind", "paint"); tag.putUUID("owner", owner); tag.putUUID("operation", operation);
+        var original=vehicle.snapshot().orElseThrow().blueprint();var target=blueprint.plan().orElseThrow();
+        boolean legacy=original.withColors(target.primary(),target.secondary()).equals(blueprint);
+        var tag = new CompoundTag(); tag.putInt("schemaVersion", legacy?3:6); tag.putString("kind", legacy?"paint":"palette"); tag.putUUID("owner", owner); tag.putUUID("operation", operation);
         tag.putString("phase", Phase.PREPARED.name()); tag.put("before", before.copy()); tag.put("after", after.copy()); tag.put("vehicle", vehicle.tag());
         tag.putDouble("charge", vehicle.snapshot().orElseThrow().motion().energy()); tag.put("blueprint", blueprint.tag());
         var record = new RechargeTransaction(tag); record.view(); return record;
     }
     View view() {
-        if (tag.sizeInBytes() > 262144 || !tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") < 1 || tag.getInt("schemaVersion") > 5
+        if (tag.sizeInBytes() > 262144 || !tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") < 1 || tag.getInt("schemaVersion") > 6
                 || !tag.hasUUID("owner") || !tag.hasUUID("operation") || !tag.contains("phase", Tag.TAG_STRING)
                 || !tag.contains("before", Tag.TAG_COMPOUND) || !tag.contains("after", Tag.TAG_COMPOUND)
                 || !tag.contains("vehicle", Tag.TAG_COMPOUND) || !tag.contains("charge", Tag.TAG_DOUBLE)) throw new IllegalArgumentException("Unsupported recharge journal");
@@ -39,7 +41,8 @@ record RechargeTransaction(CompoundTag tag) {
         var vehicle = new VehicleState(tag.getCompound("vehicle")); var state = vehicle.snapshot().orElseThrow();
         var owner = tag.getUUID("owner"); var operation = tag.getUUID("operation"); double charge = tag.getDouble("charge");
         boolean repair = tag.getInt("schemaVersion") == 2;
-        boolean paint = tag.getInt("schemaVersion") == 3;
+        boolean palette=tag.getInt("schemaVersion")==6;
+        boolean paint = tag.getInt("schemaVersion") == 3||palette;
         boolean recycle = tag.getInt("schemaVersion") == 4;
         boolean cargoTransfer=tag.getInt("schemaVersion")==5;
         var cargo=state.cargo();
@@ -82,11 +85,10 @@ record RechargeTransaction(CompoundTag tag) {
             if (changed != 1 || charge != state.motion().energy()) throw new IllegalArgumentException("Repair changes one module and never grants energy");
         }
         if (paint) {
-            if (!tag.contains("kind", Tag.TAG_STRING) || !tag.getString("kind").equals("paint") || !tag.contains("blueprint", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Unsupported paint operation");
+            if (!tag.contains("kind", Tag.TAG_STRING) || !tag.getString("kind").equals(palette?"palette":"paint") || !tag.contains("blueprint", Tag.TAG_COMPOUND)) throw new IllegalArgumentException("Unsupported paint operation");
             blueprint = new SpeederBlueprint(tag.getCompound("blueprint")); var target = blueprint.plan().orElseThrow(); var original = state.blueprint().plan().orElseThrow();
             boolean primaryChanged = target.primary() != original.primary(), secondaryChanged = target.secondary() != original.secondary();
-            if (primaryChanged == secondaryChanged || charge != state.motion().energy()
-                    || !state.blueprint().withColors(target.primary(), target.secondary()).equals(blueprint)) throw new IllegalArgumentException("Paint changes exactly one palette zone, never layout or energy");
+            if (charge != state.motion().energy() || (palette ? !SpeederBlueprint.singleAppearanceEdit(state.blueprint(),blueprint) : primaryChanged == secondaryChanged || !state.blueprint().withColors(target.primary(), target.secondary()).equals(blueprint))) throw new IllegalArgumentException("Paint changes exactly one palette zone, never layout or energy");
         }
         if (!owner.equals(state.owner()) || operation.equals(new UUID(0, 0)) || previous.revision() == Long.MAX_VALUE
                 || paid.revision() != previous.revision() + 1 || !operation.equals(paid.operation()) || !recycle && before.get("Inventory").equals(after.get("Inventory"))

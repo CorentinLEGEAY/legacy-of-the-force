@@ -9,7 +9,9 @@
     "indicator": "legacyoftheforce:item/saber/indicator",
     "button": "legacyoftheforce:item/saber/button",
     "particle": "legacyoftheforce:item/saber/alloy",
-    "wood": "legacyoftheforce:block/endor_resin_wood"
+    "wood": "legacyoftheforce:block/endor_resin_wood",
+    "lighting": "legacyoftheforce:item/speeder_lens",
+    "motif": "minecraft:block/white_concrete"
   },
   "display": {
     "gui": {
@@ -379,6 +381,26 @@
           "texture": "#gunmetal"
         }
       }
+    }
+  ],
+  "overrides": [
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 1
+      },
+      "model": "legacyoftheforce:item/speeder_style/chassis_forest_pattern_1"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 2
+      },
+      "model": "legacyoftheforce:item/speeder_style/chassis_forest_pattern_2"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:pattern": 3
+      },
+      "model": "legacyoftheforce:item/speeder_style/chassis_forest_pattern_3"
     }
   ]
 }

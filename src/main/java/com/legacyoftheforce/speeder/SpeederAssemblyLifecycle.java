@@ -72,6 +72,9 @@ public final class SpeederAssemblyLifecycle {
     public static SpeederRechargeService.Result recycle(ServerPlayer actor, BlockPos garage, UUID vehicle) {
         var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.recycle(actor, garage, vehicle);
     }
+    public static SpeederRechargeService.Result paint(ServerPlayer actor,BlockPos garage,UUID vehicle,int zone,int pattern,net.minecraft.world.item.DyeColor dye){
+        var service=RECHARGE.get(actor.server);return service==null?SpeederRechargeService.Result.UNAVAILABLE:service.paint(actor,garage,vehicle,zone,pattern,dye);
+    }
     public static SpeederRechargeService.Result paint(ServerPlayer actor, BlockPos garage, UUID vehicle, boolean primary, net.minecraft.world.item.DyeColor dye) {
         var service = RECHARGE.get(actor.server); return service == null ? SpeederRechargeService.Result.UNAVAILABLE : service.paint(actor, garage, vehicle, primary, dye);
     }

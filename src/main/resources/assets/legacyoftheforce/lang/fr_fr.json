@@ -25,8 +25,8 @@
   "force.legacyoftheforce.cooldown": "Patientez avant de réutiliser la Force.",
   "force.legacyoftheforce.recovered": "Récupération des blocs effectuée.",
   "key.categories.legacyoftheforce": "Legacy of the Force",
-  "key.legacyoftheforce.block_toggle": "Saisir / déposer le bloc",
-  "key.legacyoftheforce.block_cancel": "Restituer le bloc maintenu",
+  "key.legacyoftheforce.block_toggle": "Saisir ou libérer la cible de Force",
+  "key.legacyoftheforce.block_cancel": "Annuler la manipulation de Force",
   "block.legacyoftheforce.transaction_anchor": "Source réservée par la Force",
   "force.legacyoftheforce.no_mob_target": "Aucune créature visible ciblée.",
   "force.legacyoftheforce.resistant_target": "Cette cible résiste à la télékinésie.",
@@ -697,5 +697,13 @@
   "saber.legacyoftheforce.form_twin": "Deux lames",
   "saber.legacyoftheforce.form_help_twin": "Deux sabres simples distincts, éveillés et allumés. Coût élevé, combo partagé ; /lotf saber offhand frappe avec la seconde lame.",
   "saber.legacyoftheforce.form_yes": "oui",
-  "saber.legacyoftheforce.form_no": "non"
+  "saber.legacyoftheforce.form_no": "non",
+  "force.legacyoftheforce.item_attracted": "Objet attiré ; la collecte reste normale.",
+  "force.legacyoftheforce.item_released": "Objet libéré.",
+  "force.legacyoftheforce.item_nearby": "Cet objet est déjà proche : ramassez-le normalement.",
+  "force.legacyoftheforce.no_item_target": "Visez un objet lâché visible.",
+  "force.legacyoftheforce.power_released": "Canalisation interrompue.",
+  "force.legacyoftheforce.status": "Niveau %s · portée %s · budget de masse %s · blocs maximum %s",
+  "power.legacyoftheforce.item_telekinesis": "Attraction d’objets",
+  "key.legacyoftheforce.item_pull": "Attirer un objet lâché"
 }

@@ -8,19 +8,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Display;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
@@ -30,8 +26,6 @@ import net.minecraft.world.phys.Vec3;
 public final class BlockMoveCoordinator {
     public static final String POWER_ID = "legacyoftheforce:block_telekinesis";
     public static final String DISPLAY_MARKER = "legacyoftheforce:block_move";
-    private static final TagKey<Block> LIGHT = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, "force_light_blocks"));
-    private static final TagKey<Block> STONE = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, "force_stone_blocks"));
     private final MinecraftServer server;
     private final DurableOperationStore store;
     private final PlayerProgressService progress;
@@ -69,14 +63,16 @@ public final class BlockMoveCoordinator {
         if (!inRange(actor, source.getCenter()) || !visible(actor, source)) return ForceResult.no("out_of_range");
         var original = level.getBlockState(source);
         if (anchors.isAnchor(level, source)) return ForceResult.no("target_locked");
-        if (original.hasBlockEntity() || !original.getFluidState().isEmpty() || (!original.is(LIGHT) && !original.is(STONE))) return ForceResult.no("invalid_target");
+        var category = ForceRules.mass(original);
+        if (category.isEmpty() || !Float.isFinite(original.getDestroySpeed(level,source)) || original.getDestroySpeed(level,source)<0) return ForceResult.no("invalid_target");
         var snapshot = progress.get(actor.getUUID());
-        int required = original.is(STONE) ? Math.max(ForceConfig.BLOCK_LEVEL.get(), ForceConfig.STONE_LEVEL.get()) : ForceConfig.BLOCK_LEVEL.get();
+        int required = category.get().required();
         if (snapshot.isEmpty() || snapshot.get().unavailable()) return ForceResult.no("progress_unavailable");
         if (snapshot.get().level() < required) return ForceResult.no("level_required");
         if (sessions.values().stream().filter(s -> s.record.dimension().equals(level.dimension())).count() >= ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
-        double mass = original.is(STONE) ? ForceConfig.STONE_MASS.get() : ForceConfig.LIGHT_MASS.get();
-        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
+        double mass = category.get().mass();
+        if(mass>ForceRules.massBudget(snapshot.get().level()))return ForceResult.no("group_budget");
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*ForceRules.distanceCost(actor,source.getCenter())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (snapshot.get().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockMoveRecord(UUID.randomUUID(), actor.getUUID(), level.dimension(), source.immutable(), null, original, mass);
         try {
@@ -96,7 +92,7 @@ public final class BlockMoveCoordinator {
             tag.put("block_state", NbtUtils.writeBlockState(original)); tag.putInt("teleport_duration", 3);
             display.load(tag); display.setUUID(record.id());
             display.getPersistentData().putInt(DISPLAY_MARKER, 1);
-            var session = new Session(record, source.getCenter(), display, cost);
+            var session = new Session(record, source.getCenter(), display, cost, required);
             sessions.put(actor.getUUID(), session);
             updateDisplay(session);
             if (!level.addFreshEntity(display)) throw new IOException("Cannot create block projection");
@@ -159,17 +155,19 @@ public final class BlockMoveCoordinator {
         if (session == null) return;
         var record = session.record;
         if (!actor.isAlive() || actor.isSpectator() || session.display.isRemoved() || !actor.level().dimension().equals(record.dimension())
+                || ForceRules.level(progress,actor)<session.required || record.mass()>ForceRules.massBudget(ForceRules.level(progress,actor))
                 || !inRange(actor, session.position) || !actor.serverLevel().hasChunkAt(record.source())
                 || !protection.mayModify(actor, actor.serverLevel(), record.source(), ModificationKind.GRAB)) {
             interrupt(actor, "cancelled"); return;
         }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) {
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass()*ForceConfig.HOLD_COST.get()*ForceRules.distanceCost(actor,session.position)*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) {
             interrupt(actor, "not_enough_force"); return;
         }
-        var target = actor.getEyePosition().add(actor.getLookAngle().scale(Math.min(ForceConfig.HOLD_DISTANCE.get(), ForceConfig.RANGE.get() - 0.5)));
+        var target = actor.getEyePosition().add(actor.getLookAngle().scale(Math.min(ForceConfig.HOLD_DISTANCE.get(), ForceRules.range(progress,actor) - 0.5)));
         var difference = target.subtract(session.position);
         double length = difference.length();
-        var next = length <= ForceConfig.MOVE_STEP.get() ? target : session.position.add(difference.scale(ForceConfig.MOVE_STEP.get() / length));
+        double step = ForceRules.moveStep(record.mass());
+        var next = length <= step ? target : session.position.add(difference.scale(step / length));
         if (pathClear(actor, session, next)) { session.position = next; updateDisplay(session); }
     }
 
@@ -258,14 +256,14 @@ public final class BlockMoveCoordinator {
         progress.setChanneling(actor, false);
     }
 
-    private boolean inRange(ServerPlayer actor, Vec3 target) { return actor.getEyePosition().distanceToSqr(target) <= ForceConfig.RANGE.get() * ForceConfig.RANGE.get(); }
+    private boolean inRange(ServerPlayer actor, Vec3 target) { return actor.getEyePosition().distanceToSqr(target) <= ForceRules.range(progress,actor) * ForceRules.range(progress,actor); }
     private boolean visible(ServerPlayer actor, BlockPos target) {
         if (!loadedRay(actor.serverLevel(), actor.getEyePosition(), target.getCenter())) return false;
         var hit = actor.level().clip(new ClipContext(actor.getEyePosition(), target.getCenter(), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor));
         return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(target);
     }
     private net.minecraft.world.phys.BlockHitResult trace(ServerPlayer actor) {
-        var start = actor.getEyePosition(); var end = start.add(actor.getLookAngle().scale(ForceConfig.RANGE.get()));
+        var start = actor.getEyePosition(); var end = start.add(actor.getLookAngle().scale(ForceRules.range(progress,actor)));
         if (!loadedRay(actor.serverLevel(), start, end)) return null;
         return actor.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor));
     }
@@ -301,6 +299,7 @@ public final class BlockMoveCoordinator {
         private Vec3 position;
         private final Display.BlockDisplay display;
         private final double paid;
-        private Session(BlockMoveRecord record, Vec3 position, Display.BlockDisplay display, double paid) { this.paid = paid; this.record = record; this.position = position; this.display = display; }
+        private final int required;
+        private Session(BlockMoveRecord record, Vec3 position, Display.BlockDisplay display, double paid, int required) { this.required = required; this.paid = paid; this.record = record; this.position = position; this.display = display; }
     }
 }

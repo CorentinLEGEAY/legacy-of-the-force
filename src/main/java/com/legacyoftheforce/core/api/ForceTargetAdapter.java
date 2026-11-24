@@ -16,4 +16,5 @@ public interface ForceTargetAdapter {
     default boolean beginLift(ServerPlayer actor, VehicleLiftSpec spec) { return false; }
     default boolean lifting(UUID actor) { return false; }
     default void endLift(UUID actor) {}
+    default boolean moveControlled(ServerPlayer actor,Vec3 displacement) { return false; }
 }

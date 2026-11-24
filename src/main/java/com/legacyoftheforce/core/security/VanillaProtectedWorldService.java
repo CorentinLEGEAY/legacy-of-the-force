@@ -47,9 +47,14 @@ public final class VanillaProtectedWorldService implements ProtectedWorldService
     }
 
     @Override public boolean mayMoveEntity(ServerPlayer actor, Entity target, BlockPos position) {
-        if (actor == null || target == null || (!(target instanceof Mob) && !(target instanceof com.legacyoftheforce.core.api.VehicleForceTargetProvider)) || position == null || !actor.serverLevel().getServer().isSameThread()
+        if (actor == null || target == null || (!(target instanceof Mob) && !(target instanceof com.legacyoftheforce.core.api.VehicleForceTargetProvider) && !(target instanceof net.minecraft.world.entity.item.ItemEntity)) || position == null || !actor.serverLevel().getServer().isSameThread()
                 || actor.serverLevel() != target.level() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer()
                 || !target.isAlive() || target.isPassenger() || target.isVehicle()) return false;
+        if(target instanceof net.minecraft.world.entity.item.ItemEntity item) {
+            if(!(item instanceof com.legacyoftheforce.core.api.DroppedItemOwnership ownership)
+                    ||ownership.legacyoftheforce$thrower()!=null&&!actor.getUUID().equals(ownership.legacyoftheforce$thrower())
+                    ||item.getTarget()!=null&&!actor.getUUID().equals(item.getTarget())||!com.legacyoftheforce.core.api.EntityMotionHooks.ready(actor,item))return false;
+        }
         var level = actor.serverLevel();
         if (!level.isInWorldBounds(position) || !level.hasChunkAt(position) || !level.getWorldBorder().isWithinBounds(position)
                 || level.getServer().isUnderSpawnProtection(level, position, actor)) return false;

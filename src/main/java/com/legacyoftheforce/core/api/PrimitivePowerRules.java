@@ -5,7 +5,7 @@ import java.util.function.IntSupplier;
 
 /** Level-unlocked practice contracts supplied by Force, without importing its implementation into RPG. */
 public final class PrimitivePowerRules {
-    public static final List<String> PATHS = List.of("telekinetic_impulse", "block_telekinesis", "block_group", "vehicle_control");
+    public static final List<String> PATHS = List.of("telekinetic_impulse", "block_telekinesis", "block_group", "vehicle_control", "item_telekinesis");
     private static volatile Map<String, IntSupplier> requirements = Map.of();
     private PrimitivePowerRules() {}
     public static void install(Map<String, IntSupplier> rules) {

@@ -17,13 +17,15 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /** Learned abilities execute on the server; channels revalidate visibility, ownership and energy. */
 final class AdvancedPowers {
-    private final PlayerProgressService progress;private final ProtectedWorldService protection;
+    private final PlayerProgressService progress;private final ProtectedWorldService protection;private final java.util.function.Predicate<UUID> otherControl;
     private final Map<UUID,Channel> channels=new HashMap<>();private final Map<UUID,Long> controlRecovery=new HashMap<>(),requests=new HashMap<>();
     private record Channel(String power,UUID target,long end,long next) {}
     private final Map<UUID,Practice> practice=new HashMap<>();
     private record Practice(String power,UUID context,net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension,
             net.minecraft.world.phys.Vec3 start,net.minecraft.world.phys.Vec3 previous,long end,int hurtAtStart,boolean defense,double rise,float previousHealth) {}
-    AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection) {this.progress=progress;this.protection=protection;}
+    AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection) {this(progress,protection,id->false);}
+    AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection,java.util.function.Predicate<UUID> otherControl) {this.progress=progress;this.protection=protection;this.otherControl=otherControl;}
+    boolean channeling(UUID actor){return channels.containsKey(actor);}
     void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("skill")
             .then(Commands.literal("list").executes(ctx->{var actor=ctx.getSource().getPlayerOrException();for(var def:progress.powers())actor.sendSystemMessage(Component.translatable("power.legacyoftheforce.entry",Component.translatable("power.legacyoftheforce."+path(def.id())),def.requirement().requiredLevel(),def.points(),progress.hasLearnedPower(actor.getUUID(),def.id())?"✓":progress.knowsPower(actor.getUUID(),def.id())?"~":"—"));return 1;}))
@@ -34,9 +36,9 @@ final class AdvancedPowers {
     private static String path(String id) {return id.substring(id.indexOf(':')+1);}
     private boolean rate(ServerPlayer actor) {long now=actor.server.overworld().getGameTime();if(now<requests.getOrDefault(actor.getUUID(),0L))return false;requests.put(actor.getUUID(),now+ForceConfig.ACTION_INTERVAL.get());return true;}
     ForceResult cast(ServerPlayer actor,String power) {
-        if(!actor.server.isSameThread()||!actor.isAlive()||actor.isFakePlayer()||actor.isSpectator()||!rate(actor))return ForceResult.no("cooldown");
+        if(!actor.server.isSameThread()||!actor.isAlive()||actor.isFakePlayer()||actor.isSpectator()||!PlayerInventoryHooks.ready(actor)||!rate(actor))return ForceResult.no("cooldown");
         var definition=progress.power(power);if(definition.isEmpty()||!progress.hasLearnedPower(actor.getUUID(),power))return ForceResult.no("power_locked");var def=definition.get();String action=path(power);
-        if(channels.containsKey(actor.getUUID()))return ForceResult.no("already_holding");
+        if(channels.containsKey(actor.getUUID())||otherControl.test(actor.getUUID())&&!Set.of("sense","leap","speed","protect","heal","support","reflexes").contains(action))return ForceResult.no("already_holding");
         Mob target=null;boolean self=Set.of("leap","speed","protect","heal","support","reflexes").contains(action);
         if(action.equals("leap")&&(!actor.onGround()||actor.isPassenger()))return ForceResult.no("invalid_target");
         if(action.equals("heal")&&actor.getHealth()>=actor.getMaxHealth())return ForceResult.no("invalid_target");
@@ -46,14 +48,15 @@ final class AdvancedPowers {
         if(control&&target!=null&&!controlReady(actor,target))return ForceResult.no("resistant_target");
         if(action.equals("wave")) {area=area.stream().filter(mob->controlReady(actor,mob)).toList();if(area.isEmpty())return ForceResult.no("resistant_target");}
         boolean channel=Set.of("lightning","chain_lightning","drain","choke").contains(action);if(channel&&channels.size()>=ForceConfig.MOB_BUDGET.get())return ForceResult.no("budget");
-        if(!progress.tryStartPower(actor.getUUID(),power,def.energy()*progress.mastery(actor.getUUID(),power).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost(),def.cooldown()))return ForceResult.no("not_enough_force");
+        double distance=target!=null?ForceRules.distanceCost(actor,target.position()):area.stream().mapToDouble(mob->ForceRules.distanceCost(actor,mob.position())).max().orElse(1);
+        if(!progress.tryStartPower(actor.getUUID(),power,distance*def.energy()*progress.mastery(actor.getUUID(),power).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost(),def.cooldown()))return ForceResult.no("not_enough_force");
         switch(action) {
             case "leap" -> {var forward=actor.getLookAngle().multiply(1,0,1).normalize().scale(def.magnitude()/2);actor.push(forward.x,def.magnitude(),forward.z);actor.connection.send(new ClientboundSetEntityMotionPacket(actor));track(actor,def,false);}
             case "speed" -> {if(actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,def.duration(),(int)Math.clamp(def.magnitude()-1,0,2))))track(actor,def,false);}
             case "protect" -> {if(actor.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE,def.duration(),(int)Math.clamp(def.magnitude()-1,0,2))))track(actor,def,true);}
             case "reflexes" -> {actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED,def.duration(),0));if(actor.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE,def.duration(),0)))track(actor,def,true);}
             case "heal" -> {float before=actor.getHealth();actor.heal((float)def.magnitude());if(actor.getHealth()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(actor)!=null)used(actor,power,recentHostile(actor).getUUID(),true);}
-            case "support" -> {actor.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));for(var ally:actor.serverLevel().getPlayers(player->player!=actor&&actor.isAlliedTo(player)&&actor.hasLineOfSight(player)&&actor.distanceToSqr(player)<=def.range()*def.range())) {float before=ally.getAbsorptionAmount();ally.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));if(ally.getAbsorptionAmount()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(ally)!=null)used(actor,power,ally.getUUID(),true);}}
+            case "support" -> {actor.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));for(var ally:actor.serverLevel().getPlayers(player->player!=actor&&actor.isAlliedTo(player)&&actor.hasLineOfSight(player)&&actor.distanceToSqr(player)<=range(actor,def)*range(actor,def))) {float before=ally.getAbsorptionAmount();ally.addEffect(new MobEffectInstance(MobEffects.ABSORPTION,def.duration(),0));if(ally.getAbsorptionAmount()-before>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get()&&recentHostile(ally)!=null)used(actor,power,ally.getUUID(),true);}}
             case "sense" -> area.forEach(mob->{boolean known=mob.hasEffect(MobEffects.GLOWING);if(mob.addEffect(new MobEffectInstance(MobEffects.GLOWING,def.duration(),0))&&!known)credit(actor,mob,def);});
             case "wave" -> area.forEach(mob->impulse(actor,mob,def));
             case "throw" -> {impulse(actor,target,def);float before=target.getHealth();target.hurt(actor.damageSources().indirectMagic(actor,actor),(float)def.magnitude());if(before-target.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get())credit(actor,target,def);}
@@ -65,12 +68,13 @@ final class AdvancedPowers {
         }
         return ForceResult.yes("power_cast");
     }
-    private boolean valid(ServerPlayer actor,Mob target,PowerDefinition def) {return target.isAlive()&&!target.isNoAi()&&!target.isPassenger()&&!target.isVehicle()&&actor.level()==target.level()&&actor.distanceToSqr(target)<=def.range()*def.range()&&MobForceController.loadedRay(actor,actor.getEyePosition(),target.getEyePosition())&&actor.hasLineOfSight(target)&&!target.getType().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:force_immune_mobs")))&&protection.mayMoveEntity(actor,target,target.blockPosition());}
-    private Mob target(ServerPlayer actor,PowerDefinition def) {var start=actor.getEyePosition();var direction=actor.getLookAngle().scale(def.range());var end=start.add(direction);if(!MobForceController.loadedRay(actor,start,end))return null;var hit=ProjectileUtil.getEntityHitResult(actor,start,end,actor.getBoundingBox().expandTowards(direction).inflate(1),entity->entity instanceof Mob mob&&valid(actor,mob,def),def.range()*def.range());return hit!=null&&hit.getEntity() instanceof Mob mob?mob:null;}
-    private List<Mob> targets(ServerPlayer actor,PowerDefinition def) {return actor.serverLevel().getEntitiesOfClass(Mob.class,actor.getBoundingBox().inflate(def.range()),mob->valid(actor,mob,def)).stream().sorted(Comparator.comparingDouble((Mob mob)->actor.distanceToSqr(mob))).limit(ForceConfig.AREA_TARGETS.get()).toList();}
+    private double range(ServerPlayer actor,PowerDefinition def){return Math.min(def.range(),ForceRules.range(progress,actor));}
+    private boolean valid(ServerPlayer actor,Mob target,PowerDefinition def) {return target.isAlive()&&!target.isNoAi()&&!target.isPassenger()&&!target.isVehicle()&&actor.level()==target.level()&&actor.distanceToSqr(target)<=range(actor,def)*range(actor,def)&&MobForceController.loadedRay(actor,actor.getEyePosition(),target.getEyePosition())&&actor.hasLineOfSight(target)&&!target.getType().is(net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE,net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:force_immune_mobs")))&&protection.mayMoveEntity(actor,target,target.blockPosition());}
+    private Mob target(ServerPlayer actor,PowerDefinition def) {var start=actor.getEyePosition();var direction=actor.getLookAngle().scale(range(actor,def));var end=start.add(direction);if(!MobForceController.loadedRay(actor,start,end))return null;var hit=ProjectileUtil.getEntityHitResult(actor,start,end,actor.getBoundingBox().expandTowards(direction).inflate(1),entity->entity instanceof Mob mob&&valid(actor,mob,def),range(actor,def)*range(actor,def));return hit!=null&&hit.getEntity() instanceof Mob mob?mob:null;}
+    private List<Mob> targets(ServerPlayer actor,PowerDefinition def) {return actor.serverLevel().getEntitiesOfClass(Mob.class,actor.getBoundingBox().inflate(range(actor,def)),mob->valid(actor,mob,def)).stream().sorted(Comparator.comparingDouble((Mob mob)->actor.distanceToSqr(mob))).limit(ForceConfig.AREA_TARGETS.get()).toList();}
     private boolean controlReady(ServerPlayer actor,Mob mob) {return actor.server.overworld().getGameTime()>=controlRecovery.getOrDefault(mob.getUUID(),0L)&&(!(mob instanceof ForceImpulseResistance boss)||boss.acceptsForceImpulse());}
     private void reserveControl(ServerPlayer actor,Mob mob,PowerDefinition def) {controlRecovery.put(mob.getUUID(),actor.server.overworld().getGameTime()+def.duration()+ForceConfig.MOB_COOLDOWN.get());if(mob instanceof ForceImpulseResistance boss)boss.forceImpulseCommitted();}
-    private void used(ServerPlayer actor,String power,UUID context,boolean support){progress.creditPowerUse(actor.getUUID(),power,context);if(progress.power(power).map(def->def.energy()>0).orElse(false))net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PowerUseCommitted(actor.getUUID(),context,actor.level().dimension(),actor.server.overworld().getGameTime(),support,power));}
+    private void used(ServerPlayer actor,String power,UUID context,boolean support){if(!progress.power(power).map(def->def.energy()>0).orElse(false))return;progress.creditPowerUse(actor.getUUID(),power,context);if(!actor.hasDisconnected())net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new PowerUseCommitted(actor.getUUID(),context,actor.level().dimension(),actor.server.overworld().getGameTime(),support,power));}
     private boolean hostile(ServerPlayer actor,Mob target) {return target instanceof net.minecraft.world.entity.monster.Enemy||target.getTarget()==actor;}
     private void credit(ServerPlayer actor,Mob target,PowerDefinition def) {if(hostile(actor,target))used(actor,def.id(),target.getUUID(),false);}
     private net.minecraft.world.entity.LivingEntity recentHostile(ServerPlayer actor) {
@@ -79,8 +83,8 @@ final class AdvancedPowers {
     }
     private void track(ServerPlayer actor,PowerDefinition def,boolean defense) {
         if(practice.size()>=ForceConfig.MOB_BUDGET.get()&&!practice.containsKey(actor.getUUID()))return;
-        var threat=actor.serverLevel().getEntitiesOfClass(Mob.class,actor.getBoundingBox().inflate(ForceConfig.RANGE.get()),mob->mob.isAlive()&&mob.getTarget()==actor
-                &&actor.distanceToSqr(mob)<=ForceConfig.RANGE.get()*ForceConfig.RANGE.get()&&MobForceController.loadedRay(actor,actor.getEyePosition(),mob.getEyePosition())&&actor.hasLineOfSight(mob)).stream()
+        var threat=actor.serverLevel().getEntitiesOfClass(Mob.class,actor.getBoundingBox().inflate(ForceRules.range(progress,actor)),mob->mob.isAlive()&&mob.getTarget()==actor
+                &&actor.distanceToSqr(mob)<=ForceRules.range(progress,actor)*ForceRules.range(progress,actor)&&MobForceController.loadedRay(actor,actor.getEyePosition(),mob.getEyePosition())&&actor.hasLineOfSight(mob)).stream()
                 .min(Comparator.comparingDouble(actor::distanceToSqr)).orElse(null);
         int duration=path(def.id()).equals("leap")?ServerConfig.MASTERY_PRACTICE_TICKS.get():Math.min(def.duration(),ServerConfig.MASTERY_PRACTICE_TICKS.get());
         if(threat!=null)practice.put(actor.getUUID(),new Practice(def.id(),threat.getUUID(),actor.level().dimension(),actor.position(),actor.position(),actor.server.overworld().getGameTime()+duration,actor.getLastHurtByMobTimestamp(),defense,0,actor.getHealth()));
@@ -107,7 +111,7 @@ final class AdvancedPowers {
         for(var entry:List.copyOf(channels.entrySet())) {var actor=server.getPlayerList().getPlayer(entry.getKey());var channel=entry.getValue();var definition=progress.power(channel.power());
             if(actor==null||!actor.isAlive()||actor.isRemoved()||definition.isEmpty()||now>=channel.end()||!progress.hasLearnedPower(entry.getKey(),channel.power())) {cancel(entry.getKey());continue;}
             var entity=actor.serverLevel().getEntity(channel.target());var def=definition.get();if(!(entity instanceof Mob target)||!valid(actor,target,def)) {cancel(entry.getKey());continue;}if(now<channel.next())continue;
-            if(!progress.trySpendForceEnergy(actor.getUUID(),def.energy()*ForceConfig.CHANNEL_COST_FRACTION.get()*progress.mastery(actor.getUUID(),def.id()).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost())) {cancel(actor.getUUID());continue;}
+            if(!progress.trySpendForceEnergy(actor.getUUID(),def.energy()*ForceRules.distanceCost(actor,target.position())*ForceConfig.CHANNEL_COST_FRACTION.get()*progress.mastery(actor.getUUID(),def.id()).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost())) {cancel(actor.getUUID());continue;}
             float health=target.getHealth();boolean hit=target.hurt(actor.damageSources().indirectMagic(actor,actor),(float)def.magnitude());
             if(health-target.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get())credit(actor,target,def);
             if(path(channel.power()).equals("drain")&&hit&&health>target.getHealth())actor.heal(Math.min((float)def.magnitude()/2,health-target.getHealth()));

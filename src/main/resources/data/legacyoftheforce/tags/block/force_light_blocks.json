@@ -1,1 +1,15 @@
-{"replace":false,"values":["minecraft:dirt","minecraft:coarse_dirt","minecraft:oak_planks","minecraft:spruce_planks","#minecraft:wool"]}
+{
+  "replace": false,
+  "values": [
+    "minecraft:dirt",
+    "minecraft:coarse_dirt",
+    "minecraft:oak_planks",
+    "minecraft:spruce_planks",
+    "minecraft:oak_log",
+    "minecraft:spruce_log",
+    "minecraft:birch_log",
+    "minecraft:sand",
+    "minecraft:red_sand",
+    "minecraft:gravel"
+  ]
+}

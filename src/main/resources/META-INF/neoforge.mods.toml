@@ -24,3 +24,6 @@ config="legacyoftheforce.mixins.json"
 
 [[mixins]]
 config="legacyoftheforce.lightsaber.mixins.json"
+
+[[mixins]]
+config="legacyoftheforce.force.mixins.json"

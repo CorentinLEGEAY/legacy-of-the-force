@@ -28,7 +28,7 @@ public final class VehicleForceController {
     private final ProtectedWorldService protection;
     public VehicleForceController(PlayerProgressService progress, ProtectedWorldService protection) { this.progress = progress; this.protection = protection; }
     public ForceResult cast(ServerPlayer actor, ForceAction action) {
-        double range = ForceConfig.RANGE.get(); var start = actor.getEyePosition(); var delta = actor.getLookAngle().scale(range); var end = start.add(delta);
+        double range = ForceRules.range(progress,actor); var start = actor.getEyePosition(); var delta = actor.getLookAngle().scale(range); var end = start.add(delta);
         if (!loaded(actor, start, end)) return ForceResult.no("out_of_range");
         // Include all pickable entities: another entity in front of the vehicle must occlude selection.
         var hit = ProjectileUtil.getEntityHitResult(actor, start, end, actor.getBoundingBox().expandTowards(delta).inflate(1),
@@ -41,7 +41,7 @@ public final class VehicleForceController {
                 || !actor.server.isSameThread() || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer()
                 || actor.isPassenger() || actor.level() != target.level() || target.isRemoved() || !(target instanceof VehicleForceTargetProvider provider)) return ForceResult.no("invalid_target");
         var start = actor.getEyePosition(); var end = target.getBoundingBox().getCenter();
-        if (start.distanceToSqr(end) > ForceConfig.RANGE.get() * ForceConfig.RANGE.get() || !loaded(actor, start, end)
+        if (start.distanceToSqr(end) > ForceRules.range(progress,actor) * ForceRules.range(progress,actor) || !loaded(actor, start, end)
                 || actor.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor)).getType() != HitResult.Type.MISS) return ForceResult.no("out_of_range");
         var adapter = provider.forceTarget(protection); double mass = adapter.effectiveMass(), resistance = adapter.resistance();
         if (!Double.isFinite(mass) || mass <= 0 || mass > ForceConfig.VEHICLE_MAX_MASS.get() || !Double.isFinite(resistance) || resistance < 0 || resistance >= 1) return ForceResult.no("resistant_target");
@@ -54,7 +54,7 @@ public final class VehicleForceController {
         if (!progress.powerReady(actor.getUUID(), POWER_ID)) return ForceResult.no("cooldown");
         if (action == ForceAction.LIFT) {
             if (lifts.size() >= ForceConfig.MOB_BUDGET.get() || mass > ForceConfig.VEHICLE_LIFT_MASS.get()) return ForceResult.no("budget");
-            var spec = new VehicleLiftSpec(required, ForceConfig.VEHICLE_LIFT_TICKS.get(), ForceConfig.VEHICLE_LIFT_RISE.get(), ForceConfig.VEHICLE_LIFT_STEP.get(), ForceConfig.RANGE.get(), ForceConfig.VEHICLE_LIFT_MASS.get());
+            var spec = new VehicleLiftSpec(required, ForceConfig.VEHICLE_LIFT_TICKS.get(), ForceConfig.VEHICLE_LIFT_RISE.get(), ForceConfig.VEHICLE_LIFT_STEP.get(), ForceRules.range(progress,actor), ForceConfig.VEHICLE_LIFT_MASS.get());
             var sweep = target.getBoundingBox().expandTowards(0, spec.step(), 0);
             if (!actor.serverLevel().getWorldBorder().isWithinBounds(sweep) || sweep.maxY >= actor.level().getMaxBuildHeight()) return ForceResult.no("blocked_path");
             double cells = (Math.ceil(sweep.getXsize()) + 1) * (Math.ceil(sweep.getYsize()) + 1) * (Math.ceil(sweep.getZsize()) + 1);
@@ -63,7 +63,7 @@ public final class VehicleForceController {
                     || !protection.mayMoveEntity(actor, target, at)) return ForceResult.no("protected_area");
             if (!actor.level().noCollision(target, sweep)) return ForceResult.no("blocked_path");
             double prepaid = (ForceConfig.VEHICLE_LIFT_BASE.get() + mass * (ForceConfig.VEHICLE_MASS_COST.get() + spec.ticks() / 20d * ForceConfig.VEHICLE_LIFT_HOLD.get()))
-                    * PrimitivePractice.multiplier(progress, actor, POWER_ID) * CrystalAffinityAccess.get(actor).telekinesisCost();
+                    * ForceRules.distanceCost(actor,target.position()) * PrimitivePractice.multiplier(progress, actor, POWER_ID) * CrystalAffinityAccess.get(actor).telekinesisCost();
             if (!progress.tryStartPower(actor.getUUID(), POWER_ID, prepaid, Math.max(spec.ticks(), ForceConfig.VEHICLE_COOLDOWN.get()))) return ForceResult.no("not_enough_force");
             if (!adapter.beginLift(actor, spec)) return ForceResult.no("blocked_path");
             lifts.put(actor.getUUID(), target); PrimitivePractice.committed(progress, actor, POWER_ID, target.getUUID(), prepaid);
@@ -71,7 +71,7 @@ public final class VehicleForceController {
         }
         double retention = 1 - (1 - ForceConfig.VEHICLE_RETENTION.get()) * (1 - resistance);
         if (retention >= 1 - .000001) return ForceResult.no("resistant_target");
-        double cost = (ForceConfig.VEHICLE_BASE_COST.get() + mass * ForceConfig.VEHICLE_MASS_COST.get()) * PrimitivePractice.multiplier(progress, actor, POWER_ID) * CrystalAffinityAccess.get(actor).telekinesisCost();
+        double cost = (ForceConfig.VEHICLE_BASE_COST.get() + mass * ForceConfig.VEHICLE_MASS_COST.get()) * ForceRules.distanceCost(actor,target.position()) * PrimitivePractice.multiplier(progress, actor, POWER_ID) * CrystalAffinityAccess.get(actor).telekinesisCost();
         if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.VEHICLE_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         adapter.dampMotion(actor, action, retention);
         PrimitivePractice.committed(progress, actor, POWER_ID, target.getUUID(), cost);

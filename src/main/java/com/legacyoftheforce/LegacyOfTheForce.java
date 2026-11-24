@@ -78,6 +78,7 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.rpg.PowerCatalog::register);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberCombat());
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.lightsaber.SaberItemTransfers());
+        com.legacyoftheforce.core.api.EntityMotionHooks.register(com.legacyoftheforce.lightsaber.SaberItemTransfers::movementReady);
         com.legacyoftheforce.core.api.PlayerInventoryHooks.register(new com.legacyoftheforce.lightsaber.SaberInventoryPolicy());
         NeoForge.EVENT_BUS.register(com.legacyoftheforce.lightsaber.SaberMenuState.listener());
         var saberStorage=new com.legacyoftheforce.lightsaber.SaberStorageTransactions();

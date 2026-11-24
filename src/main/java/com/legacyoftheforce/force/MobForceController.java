@@ -32,7 +32,7 @@ public final class MobForceController {
     private static TagKey<EntityType<?>> tag(String id) { return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, id)); }
 
     public ForceResult cast(ServerPlayer actor, ForceAction action) {
-        double range = ForceConfig.RANGE.get();
+        double range = ForceRules.range(progress,actor);
         var start = actor.getEyePosition(); var direction = actor.getLookAngle().scale(range); var end = start.add(direction);
         if (!loadedRay(actor, start, end)) return ForceResult.no("out_of_range");
         var hit = ProjectileUtil.getEntityHitResult(actor, start, end, actor.getBoundingBox().expandTowards(direction).inflate(1),
@@ -48,7 +48,7 @@ public final class MobForceController {
         if (target.getType().is(IMMUNE) || target.getType().is(BOSSES) && !(target instanceof ForceImpulseResistance)) return ForceResult.no("resistant_target");
         if (target instanceof ForceImpulseResistance posture && !posture.acceptsForceImpulse()) return ForceResult.no("resistant_target");
         if (!protection.mayMoveEntity(actor, target, target.blockPosition())) return ForceResult.no("protected_area");
-        if (actor.getEyePosition().distanceToSqr(target.getEyePosition()) > ForceConfig.RANGE.get() * ForceConfig.RANGE.get()
+        if (actor.getEyePosition().distanceToSqr(target.getEyePosition()) > ForceRules.range(progress,actor) * ForceRules.range(progress,actor)
                 || !visible(actor, target)) return ForceResult.no("out_of_range");
         var snapshot = progress.get(actor.getUUID());
         int required = action == ForceAction.PUSH ? ForceConfig.PUSH_LEVEL.get() : ForceConfig.PULL_LEVEL.get();
@@ -69,6 +69,7 @@ public final class MobForceController {
         if (velocity.subtract(target.getDeltaMovement()).lengthSqr() < 0.0001) return ForceResult.no("resistant_target");
         if (!pathAllowed(actor, target, velocity)) return ForceResult.no("blocked_path");
         double cost = (action == ForceAction.PUSH ? ForceConfig.PUSH_COST.get() : ForceConfig.PULL_COST.get()) + mass * ForceConfig.MOB_COST_PER_MASS.get();
+        cost *= ForceRules.distanceCost(actor,target.position());
         cost *= CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.MOB_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         adapter.applyImpulse(velocity);

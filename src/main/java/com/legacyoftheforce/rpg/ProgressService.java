@@ -15,7 +15,7 @@ public final class ProgressService implements PlayerProgressService {
     }
     @Override public boolean creditPowerUse(UUID playerId,String id,UUID context) {
         var actor=onlinePlayer(playerId);
-        if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||context==null||context.equals(playerId)||!(hasLearnedPower(playerId,id)||com.legacyoftheforce.core.api.PrimitivePowerRules.eligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot(),id)))return false;
+        if(actor==null||!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||context==null||context.equals(playerId)||!(hasLearnedPower(playerId,id)||com.legacyoftheforce.core.api.PrimitivePowerRules.eligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot(),id)))return false;
         if(!actor.getData(ProgressAttachments.POWER_MASTERY).credit(id,context,actor.server.overworld().getGameTime()))return false;
         try{new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);return true;}
         catch(java.io.IOException|RuntimeException failure){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Mastery save uncertain; native aggregate retained",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.mastery_pending"));return false;}
@@ -25,7 +25,7 @@ public final class ProgressService implements PlayerProgressService {
     @Override public boolean hasLearnedPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);var definition=power(id);return actor!=null&&definition.isPresent()&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id)&&definition.get().requirement().isEligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot());}
     @Override public boolean knowsPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);return actor!=null&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id);}
     @Override public boolean learnPower(UUID playerId,String id) {
-        var actor=onlinePlayer(playerId);var definition=power(id);if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||definition.isEmpty())return false;
+        var actor=onlinePlayer(playerId);var definition=power(id);if(actor==null||!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||definition.isEmpty())return false;
         var data=actor.getData(ProgressAttachments.LEARNED_POWERS);var rule=definition.get();var progress=actor.getData(ProgressAttachments.PLAYER_PROGRESS);
         if(!data.canLearn(id)||!rule.requirement().isEligible(progress.snapshot())||!rule.prerequisite().isEmpty()&&!data.knows(rule.prerequisite())||!progress.trySpendSkillPoints(rule.points()))return false;data.learn(id);
         try {new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);}catch(java.io.IOException|RuntimeException failure) {com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Learning save uncertain; reconnect from native aggregate",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.learning_pending"));return false;}ProgressEvents.sync(actor);return true;

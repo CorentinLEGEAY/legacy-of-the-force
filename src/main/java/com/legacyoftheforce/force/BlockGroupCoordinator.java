@@ -8,12 +8,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import net.minecraft.core.*;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.*;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.*;
@@ -22,7 +19,6 @@ import net.minecraft.world.phys.*;
 /** Bounded connected selection, one group collider and one durable world transaction. */
 final class BlockGroupCoordinator {
     public static final String POWER_ID = "legacyoftheforce:block_group";
-    private static final TagKey<Block> LIGHT = tag("force_light_blocks"), STONE = tag("force_stone_blocks");
     private final MinecraftServer server;
     private final DurableOperationStore store;
     private final PlayerProgressService progress;
@@ -37,23 +33,13 @@ final class BlockGroupCoordinator {
         this.server = server; this.store = new DurableOperationStore(directory, ForceConfig.JOURNAL_BUDGET.get());
         this.progress = progress; this.protection = protection; this.anchors = anchors; this.barrier = barrier;
     }
-    private static TagKey<Block> tag(String name) { return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, name)); }
     boolean holding(UUID actor) { return sessions.containsKey(actor); }
     int blockCount(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension) {
         return sessions.values().stream().filter(s -> s.record.dimension().equals(dimension)).mapToInt(s -> s.record.members().size()).sum();
     }
     private int level(ServerPlayer actor) { return progress.get(actor.getUUID()).filter(p -> !p.unavailable()).map(PlayerProgressSnapshot::level).orElse(0); }
-    private int capacity(int level) {
-        var levels = ForceConfig.GROUP_LEVELS.get(); var counts = ForceConfig.GROUP_COUNTS.get();
-        int result = 0;
-        for (int i = 0; i < Math.min(levels.size(), counts.size()); i++) if (level >= levels.get(i)) result = Math.max(result, counts.get(i));
-        return Math.min(result, ServerConfig.MAX_BLOCKS_PER_PLAYER.get());
-    }
-    private double range(ServerPlayer actor) {
-        var levels = ForceConfig.GROUP_LEVELS.get(); var ranges = ForceConfig.GROUP_RANGES.get(); double result = 4;
-        for (int i = 0; i < Math.min(levels.size(), ranges.size()); i++) if (level(actor) >= levels.get(i)) result = Math.max(result, ranges.get(i));
-        return result;
-    }
+    private int capacity(int level) { return ForceRules.capacity(level); }
+    private double range(ServerPlayer actor) { return ForceRules.range(progress,actor); }
     private boolean inRange(ServerPlayer actor, Vec3 target) { double range = range(actor); return actor.getEyePosition().distanceToSqr(target) <= range * range; }
 
     ForceResult grab(ServerPlayer actor, int otherBlocks) {
@@ -68,27 +54,29 @@ final class BlockGroupCoordinator {
         if (hit.getType() != HitResult.Type.BLOCK) return ForceResult.no("no_target");
         var pivot = hit.getBlockPos().immutable();
         var queue = new ArrayDeque<BlockPos>(); var visited = new HashSet<BlockPos>(); var members = new ArrayList<BlockGroupRecord.Member>();
-        queue.add(pivot); double mass = 0;
+        queue.add(pivot); double mass = 0; int required = ForceConfig.BLOCK_LEVEL.get();
         while (!queue.isEmpty()) {
             var pos = queue.removeFirst(); if (!visited.add(pos)) continue;
             // Never request a chunk during selection or movement.
             if (!world.hasChunkAt(pos)) return ForceResult.no("out_of_range");
             var state = world.getBlockState(pos);
-            if ((!state.is(LIGHT) && !state.is(STONE)) || state.hasBlockEntity() || !state.getFluidState().isEmpty()) {
+            var category = ForceRules.mass(state);
+            if (category.isEmpty() || !Float.isFinite(state.getDestroySpeed(world,pos)) || state.getDestroySpeed(world,pos)<0) {
                 if (pos.equals(pivot)) return ForceResult.no("invalid_target");
                 continue;
             }
             if (members.size() >= capacity || pos.distManhattan(pivot) > ForceConfig.GROUP_RADIUS.get()) return ForceResult.no("group_budget");
             if (!inRange(actor, pos.getCenter())) return ForceResult.no("out_of_range");
-            if (state.is(STONE) && level < ForceConfig.STONE_LEVEL.get()) return ForceResult.no("level_required");
+            if (level < category.get().required()) return ForceResult.no("level_required");
+            required = Math.max(required,category.get().required());
             if (!protection.mayModify(actor, world, pos, ModificationKind.GRAB)) return ForceResult.no("protected_area");
-            double weight = state.is(STONE) ? ForceConfig.STONE_MASS.get() : ForceConfig.LIGHT_MASS.get(); mass += weight;
-            if (mass > capacity * ForceConfig.LIGHT_MASS.get()) return ForceResult.no("group_budget");
+            double weight = category.get().mass(); mass += weight;
+            if (mass > ForceRules.massBudget(level)) return ForceResult.no("group_budget");
             members.add(new BlockGroupRecord.Member(pos.immutable(), state, weight));
             for (var direction : Direction.values()) queue.add(pos.relative(direction));
         }
         if (members.size() + otherBlocks + blockCount(world.dimension()) > ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
-        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*ForceRules.distanceCost(actor,pivot.getCenter())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (progress.get(actor.getUUID()).orElseThrow().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockGroupRecord(UUID.randomUUID(), actor.getUUID(), world.dimension(), pivot, members, null, 0);
         try {
@@ -97,7 +85,7 @@ final class BlockGroupCoordinator {
             // Every original position is reserved before HELD; partial installation recovers the whole before-image.
             for (var member : members) if (!anchors.place(world, member.source(), record.id())) throw new IOException("Cannot reserve group source");
             barrier.persist(world, record.sources()); store.transition(record.id(), OperationPhase.PREPARED, OperationPhase.HELD, record.payload());
-            var session = new Session(record, cost); sessions.put(actor.getUUID(), session);
+            var session = new Session(record, cost, required); sessions.put(actor.getUUID(), session);
             for (var member : members) {
                 var display = new Display.BlockDisplay(EntityType.BLOCK_DISPLAY, world);
                 var data = new CompoundTag(); display.saveWithoutId(data); data.put("block_state", NbtUtils.writeBlockState(member.state())); data.putInt("teleport_duration", 3);
@@ -126,7 +114,7 @@ final class BlockGroupCoordinator {
         if (!server.isSameThread() || recoveryPending) return ForceResult.no("recovery_pending");
         if (session.velocity != null) return ForceResult.no("cooldown");
         if (level(actor) < ForceConfig.GROUP_THROW_LEVEL.get()) return ForceResult.no("level_required");
-        double cost = (ForceConfig.GROUP_THROW_BASE.get()+session.record.mass()*ForceConfig.GROUP_THROW_MASS.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
+        double cost = (ForceConfig.GROUP_THROW_BASE.get()+session.record.mass()*ForceConfig.GROUP_THROW_MASS.get())*ForceRules.distanceCost(actor,session.position)*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (!progress.trySpendForceEnergy(actor.getUUID(), cost)) return ForceResult.no("not_enough_force");
         double speed = ForceConfig.GROUP_THROW_SPEED.get() / Math.sqrt(Math.max(1, session.record.mass()));
         session.velocity = actor.getLookAngle().scale(speed); session.flightTicks = ForceConfig.GROUP_FLIGHT_TICKS.get();
@@ -177,12 +165,12 @@ final class BlockGroupCoordinator {
                 || session.displays.stream().anyMatch(Entity::isRemoved)) { cancel(actor.getUUID()); return; }
         for (var member : session.record.members()) if (!actor.serverLevel().hasChunkAt(member.source())
                 || !protection.mayModify(actor, actor.serverLevel(), member.source(), ModificationKind.GRAB)) { cancel(actor.getUUID()); return; }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) { cancel(actor.getUUID()); return; }
-        if (!inRange(actor, session.position)) { cancel(actor.getUUID()); return; }
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass()*ForceConfig.HOLD_COST.get()*ForceRules.distanceCost(actor,session.position)*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) { cancel(actor.getUUID()); return; }
+        if (session.record.members().size()>capacity(level(actor)) || level(actor)<session.required || session.record.mass()>ForceRules.massBudget(level(actor)) || !inRange(actor, session.position)) { cancel(actor.getUUID()); return; }
         Vec3 next;
         if (session.velocity == null) {
             var target = actor.getEyePosition().add(actor.getLookAngle().scale(Math.min(ForceConfig.HOLD_DISTANCE.get(), range(actor) - .5)));
-            var delta = target.subtract(session.position); double limit = ForceConfig.MOVE_STEP.get() / Math.sqrt(Math.max(1, session.record.mass()));
+            var delta = target.subtract(session.position); double limit = ForceRules.moveStep(session.record.mass());
             next = delta.length() <= limit ? target : session.position.add(delta.normalize().scale(limit));
         } else {
             next = session.position.add(session.velocity); session.velocity = session.velocity.add(0, -ForceConfig.GROUP_GRAVITY.get(), 0);
@@ -311,9 +299,9 @@ final class BlockGroupCoordinator {
     }
     private void release(UUID actor) { var session = sessions.remove(actor); if (session != null) session.displays.forEach(Entity::discard); progress.setChanneling(actor, false); }
     private static final class Session {
-        final double paid;
+        final double paid; final int required;
         BlockGroupRecord record; Vec3 position; Vec3 velocity; int flightTicks; int renderedTurns = -1;
         final List<Display.BlockDisplay> displays = new ArrayList<>(); final Set<UUID> hit = new HashSet<>();
-        Session(BlockGroupRecord record, double paid) { this.paid = paid; this.record = record; position = record.pivot().getCenter(); }
+        Session(BlockGroupRecord record, double paid, int required) { this.required = required; this.paid = paid; this.record = record; position = record.pivot().getCenter(); }
     }
 }

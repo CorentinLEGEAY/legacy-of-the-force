@@ -10,6 +10,9 @@ public final class ForceConfig {
     public static final ModConfigSpec.DoubleValue CHANNEL_COST_FRACTION, CHAIN_RADIUS;
     public static final ModConfigSpec.IntValue VEHICLE_LIFT_LEVEL, VEHICLE_LIFT_TICKS;
     public static final ModConfigSpec.DoubleValue VEHICLE_LIFT_RISE, VEHICLE_LIFT_STEP, VEHICLE_LIFT_MASS, VEHICLE_LIFT_BASE, VEHICLE_LIFT_HOLD;
+    public static final ModConfigSpec.DoubleValue TIER_RANGE_CAP, LOW_LEVEL_RANGE, VERY_LIGHT_MASS, HEAVY_MASS, EXTREME_MASS, DISTANCE_COST, DISTANCE_REFERENCE, DISTANCE_COST_CAP, MASS_SLOWDOWN;
+    public static final ModConfigSpec.IntValue HEAVY_LEVEL, EXTREME_LEVEL, ITEM_LEVEL, ITEM_TICKS, ITEM_COOLDOWN, ITEM_BUDGET;
+    public static final ModConfigSpec.DoubleValue ITEM_MASS, ITEM_STACK_MASS, ITEM_SPEED, ITEM_BASE_COST, ITEM_HOLD_COST, ITEM_PRACTICE_DISTANCE;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.IntValue VEHICLE_STABILIZE_LEVEL, VEHICLE_BRAKE_LEVEL, VEHICLE_COOLDOWN;
     public static final ModConfigSpec.DoubleValue VEHICLE_MAX_MASS, VEHICLE_BASE_COST, VEHICLE_MASS_COST, VEHICLE_RETENTION;
@@ -83,6 +86,27 @@ public final class ForceConfig {
         VEHICLE_LIFT_MASS = builder.defineInRange("vehicle.maximumLiftMass", 20d, .1, 64);
         VEHICLE_LIFT_BASE = builder.defineInRange("vehicle.liftBaseCost", 20d, 1, 200);
         VEHICLE_LIFT_HOLD = builder.defineInRange("vehicle.liftPrepaidCostPerMassSecond", .8d, .1, 4);
+        TIER_RANGE_CAP = builder.defineInRange("tiers.maximumRange",24d,2,24);
+        LOW_LEVEL_RANGE = builder.defineInRange("tiers.belowFirstBlockRange",4d,2,24);
+        VERY_LIGHT_MASS = builder.defineInRange("veryLightMass",.5d,.1,10);
+        HEAVY_MASS = builder.defineInRange("heavyMass",5d,.1,10);
+        EXTREME_MASS = builder.defineInRange("extremeMass",9d,.1,10);
+        HEAVY_LEVEL = builder.defineInRange("heavyLevel",60,15,100);
+        EXTREME_LEVEL = builder.defineInRange("extremeLevel",85,15,100);
+        DISTANCE_COST = builder.defineInRange("distance.extraCostPerBlock",.04d,0,.2);
+        DISTANCE_REFERENCE = builder.defineInRange("distance.freeRadius",3d,1,6);
+        DISTANCE_COST_CAP = builder.defineInRange("distance.maximumCostMultiplier",2d,1,4);
+        MASS_SLOWDOWN = builder.defineInRange("mass.holdMovementMassExponent",.5d,0,1);
+        ITEM_LEVEL = builder.defineInRange("item.minimumLevel",1,1,100);
+        ITEM_TICKS = builder.defineInRange("item.maximumControlTicks",100,10,100);
+        ITEM_COOLDOWN = builder.defineInRange("item.cooldownTicks",40,10,400);
+        ITEM_BUDGET = builder.defineInRange("item.maximumSessions",128,1,512);
+        ITEM_MASS = builder.defineInRange("item.baseMass",.25d,.05,4);
+        ITEM_STACK_MASS = builder.defineInRange("item.fullStackAdditionalMass",.75d,0,4);
+        ITEM_SPEED = builder.defineInRange("item.moveStepPerTick",.25d,.02,.4);
+        ITEM_PRACTICE_DISTANCE = builder.defineInRange("item.minimumPracticeTravel",1.5d,.5,6);
+        ITEM_BASE_COST = builder.defineInRange("item.baseCost",2d,.1,100);
+        ITEM_HOLD_COST = builder.defineInRange("item.prepaidHoldCostPerMassSecond",.8d,.1,4);
         SPEC = builder.build();
     }
     private ForceConfig() {}

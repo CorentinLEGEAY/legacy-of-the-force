@@ -149,3 +149,6 @@ Force70 : `/lotf force lift_vehicle` lève son speeder léger vide pendant un co
 
 
 Formes avancées et deux lames : des holocrons d’expédition enseignent Précision, Protection, Élan et Deux lames (niveaux25/30/40/35 par défaut). `/lotf saber form list` affiche vos accès ; `form <nom>` choisit une forme compatible. Pour Deux lames : deux vrais sabres **simples** éveillés, `/lotf saber ignite main` puis `ignite offhand`, et `/lotf saber offhand` pour le coup secondaire. Touches forme/coup secondaire à assigner. Endurance et cooldown partagés, aucun échange des objets. Intégration compilée, pas encore validée en jeu.
+
+
+Force débutant : **V** attire un objet lâché visé, puis libère la prise ; G annule. `/lotf force item` cible explicitement un item. L’objet existant se déplace, ses règles de propriété/collecte restent natives. `/lotf force status` affiche portée et budget réels. Cinq masses et les paliers de portée sont maintenant codés (maximum24 au niveau100), avec limites de nombre/masse, distance et coût serveur. Compilation réussie, campagne native encore à faire ; voir09 pour les changements de configuration de portée.

@@ -25,8 +25,8 @@
   "force.legacyoftheforce.cooldown": "Wait before using the Force again.",
   "force.legacyoftheforce.recovered": "Block recovery completed.",
   "key.categories.legacyoftheforce": "Legacy of the Force",
-  "key.legacyoftheforce.block_toggle": "Grab / deposit block",
-  "key.legacyoftheforce.block_cancel": "Restore held block",
+  "key.legacyoftheforce.block_toggle": "Grab or release the Force target",
+  "key.legacyoftheforce.block_cancel": "Cancel Force control",
   "block.legacyoftheforce.transaction_anchor": "Reserved Force source",
   "force.legacyoftheforce.no_mob_target": "No visible mob targeted.",
   "force.legacyoftheforce.resistant_target": "This target resists telekinesis.",
@@ -697,5 +697,13 @@
   "saber.legacyoftheforce.form_twin": "Twin blades",
   "saber.legacyoftheforce.form_help_twin": "Two distinct awakened, ignited single sabers. High fatigue, shared combo; /lotf saber offhand strikes with the second blade.",
   "saber.legacyoftheforce.form_yes": "yes",
-  "saber.legacyoftheforce.form_no": "no"
+  "saber.legacyoftheforce.form_no": "no",
+  "force.legacyoftheforce.item_attracted": "Item attracted; pickup remains normal.",
+  "force.legacyoftheforce.item_released": "Item released.",
+  "force.legacyoftheforce.item_nearby": "This item is already nearby; pick it up normally.",
+  "force.legacyoftheforce.no_item_target": "Aim at a visible dropped item.",
+  "force.legacyoftheforce.power_released": "Channel interrupted.",
+  "force.legacyoftheforce.status": "Level %s · range %s · mass budget %s · maximum blocks %s",
+  "power.legacyoftheforce.item_telekinesis": "Item attraction",
+  "key.legacyoftheforce.item_pull": "Attract a dropped item"
 }

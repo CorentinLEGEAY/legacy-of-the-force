@@ -38,6 +38,12 @@ public final class SaberItemTransfers {
     static boolean canMenuDrop(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service!=null&&service.ready(actor);}
     static boolean validMenuItem(ItemEntity entity) {return entity!=null&&!entity.isRemoved()&&identity(entity.getItem()).isPresent();}
     static DropOutcome commitMenuDrop(ServerPlayer actor,ItemEntity entity) {var service=SERVICES.get(actor.server);return service==null?DropOutcome.REFUSED:service.commitDrop(actor,entity);}
+    public static boolean movementReady(ServerPlayer actor,Entity target) {
+        if(!(target instanceof ItemEntity item))return true;
+        if(item.getItem().is(SaberContent.KYBER.get()))return item.getItem().get(SaberContent.KYBER_DATA.get())!=null&&item.getItem().get(SaberContent.KYBER_DATA.get()).state().isPresent();
+        if(!relevant(item.getItem()))return true;
+        var service=SERVICES.get(actor.server);return service!=null&&service.ready(actor)&&!service.locked(item.getUUID())&&identity(item.getItem()).isPresent();
+    }
     static boolean pending(ServerPlayer actor) {var service=SERVICES.get(actor.server);return service==null||!service.healthy||service.pendingActor(actor.getUUID());}
     private static void refund(ServerPlayer actor,ItemStack stack) {
         var returned=stack.copy();

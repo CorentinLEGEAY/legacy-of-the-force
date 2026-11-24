@@ -15,6 +15,13 @@ public final class PlanetEnvironment {
     private final Map<UUID, Integer> lavaExposure = new HashMap<>();
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer actor) || actor.tickCount % 20 != 0) return;
+        if (actor.level().dimension().equals(PlanetId.DAGOBAH.dimension())) {
+            exposure.remove(actor.getUUID()); lavaExposure.remove(actor.getUUID());
+            if (TravelConfig.MUD_DRAG.get() && actor.isAlive() && !actor.isCreative() && !actor.isSpectator() && !actor.isFakePlayer() && actor.onGround() && !actor.isPassenger()
+                    && actor.getItemBySlot(EquipmentSlot.FEET).isEmpty() && actor.level().getBlockState(actor.getOnPos()).is(Blocks.MUD))
+                actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TravelConfig.MUD_DURATION.get(), 0));
+            return;
+        }
         if (actor.level().dimension().equals(PlanetId.MUSTAFAR.dimension())) { exposure.remove(actor.getUUID()); volcanic(actor); return; }
         lavaExposure.remove(actor.getUUID());
         boolean desert = actor.level().dimension().equals(PlanetId.TATOOINE.dimension());

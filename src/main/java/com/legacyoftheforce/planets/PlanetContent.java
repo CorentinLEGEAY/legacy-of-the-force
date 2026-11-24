@@ -29,6 +29,7 @@ public final class PlanetContent {
     public static final Supplier<PlanetFieldNotesItem> DESERT_NOTES = ITEMS.register("tatooine_field_notes", () -> new PlanetFieldNotesItem(PlanetId.TATOOINE, new Item.Properties().stacksTo(1)));
     public static final Supplier<PlanetFieldNotesItem> FOREST_NOTES = ITEMS.register("endor_field_notes", () -> new PlanetFieldNotesItem(PlanetId.ENDOR, new Item.Properties().stacksTo(1)));
     public static final Supplier<PlanetFieldNotesItem> VOLCANIC_NOTES = ITEMS.register("mustafar_field_notes", () -> new PlanetFieldNotesItem(PlanetId.MUSTAFAR, new Item.Properties().stacksTo(1)));
+    public static final Supplier<PlanetFieldNotesItem> SWAMP_NOTES = ITEMS.register("dagobah_field_notes", () -> new PlanetFieldNotesItem(PlanetId.DAGOBAH, new Item.Properties().stacksTo(1)));
     private static final java.util.Map<PlanetId,Supplier<Item>> CHARTS=new java.util.EnumMap<>(PlanetId.class);
     static{for(var planet:PlanetId.values())if(planet!=PlanetId.ILUM)CHARTS.put(planet,ITEMS.register(planet.key()+"_coordinates",()->new Item(new Item.Properties().stacksTo(16))));}
     public static Item coordinates(PlanetId planet){return planet==PlanetId.ILUM?COORDINATES.get():CHARTS.get(planet).get();}
@@ -58,6 +59,13 @@ public final class PlanetContent {
     public static final Supplier<Feature<MustafarLandscapeFeature.Settings>> VOLCANIC = FEATURES.register("mustafar_landscape", MustafarLandscapeFeature::new);
     public static final Supplier<StructureType<MustafarSiteStructure>> VOLCANIC_SITE = STRUCTURES.register("mustafar_site", () -> () -> MustafarSiteStructure.CODEC);
     public static final Supplier<StructurePieceType> VOLCANIC_PIECE = PIECES.register("mustafar_site", () -> MustafarSitePiece::new);
+    public static final Supplier<IlumCrystalBlock> DAGOBAH_CRYSTAL = BLOCKS.register("dagobah_crystal_cluster", () -> new IlumCrystalBlock(BlockBehaviour.Properties.of()
+            .strength(4f).requiresCorrectToolForDrops().noOcclusion().lightLevel(state -> 8).sound(net.minecraft.world.level.block.SoundType.AMETHYST)));
+    public static final Supplier<net.minecraft.world.level.block.Block> ESSENCE_ROOT = BLOCKS.register("dagobah_essence_root", () -> new net.minecraft.world.level.block.Block(
+            BlockBehaviour.Properties.of().strength(2.5f).requiresCorrectToolForDrops().sound(net.minecraft.world.level.block.SoundType.ROOTED_DIRT)));
+    public static final Supplier<Feature<DagobahLandscapeFeature.Settings>> MARSH = FEATURES.register("dagobah_landscape", DagobahLandscapeFeature::new);
+    public static final Supplier<StructureType<DagobahSiteStructure>> SWAMP_SITE = STRUCTURES.register("dagobah_site", () -> () -> DagobahSiteStructure.CODEC);
+    public static final Supplier<StructurePieceType> SWAMP_PIECE = PIECES.register("dagobah_site", () -> DagobahSitePiece::new);
     public static final Supplier<StructureType<IlumSiteStructure>> SITE = STRUCTURES.register("ilum_site", () -> () -> IlumSiteStructure.CODEC);
     public static final Supplier<StructurePieceType> SITE_PIECE = PIECES.register("ilum_site", () -> IlumSitePiece::new);
     public static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, name); }
@@ -69,6 +77,7 @@ public final class PlanetContent {
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(DESERT_NOTES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(FOREST_NOTES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(VOLCANIC_NOTES.get());
+            if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(SWAMP_NOTES.get());
             if(event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES))CHARTS.values().forEach(chart->event.accept(chart.get()));
         });
     }

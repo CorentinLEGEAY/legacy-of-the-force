@@ -17,6 +17,9 @@
     "legacyoftheforce:mustafar_slag_ore",
     "legacyoftheforce:mustafar_crystal_cluster",
     "legacyoftheforce:mustafar_jedi_altar",
-    "legacyoftheforce:mustafar_sith_altar"
+    "legacyoftheforce:mustafar_sith_altar",
+    "legacyoftheforce:dagobah_crystal_cluster",
+    "legacyoftheforce:dagobah_jedi_altar",
+    "legacyoftheforce:dagobah_sith_altar"
   ]
 }

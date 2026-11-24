@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ECE",
+    "RGR",
+    " E "
+  ],
+  "key": {
+    "E": {
+      "item": "legacyoftheforce:dagobah_essence"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "G": {
+      "item": "legacyoftheforce:stabilizer_gyro"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:stabilizer_levitation",
+    "count": 1
+  }
+}

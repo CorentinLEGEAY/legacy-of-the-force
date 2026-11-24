@@ -75,15 +75,16 @@ public final class BossLifecycle implements ProtectionPolicy {
         var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer(); if (server == null || !server.isSameThread() || server.overworld().getGameTime() != event.tick()) return;
         var level = server.getLevel(event.dimension()); var actor = server.getPlayerList().getPlayer(event.actorId());
         if (actor != null && level != null && level.getEntity(event.targetId()) instanceof ArenaIceEntity ice) ice.deflected(actor);
+        if (actor != null && level != null && level.getEntity(event.targetId()) instanceof IlumBossEntity boss) boss.swampImpulse(actor);
     }
     @SubscribeEvent public void reveal(PowerUseCommitted event) {
-        if (event.actor == null || event.context == null || event.dimension == null) return;
+        if (event.actor == null || event.context == null || event.dimension == null || !"legacyoftheforce:sense".equals(event.power)) return;
         var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
         if (server == null || !server.isSameThread() || server.overworld().getGameTime() != event.tick) return;
         var level = server.getLevel(event.dimension); var actor = server.getPlayerList().getPlayer(event.actor);
         if (level == null || actor == null || !(level.getEntity(event.context) instanceof IlumBossEntity boss)
-                || boss.kind() != BossKind.NIGHT_ASSASSIN || !boss.participant(actor) || !boss.hasEffect(net.minecraft.world.effect.MobEffects.GLOWING)) return;
-        if (boss.attack() == BossAttack.SHADOW_DOUBLE || !level.getEntitiesOfClass(ArenaIllusionEntity.class, BossArenaService.bounds(boss.altar()), illusion -> boss.getUUID().equals(illusion.owner())).isEmpty()) {
+                || !(boss.kind() == BossKind.NIGHT_ASSASSIN || boss.kind().swamp()) || !boss.participant(actor) || !boss.hasEffect(net.minecraft.world.effect.MobEffects.GLOWING)) return;
+        if (java.util.Set.of(BossAttack.SHADOW_DOUBLE, BossAttack.PERCEPTION_TRIAL, BossAttack.MIRROR_VEIL, BossAttack.DECEPTIVE_BOLT).contains(boss.attack()) || !level.getEntitiesOfClass(ArenaIllusionEntity.class, BossArenaService.bounds(boss.altar()), illusion -> boss.getUUID().equals(illusion.owner())).isEmpty()) {
             boss.support(actor); boss.arenaObjectDisrupted();
         }
     }

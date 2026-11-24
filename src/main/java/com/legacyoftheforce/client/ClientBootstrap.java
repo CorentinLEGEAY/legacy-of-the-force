@@ -40,6 +40,8 @@ public final class ClientBootstrap {
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ILLUSION.get(), ArenaIllusionRenderer::new);
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.PROTECTOR.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.RUINS_PROTECTOR));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.FLAME.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.FLAME_LORD));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.HERMIT.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.FORCE_HERMIT));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ILLUSION_MASTER.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.ILLUSION_MASTER));
         });
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) ->
                 event.registerEntityRenderer(com.legacyoftheforce.speeder.SpeederContent.VEHICLE.get(), SpeederRenderer::new));

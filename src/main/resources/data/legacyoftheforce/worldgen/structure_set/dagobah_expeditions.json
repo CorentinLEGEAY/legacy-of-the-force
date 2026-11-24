@@ -1,0 +1,31 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:dagobah_crystal_grotto",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:dagobah_stilt_hut",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:dagobah_sunken_ruins",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:dagobah_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:dagobah_sith_sanctum",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 384127,
+    "spacing": 14,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}

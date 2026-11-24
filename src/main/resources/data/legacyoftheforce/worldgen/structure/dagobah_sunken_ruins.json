@@ -1,0 +1,11 @@
+{
+  "type": "legacyoftheforce:dagobah_site",
+  "site_kind": 2,
+  "biomes": [
+    "legacyoftheforce:dagobah_drowned_marsh",
+    "legacyoftheforce:dagobah_root_bogs"
+  ],
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

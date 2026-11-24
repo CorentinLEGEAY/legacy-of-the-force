@@ -1,0 +1,9 @@
+{
+  "type": "legacyoftheforce:dagobah_landscape",
+  "config": {
+    "tree_chance": 1,
+    "minimum_height": 8,
+    "maximum_height": 14,
+    "plant_attempts": 24
+  }
+}

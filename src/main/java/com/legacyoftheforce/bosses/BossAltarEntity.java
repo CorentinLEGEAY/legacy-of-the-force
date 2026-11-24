@@ -76,6 +76,20 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
                     planned.set(5, crystal);
                 }
             }
+            if (getBlockState().getBlock() instanceof BossAltarBlock block && block.kind().swamp()) {
+                planned.set(0, new ItemStack(BossContent.SWAMP_RELIC.get()));
+                planned.set(2, new ItemStack(com.legacyoftheforce.content.PlanetaryMaterials.item("dagobah_essence"), BossConfig.SWAMP_MATERIALS.get()));
+                var design = com.legacyoftheforce.core.api.SaberDesigns.create(block.kind().dark() ? "double" : "curved");
+                if (design.isEmpty()) throw new IllegalStateException("Missing swamp design reward");
+                planned.set(3, design);
+                planned.set(4, new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:jedha_coordinates"))));
+                if (Math.floorMod(event.hashCode(), 100) < BossConfig.SWAMP_CRYSTAL_CHANCE.get()) {
+                    var identity = UUID.nameUUIDFromBytes(("expedition-crystal/" + block.kind().dimension() + "/" + event).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    var crystal = com.legacyoftheforce.core.api.PlanetaryCrystals.create(block.kind().dimension(), identity);
+                    if (crystal.isEmpty()) throw new IllegalStateException("Missing swamp crystal reward");
+                    planned.set(5, crystal);
+                }
+            }
         }
         items = planned; lootVictory = event; setChanged();
     }

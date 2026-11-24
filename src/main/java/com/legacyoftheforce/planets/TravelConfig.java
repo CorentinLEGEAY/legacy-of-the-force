@@ -10,6 +10,8 @@ public final class TravelConfig {
     public static final ModConfigSpec.IntValue HEAT_EXPOSURE, HEAT_DURATION;
     public static final ModConfigSpec.BooleanValue VOLCANIC_HEAT;
     public static final ModConfigSpec.IntValue VOLCANIC_EXPOSURE, VOLCANIC_DURATION;
+    public static final ModConfigSpec.BooleanValue MUD_DRAG;
+    public static final ModConfigSpec.IntValue MUD_DURATION;
     static {
         var builder = new ModConfigSpec.Builder();
         OUTBOUND_CELLS = builder.defineInRange("outboundEnergyCells", 1, 1, 32);
@@ -26,6 +28,8 @@ public final class TravelConfig {
         VOLCANIC_HEAT = builder.define("environment.mustafar.heatEnabled", true);
         VOLCANIC_EXPOSURE = builder.defineInRange("environment.mustafar.exposureTicks", 200, 100, 1200);
         VOLCANIC_DURATION = builder.defineInRange("environment.mustafar.weaknessTicks", 60, 20, 100);
+        MUD_DRAG = builder.define("environment.dagobah.mudSlowdownEnabled", true);
+        MUD_DURATION = builder.defineInRange("environment.dagobah.mudSlowdownTicks", 30, 20, 60);
         SPEC = builder.build();
     }
     private TravelConfig() {}

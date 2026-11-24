@@ -1,0 +1,42 @@
+{
+  "type": "legacyoftheforce:dagobah",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "legacyoftheforce:dagobah",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "legacyoftheforce:dagobah_drowned_marsh",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              -1,
+              0
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        },
+        {
+          "biome": "legacyoftheforce:dagobah_root_bogs",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              0,
+              1
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        }
+      ]
+    }
+  }
+}

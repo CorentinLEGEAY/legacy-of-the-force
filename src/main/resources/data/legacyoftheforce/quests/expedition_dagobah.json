@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.dagobah.title",
+  "origin": "quest.legacyoftheforce.expedition.dagobah.origin",
+  "clue": "quest.legacyoftheforce.expedition.dagobah.clue",
+  "planet": "legacyoftheforce:dagobah",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.dagobah.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:dagobah"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.dagobah.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:dagobah"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.dagobah.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:dagobah_force_hermit"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.dagobah.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:dagobah_illusion_master"
+    }
+  ]
+}

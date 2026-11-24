@@ -31,6 +31,7 @@ public final class SaberContent {
     public static final Supplier<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<IdentifyIlumCrystal>> IDENTIFY_ILUM = LOOT_FUNCTIONS.register("identify_ilum_crystal", () -> new net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<>(IdentifyIlumCrystal.CODEC));
     private static final Map<SaberForm,Supplier<CombatHolocronItem>> HOLOCRONS=new EnumMap<>(SaberForm.class);
     static {for(var form:SaberForm.values())if(form!=SaberForm.BASIC)HOLOCRONS.put(form,ITEMS.register("holocron_"+form.key(),()->new CombatHolocronItem(form,new Item.Properties().stacksTo(16).rarity(Rarity.RARE))));}
+    public static Set<ResourceLocation> knownHolocrons(net.minecraft.server.level.ServerPlayer actor){var knowledge=actor.getData(DISCIPLINE);return java.util.Arrays.stream(SaberForm.values()).filter(form->form!=SaberForm.BASIC&&knowledge.knows(form)).map(form->id("holocron_"+form.key())).collect(java.util.stream.Collectors.toUnmodifiableSet());}
     public static ItemStack holocron(String key){return SaberForm.parse(key).filter(form->form!=SaberForm.BASIC).map(form->new ItemStack(HOLOCRONS.get(form).get())).orElse(ItemStack.EMPTY);}
     public static final Supplier<SoundEvent> IGNITE = SOUNDS.register("saber_ignite", () -> SoundEvent.createVariableRangeEvent(id("saber_ignite")));
     public static final Supplier<SoundEvent> EXTINGUISH = SOUNDS.register("saber_extinguish", () -> SoundEvent.createVariableRangeEvent(id("saber_extinguish")));

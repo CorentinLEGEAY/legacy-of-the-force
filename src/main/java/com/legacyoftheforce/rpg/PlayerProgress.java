@@ -113,6 +113,8 @@ public final class PlayerProgress implements INBTSerializable<CompoundTag> {
                 farm ? 0 : category.alignmentTenths(), rules);
     }
 
+    public java.util.Set<net.minecraft.resources.ResourceLocation> rewardedBosses(){if(blocked())return java.util.Set.of();return history.rewardedBosses().stream().map(net.minecraft.resources.ResourceLocation::tryParse).filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toUnmodifiableSet());}
+
     /** Boss module supplies verified participation and catalog identity, never client input. */
     public RewardResult awardBoss(UUID eventId, String bossId, RewardCategory category,
             long tick, long cooldownTicks, long xp, ProgressionRules rules) {

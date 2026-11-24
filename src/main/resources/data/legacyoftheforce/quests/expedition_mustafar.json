@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.mustafar.title",
+  "origin": "quest.legacyoftheforce.expedition.mustafar.origin",
+  "clue": "quest.legacyoftheforce.expedition.mustafar.clue",
+  "planet": "legacyoftheforce:mustafar",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.mustafar.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:mustafar"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.mustafar.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:mustafar"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.mustafar.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:mustafar_ruins_protector"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.mustafar.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:mustafar_flame_lord"
+    }
+  ]
+}

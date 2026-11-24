@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.tatooine.title",
+  "origin": "quest.legacyoftheforce.expedition.tatooine.origin",
+  "clue": "quest.legacyoftheforce.expedition.tatooine.clue",
+  "planet": "legacyoftheforce:tatooine",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.tatooine.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:tatooine"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.tatooine.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:tatooine"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.tatooine.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:tatooine_wandering_knight"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.tatooine.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:tatooine_desert_exile"
+    }
+  ]
+}

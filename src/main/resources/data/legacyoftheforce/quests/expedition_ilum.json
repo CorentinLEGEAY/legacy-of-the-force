@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.ilum.title",
+  "origin": "quest.legacyoftheforce.expedition.ilum.origin",
+  "clue": "quest.legacyoftheforce.expedition.ilum.clue",
+  "planet": "legacyoftheforce:ilum",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.ilum.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:ilum"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.ilum.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:ilum"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.ilum.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:ilum_guardian"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.ilum.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:ilum_frost_lord"
+    }
+  ]
+}

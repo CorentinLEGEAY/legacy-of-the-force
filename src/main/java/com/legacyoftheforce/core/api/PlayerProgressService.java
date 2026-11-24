@@ -18,6 +18,7 @@ public interface PlayerProgressService {
     default PowerMasterySnapshot mastery(UUID playerId,String id) {return PowerMasterySnapshot.NONE;}
     /** Only call after a meaningful server effect; context identifies the actual target/challenge. */
     default boolean creditPowerUse(UUID playerId,String id,UUID context) {return false;}
+    default java.util.Set<net.minecraft.resources.ResourceLocation> rewardedBosses(UUID playerId){return java.util.Set.of();}
     RewardResult awardBoss(UUID playerId, BossReward reward);
     default BossRewardStatus bossRewardStatus(UUID playerId, UUID eventId) { return BossRewardStatus.PENDING; }
 }

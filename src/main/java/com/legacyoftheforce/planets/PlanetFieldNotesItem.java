@@ -15,6 +15,7 @@ public final class PlanetFieldNotesItem extends Item {
         if (player instanceof ServerPlayer actor && !actor.getCooldowns().isOnCooldown(this)) {
             for (int line = 0; line < 5; line++) actor.sendSystemMessage(Component.translatable("notes.legacyoftheforce." + planet.key() + "." + line));
             actor.getCooldowns().addCooldown(this, 40);
+            com.legacyoftheforce.core.api.AdventureHooks.readGuide(actor,PlanetContent.id("expedition_"+planet.key()));
         }
         return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
     }

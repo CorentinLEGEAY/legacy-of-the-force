@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "title": "item.legacyoftheforce.holocron_momentum",
+  "origin": "quest.legacyoftheforce.teaching_origin",
+  "clue": "saber.legacyoftheforce.form_help_momentum",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "learned",
+      "condition": "HOLOCRON",
+      "text": "quest.legacyoftheforce.teaching_recorded"
+    }
+  ]
+}

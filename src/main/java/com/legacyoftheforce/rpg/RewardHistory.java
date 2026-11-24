@@ -19,6 +19,7 @@ final class RewardHistory {
     private final Deque<KillLocation> kills = new ArrayDeque<>();
     private final Map<String, Long> bossCooldowns = new HashMap<>();
 
+    Set<String> rewardedBosses(){return Set.copyOf(bossCooldowns.keySet());}
     boolean contains(UUID event) { return eventSet.contains(event); }
     boolean bossReady(String id, long tick) { return tick >= bossCooldowns.getOrDefault(id, 0L); }
     boolean canTrackBoss(String id) { return bossCooldowns.containsKey(id) || bossCooldowns.size() < 64; }

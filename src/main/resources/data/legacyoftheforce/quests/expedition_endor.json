@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.endor.title",
+  "origin": "quest.legacyoftheforce.expedition.endor.origin",
+  "clue": "quest.legacyoftheforce.expedition.endor.clue",
+  "planet": "legacyoftheforce:endor",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.endor.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:endor"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.endor.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:endor"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.endor.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:endor_nature_keeper"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.endor.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:endor_night_assassin"
+    }
+  ]
+}

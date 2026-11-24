@@ -83,7 +83,7 @@ Les chiffres, noms de capacités avancées, modèles 3D, comportements complexes
 
 ## Développement exécutable (mise à jour du 11 novembre 2026)
 
-Le dépôt contient un socle NeoForge, la progression RPG, la Force minimale, un atelier de sabres avec cristal/lame/combat/lien initiaux, un speeder modulaire avec entretien/recyclage, Ilum et son terminal de voyage, et deux boss Ilum en cours de validation ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement. Les cinq autres planètes, dix autres boss et les validations complètes solo/réseau/crash restent à réaliser. Les rapports sous `docs/validation/` distinguent les essais graphiques réellement observés des contrôles automatisés.
+Le dépôt contient un socle NeoForge, la progression RPG, la Force minimale, un atelier de sabres avec cristal/lame/combat/lien initiaux, un speeder modulaire avec entretien/recyclage, Ilum et son terminal de voyage, et deux boss Ilum en cours de validation ; **la V1.0 n'est pas terminée**. Le journal `docs/03_ETAT_DU_PROJET.md` donne le statut réel. Le JAR `build/libs/legacyoftheforce-0.1.0-dev.jar` est une version de développement. Les six planètes et douze boss sont désormais codés en lots de développement ; leur validation complète solo/réseau/crash reste à réaliser sur le nouveau binaire. Les rapports sous `docs/validation/` distinguent les essais graphiques réellement observés des contrôles automatisés.
 
 Prérequis : JDK 21 x64, Git. Le wrapper télécharge Gradle et les dépendances NeoForge 21.1.265. Aucun Gradle global nécessaire.
 
@@ -155,3 +155,5 @@ Force débutant : **V** attire un objet lâché visé, puis libère la prise ; G
 
 
 Le soulèvement appris des mobs utilise maintenant une suspension physique bornée plutôt qu’une potion : la cible monte, reste tenue brièvement et reprend sa physique après G/V ou expiration. Le maintien revalide trajet/permissions et coûte de la Force. Ce nouveau garde natif compile ; son chargement et ses parcours attendent la campagne globale.
+
+Le nouveau journal `/lotf journal` regroupe les six expéditions et les quatre enseignements de combat, avec filtres locaux et indices FR/EN. Visites, cristaux par origine et victoires viennent des preuves serveur ; aucune récompense RPG supplémentaire. Cette extension compile mais attend la campagne globale : les anciennes observations du guide Ilum ne la valident pas.

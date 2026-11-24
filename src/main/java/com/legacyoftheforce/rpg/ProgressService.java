@@ -20,6 +20,7 @@ public final class ProgressService implements PlayerProgressService {
         try{new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);return true;}
         catch(java.io.IOException|RuntimeException failure){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Mastery save uncertain; native aggregate retained",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.mastery_pending"));return false;}
     }
+    @Override public java.util.Set<net.minecraft.resources.ResourceLocation> rewardedBosses(UUID playerId){var actor=onlinePlayer(playerId);return actor==null?java.util.Set.of():actor.getData(ProgressAttachments.PLAYER_PROGRESS).rewardedBosses();}
     @Override public Optional<com.legacyoftheforce.core.api.PowerDefinition> power(String id) {return PowerCatalog.get(id);}
     @Override public java.util.List<com.legacyoftheforce.core.api.PowerDefinition> powers() {return PowerCatalog.all();}
     @Override public boolean hasLearnedPower(UUID playerId,String id) {var actor=onlinePlayer(playerId);var definition=power(id);return actor!=null&&definition.isPresent()&&actor.getData(ProgressAttachments.LEARNED_POWERS).knows(id)&&definition.get().requirement().isEligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot());}

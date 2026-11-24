@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "title": "quest.legacyoftheforce.expedition.jedha.title",
+  "origin": "quest.legacyoftheforce.expedition.jedha.origin",
+  "clue": "quest.legacyoftheforce.expedition.jedha.clue",
+  "planet": "legacyoftheforce:jedha",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "visit",
+      "text": "quest.legacyoftheforce.expedition.jedha.visit",
+      "condition": "VISITED_PLANET",
+      "subject": "legacyoftheforce:jedha"
+    },
+    {
+      "id": "crystal",
+      "text": "quest.legacyoftheforce.expedition.jedha.crystal",
+      "condition": "PLANET_CRYSTAL",
+      "subject": "legacyoftheforce:jedha"
+    },
+    {
+      "id": "jedi",
+      "text": "quest.legacyoftheforce.expedition.jedha.jedi",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:jedha_temple_guardian"
+    },
+    {
+      "id": "sith",
+      "text": "quest.legacyoftheforce.expedition.jedha.sith",
+      "condition": "BOSS",
+      "subject": "legacyoftheforce:jedha_relic_lord"
+    }
+  ]
+}

@@ -143,3 +143,6 @@ Jedha dispose maintenant aussi de ses deux profils de boss, chacun à six action
 
 
 Complément Ilum : le métal gelé des nouvelles cavernes se mine avec une pioche de fer puis se fond. Il alimente le propulseur cryogénique, plus porteur mais plus lourd et moins propulsif que le vectoriel. Butin Ilum renouvelable sous cooldown et carnet facultatif ajoutés ; minage, fabrication et performances attendent la campagne générale.
+
+
+Force70 : `/lotf force lift_vehicle` lève son speeder léger vide pendant un court maintien prépayé. V ou G le libère ; touche de lancement à assigner dans les contrôles. Le serveur vérifie masse, propriété, collisions et permissions ; la cargaison et l’embarquement sont verrouillés pendant le contrôle. Ce soulèvement compile mais attend la campagne de physique/réseau/sauvegarde.

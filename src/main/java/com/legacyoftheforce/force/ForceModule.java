@@ -55,7 +55,7 @@ public final class ForceModule {
             LegacyOfTheForce.LOGGER.error("Cannot open Force block journal; actions disabled", failure);
         }
     }
-    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); if (groups != null) groups.cancelAll(); mobs.stopAll(); advanced.stop(); }
+    @SubscribeEvent public void stopping(ServerStoppingEvent event) { if (coordinator != null) coordinator.cancelAll(); if (groups != null) groups.cancelAll(); mobs.stopAll(); vehicles.stopAll(); advanced.stop(); }
     @SubscribeEvent public void stopped(ServerStoppedEvent event) { coordinator = null; groups = null; nextAction.clear(); nextGlobalAction = 0; }
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.tick(player);
@@ -65,25 +65,25 @@ public final class ForceModule {
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
         if (groups != null) groups.cancel(event.getEntity().getUUID());
         nextAction.remove(event.getEntity().getUUID());
-        mobs.cancelActor(event.getEntity().getUUID());
+        mobs.cancelActor(event.getEntity().getUUID()); vehicles.cancel(event.getEntity().getUUID());
         advanced.cancel(event.getEntity().getUUID());
     }
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (groups != null) groups.cancel(event.getEntity().getUUID());
         advanced.cancel(event.getEntity().getUUID());
         if (coordinator != null) coordinator.cancel(event.getEntity().getUUID());
-        mobs.cancelActor(event.getEntity().getUUID());
+        mobs.cancelActor(event.getEntity().getUUID()); vehicles.cancel(event.getEntity().getUUID());
     }
     @SubscribeEvent public void death(LivingDeathEvent event) {
         if (groups != null && event.getEntity() instanceof ServerPlayer player) groups.cancel(player.getUUID());
         if(event.getEntity() instanceof ServerPlayer actor)advanced.cancel(actor.getUUID());
         if (coordinator != null && event.getEntity() instanceof ServerPlayer player) coordinator.cancel(player.getUUID());
-        if (event.getEntity() instanceof ServerPlayer player) mobs.cancelActor(player.getUUID());
+        if (event.getEntity() instanceof ServerPlayer player) { mobs.cancelActor(player.getUUID()); vehicles.cancel(player.getUUID()); }
     }
     @SubscribeEvent public void entityTick(EntityTickEvent.Pre event) {
         if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof Mob mob) mobs.beforeTick(mob);
     }
-    @SubscribeEvent public void serverTick(ServerTickEvent.Post event) { mobs.cleanup(event.getServer()); advanced.tick(event.getServer()); }
+    @SubscribeEvent public void serverTick(ServerTickEvent.Post event) { mobs.cleanup(event.getServer()); vehicles.cleanup(); advanced.tick(event.getServer()); }
     @SubscribeEvent public void entityJoin(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide() && event.loadedFromDisk() && event.getEntity() instanceof Mob mob) mobs.onReload(mob);
         if (!event.getLevel().isClientSide() && event.loadedFromDisk() && event.getEntity() instanceof Display.BlockDisplay display
@@ -94,7 +94,7 @@ public final class ForceModule {
     @SubscribeEvent public void commands(RegisterCommandsEvent event) {
         advanced.commands(event);
         var force = Commands.literal("force");
-        for (String action : new String[]{"grab", "group", "rotate", "throw_blocks", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake"}) {
+        for (String action : new String[]{"grab", "group", "rotate", "throw_blocks", "drop", "toggle", "cancel", "recover", "push", "pull", "stabilize", "brake", "lift_vehicle"}) {
             var command = Commands.literal(action);
             if (action.equals("recover")) command.requires(source -> source.hasPermission(2));
             command.executes(context -> {
@@ -106,12 +106,14 @@ public final class ForceModule {
                     return recovered ? 1 : 0;
                 }
                 var player = context.getSource().getPlayerOrException();
-                if (coordinator == null && !java.util.Set.of("push", "pull", "stabilize", "brake").contains(action)) return respond(player, ForceResult.no("recovery_pending"));
+                boolean vehicleHeld = vehicles.holding(player.getUUID());
+                if (coordinator == null && !vehicleHeld && !java.util.Set.of("push", "pull", "stabilize", "brake", "lift_vehicle").contains(action)) return respond(player, ForceResult.no("recovery_pending"));
                 long tick = player.server.overworld().getGameTime();
                 if (!action.equals("cancel") && (tick < nextAction.getOrDefault(player.getUUID(), 0L) || tick < nextGlobalAction)) return respond(player, ForceResult.no("cooldown"));
                 nextAction.put(player.getUUID(), tick + ForceConfig.ACTION_INTERVAL.get());
                 boolean groupHeld = groups != null && groups.holding(player.getUUID());
-                if (groupHeld && java.util.Set.of("grab", "group", "push", "pull", "stabilize", "brake").contains(action)) return respond(player, ForceResult.no("already_holding"));
+                if (vehicleHeld && !java.util.Set.of("drop", "toggle", "cancel").contains(action)) return respond(player, ForceResult.no("already_holding"));
+                if (groupHeld && java.util.Set.of("grab", "group", "push", "pull", "stabilize", "brake", "lift_vehicle").contains(action)) return respond(player, ForceResult.no("already_holding"));
                 if ((action.equals("grab") || (action.equals("toggle") && !groupHeld && !coordinator.holding(player.getUUID())))
                         && groups != null && groups.blockCount(player.level().dimension()) + coordinator.blockCount(player.level().dimension()) >= com.legacyoftheforce.core.config.ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return respond(player, ForceResult.no("budget"));
                 ForceResult result = switch (action) {
@@ -119,13 +121,13 @@ public final class ForceModule {
                     case "group" -> coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding") : groups == null ? ForceResult.no("recovery_pending") : groups.grab(player, coordinator.blockCount(player.level().dimension()));
                     case "rotate" -> groups == null ? ForceResult.no("not_holding") : groups.rotate(player);
                     case "throw_blocks" -> groups == null ? ForceResult.no("not_holding") : groups.throwGroup(player);
-                    case "drop" -> groupHeld ? groups.drop(player) : coordinator.drop(player);
-                    case "toggle" -> groupHeld ? groups.drop(player) : coordinator.holding(player.getUUID()) ? coordinator.drop(player) : coordinator.grab(player);
-                    case "cancel" -> groupHeld ? groups.cancel(player.getUUID()) : coordinator.cancel(player.getUUID());
+                    case "drop" -> vehicleHeld ? vehicles.cancel(player.getUUID()) : groupHeld ? groups.drop(player) : coordinator.drop(player);
+                    case "toggle" -> vehicleHeld ? vehicles.cancel(player.getUUID()) : groupHeld ? groups.drop(player) : coordinator.holding(player.getUUID()) ? coordinator.drop(player) : coordinator.grab(player);
+                    case "cancel" -> vehicleHeld ? vehicles.cancel(player.getUUID()) : groupHeld ? groups.cancel(player.getUUID()) : coordinator.cancel(player.getUUID());
                     case "push", "pull" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
                             : mobs.cast(player, action.equals("push") ? ForceAction.PUSH : ForceAction.PULL);
-                    case "stabilize", "brake" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
-                            : vehicles.cast(player, action.equals("stabilize") ? ForceAction.STABILIZE : ForceAction.BRAKE);
+                    case "stabilize", "brake", "lift_vehicle" -> coordinator != null && coordinator.holding(player.getUUID()) ? ForceResult.no("already_holding")
+                            : vehicles.cast(player, action.equals("lift_vehicle") ? ForceAction.LIFT : action.equals("stabilize") ? ForceAction.STABILIZE : ForceAction.BRAKE);
                     case "recover" -> coordinator.recoverAll() ? ForceResult.yes("recovered") : ForceResult.no("recovery_pending");
                     default -> ForceResult.no("invalid_target");
                 };

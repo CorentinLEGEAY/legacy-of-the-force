@@ -8,6 +8,8 @@ public final class ForceConfig {
     public static final ModConfigSpec.DoubleValue GROUP_THROW_BASE, GROUP_THROW_MASS, GROUP_THROW_SPEED, GROUP_GRAVITY, GROUP_DAMAGE_CAP, GROUP_DAMAGE_SCALE;
     public static final ModConfigSpec.IntValue CHANNEL_INTERVAL, AREA_TARGETS, CHAIN_TARGETS;
     public static final ModConfigSpec.DoubleValue CHANNEL_COST_FRACTION, CHAIN_RADIUS;
+    public static final ModConfigSpec.IntValue VEHICLE_LIFT_LEVEL, VEHICLE_LIFT_TICKS;
+    public static final ModConfigSpec.DoubleValue VEHICLE_LIFT_RISE, VEHICLE_LIFT_STEP, VEHICLE_LIFT_MASS, VEHICLE_LIFT_BASE, VEHICLE_LIFT_HOLD;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.IntValue VEHICLE_STABILIZE_LEVEL, VEHICLE_BRAKE_LEVEL, VEHICLE_COOLDOWN;
     public static final ModConfigSpec.DoubleValue VEHICLE_MAX_MASS, VEHICLE_BASE_COST, VEHICLE_MASS_COST, VEHICLE_RETENTION;
@@ -74,6 +76,13 @@ public final class ForceConfig {
         AREA_TARGETS = builder.defineInRange("advanced.maximumAreaTargets",8,1,16);
         CHAIN_TARGETS = builder.defineInRange("advanced.maximumLightningTargets",3,1,8);
         CHAIN_RADIUS = builder.defineInRange("advanced.lightningChainRadius",4.0,1.0,8.0);
+        VEHICLE_LIFT_LEVEL = builder.defineInRange("vehicle.liftLevel", 70, 1, 100);
+        VEHICLE_LIFT_TICKS = builder.defineInRange("vehicle.liftTicks", 60, 20, 100);
+        VEHICLE_LIFT_RISE = builder.defineInRange("vehicle.liftRise", 1.2d, .5, 2.5);
+        VEHICLE_LIFT_STEP = builder.defineInRange("vehicle.liftStepPerTick", .08d, .02, .2);
+        VEHICLE_LIFT_MASS = builder.defineInRange("vehicle.maximumLiftMass", 20d, .1, 64);
+        VEHICLE_LIFT_BASE = builder.defineInRange("vehicle.liftBaseCost", 20d, 1, 200);
+        VEHICLE_LIFT_HOLD = builder.defineInRange("vehicle.liftPrepaidCostPerMassSecond", .8d, .1, 4);
         SPEC = builder.build();
     }
     private ForceConfig() {}

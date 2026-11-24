@@ -671,5 +671,8 @@
   "power.legacyoftheforce.telekinetic_impulse": "Push and pull",
   "power.legacyoftheforce.block_telekinesis": "Block telekinesis",
   "power.legacyoftheforce.block_group": "Block assemblies",
-  "power.legacyoftheforce.vehicle_control": "Stabilize and brake"
+  "power.legacyoftheforce.vehicle_control": "Stabilize and brake",
+  "force.legacyoftheforce.vehicle_lifted": "Speeder lifted briefly. V or G releases it.",
+  "force.legacyoftheforce.vehicle_released": "Speeder released: normal physics resumes.",
+  "key.legacyoftheforce.vehicle_lift": "Lift your empty light speeder (level 70)"
 }

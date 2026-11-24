@@ -65,7 +65,7 @@ public final class SpeederRechargeService {
             if (!(entity instanceof SpeederEntity vehicle) || !protection.mayModify(actor, actor.serverLevel(), vehicle.blockPosition(), ModificationKind.PLACE)) return Result.PERMISSION;
             var state = vehicle.savedState().snapshot().orElseThrow();
             if (SpeederRetirement.status(server, selected, state.owner()) != SpeederRetirement.Status.ABSENT) return Result.UNAVAILABLE;
-            if (!vehicle.getPassengers().isEmpty()) return Result.OCCUPIED;
+            if (vehicle.forceControlled() || !vehicle.getPassengers().isEmpty()) return Result.OCCUPIED;
             if (Math.abs(state.motion().speed()) > .001 || Math.abs(state.motion().verticalSpeed()) > .001 || vehicle.getDeltaMovement().lengthSqr() > .000001) return Result.MOVING;
             var health = new ArrayList<>(state.health());
             var blueprint = state.blueprint();

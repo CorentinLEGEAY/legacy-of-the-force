@@ -31,6 +31,10 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     private VehicleState state = new VehicleState(new CompoundTag());
     private final ProtectedWorldService protection;
     private SpeederMotion.Input intent = SpeederMotion.Input.parked();
+    private LiftLease lift;
+    private long lastLiftStep = Long.MIN_VALUE;
+    private record LiftLease(UUID actor, com.legacyoftheforce.core.api.VehicleLiftSpec spec, long start, long until, double top, ProtectedWorldService policy) {}
+    public boolean forceControlled() { return lift != null; }
     private long lastInput = Long.MIN_VALUE;
     private long nextDamage;
     private boolean guestSavePending;
@@ -74,9 +78,9 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
             }
             @Override public double resistance() { return 0; }
             @Override public boolean canManipulate(ServerPlayer actor, ForceAction action) {
-                if (actor == null || !actor.server.isSameThread() || !ownedBy(actor) || actor.isPassenger() || !getPassengers().isEmpty()
+                if (actor == null || !actor.server.isSameThread() || guestSavePending || forceControlled() || !ownedBy(actor) || actor.isPassenger() || !getPassengers().isEmpty()
                         || !(level() instanceof ServerLevel level) || level.getEntity(getUUID()) != SpeederEntity.this
-                        || !Double.isFinite(getDeltaMovement().lengthSqr()) || (action != ForceAction.STABILIZE && action != ForceAction.BRAKE)) return false;
+                        || !Double.isFinite(getDeltaMovement().lengthSqr()) || (action != ForceAction.STABILIZE && action != ForceAction.BRAKE && action != ForceAction.LIFT)) return false;
                 var snapshot = state.snapshot().orElseThrow();
                 if (!BlueprintValidator.inspect(snapshot.blueprint(), SpeederCatalog.definitions(), SpeederConfig.limits()).valid()
                         || !SpeederRetirement.supportedStorage(SpeederEntity.this)
@@ -84,7 +88,22 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
                         || !loadedAndAllowed(getBoundingBox(), actor)) return false;
                 var positions = BlockPos.betweenClosedStream(getBoundingBox().deflate(.001)).iterator();
                 while (positions.hasNext()) if (!policy.mayMoveEntity(actor, SpeederEntity.this, positions.next())) return false;
+                if (action == ForceAction.LIFT) {
+                    var plan = snapshot.blueprint().plan().orElseThrow();
+                    double mass = effectiveMass();
+                    return Double.isFinite(mass) && SpeederClass.of(plan, mass, SpeederCatalog.definitions()) == SpeederClass.LIGHT
+                            && Math.abs(snapshot.motion().speed()) <= .02 && getDeltaMovement().multiply(1, 0, 1).lengthSqr() <= .0004;
+                }
                 return Math.abs(action == ForceAction.STABILIZE ? snapshot.motion().verticalSpeed() : snapshot.motion().speed()) > .0001;
+            }
+            @Override public boolean lifting(UUID actor) { return lift != null && lift.actor().equals(actor); }
+            @Override public void endLift(UUID actor) { if (lifting(actor)) releaseLift(); }
+            @Override public boolean beginLift(ServerPlayer actor, com.legacyoftheforce.core.api.VehicleLiftSpec spec) {
+                if (!canManipulate(actor, ForceAction.LIFT) || effectiveMass() > spec.massLimit()) return false;
+                long now = actor.server.overworld().getGameTime();
+                lastLiftStep = Long.MIN_VALUE;
+                lift = new LiftLease(actor.getUUID(), spec, now, now + spec.ticks(), getY() + spec.rise(), policy);
+                return tickLift();
             }
             @Override public void dampMotion(ServerPlayer actor, ForceAction action, double retention) {
                 if (!Double.isFinite(retention) || retention < 0 || retention > 1 || !canManipulate(actor, action)) throw new IllegalArgumentException("Invalid vehicle damping");
@@ -122,6 +141,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     }
     @Override protected void addAdditionalSaveData(CompoundTag tag) { tag.put("vehicleState", state.tag()); }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
+        lift = null; lastLiftStep = Long.MIN_VALUE;
         state = new VehicleState(tag.getCompound("vehicleState")); intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE;
         retirementEpoch = -1;
         // Vanilla pose wins when loading the entity; its own UUID must agree before gameplay is allowed.
@@ -197,7 +217,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.FAIL;
     }
     private boolean mayBoard(ServerPlayer actor) {
-        if (guestSavePending || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || actor.serverLevel() != level()
+        if (forceControlled() || guestSavePending || !actor.isAlive() || actor.isSpectator() || actor.isFakePlayer() || actor.serverLevel() != level()
                 || actor.isPassenger() || Math.abs(speed()) > .02 || actor.distanceToSqr(this) > 16 || supported().isEmpty()) return false;
         if(state.snapshot().flatMap(s->SpeederPerformance.inspect(s,SpeederCatalog.definitions())).filter(p->p.pilotWorking()&&!p.wrecked()).isEmpty())return false;
         if (ownedBy(actor)) return owner(actor) && getPassengers().stream().noneMatch(p -> p.getUUID().equals(actor.getUUID()));
@@ -214,7 +234,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         return result;
     }
     public boolean setGuest(ServerPlayer actor, UUID guest, boolean allowed) {
-        if (!actor.server.isSameThread() || !ownedBy(actor) || !getPassengers().isEmpty() || actor.distanceToSqr(this) > 36
+        if (!actor.server.isSameThread() || forceControlled() || !ownedBy(actor) || !getPassengers().isEmpty() || actor.distanceToSqr(this) > 36
                 || level().getGameTime() < nextGuestChange || !actor.hasLineOfSight(this)
                 || Math.abs(speed()) > .02 || !protection.mayModify(actor, actor.serverLevel(), blockPosition(), ModificationKind.PLACE)) return false;
         nextGuestChange = level().getGameTime() + SpeederConfig.RECHARGE_INTERVAL.get();
@@ -241,7 +261,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     public boolean isPilotPassenger(Entity actor) { return entityData.get(OWNER).filter(actor.getUUID()::equals).isPresent() && getPassengers().contains(actor); }
     public int seatCapacity(){return 1+passengerSeats().size();}
     boolean cargoReady(ServerPlayer actor){
-        if(!ownedBy(actor)||actor.isPassenger()||!getPassengers().isEmpty()||guestSavePending||!actor.hasLineOfSight(this)
+        if(forceControlled()||!ownedBy(actor)||actor.isPassenger()||!getPassengers().isEmpty()||guestSavePending||!actor.hasLineOfSight(this)
                 ||actor.distanceToSqr(this)>SpeederConfig.CARGO_ACCESS_RANGE.get()*SpeederConfig.CARGO_ACCESS_RANGE.get())return false;
         var snapshot=supported().orElseThrow();
         if(Math.abs(snapshot.motion().speed())>.001||Math.abs(snapshot.motion().verticalSpeed())>.001||getDeltaMovement().lengthSqr()>.000001
@@ -255,11 +275,12 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
             return;
         }
         if (retired() && retirementStatus == SpeederRetirement.Status.RETIRED) { ejectPassengers(); discard(); return; }
-        if (guestSavePending) { ejectPassengers(); return; }
-        var snapshot = supported(); if (snapshot.isEmpty()) { ejectPassengers(); return; }
+        if (guestSavePending) { releaseLift(); ejectPassengers(); return; }
+        var snapshot = supported(); if (snapshot.isEmpty()) { releaseLift(); ejectPassengers(); return; }
         var layout = snapshot.get().blueprint(); var validated = BlueprintValidator.inspect(layout, SpeederCatalog.definitions(), SpeederConfig.limits());
         if (!validated.valid() || snapshot.get().motion().energy() > validated.stats().capacity()) { ejectPassengers(); return; }
         var performance = SpeederPerformance.inspect(snapshot.get(), SpeederCatalog.definitions()).orElseThrow();
+        if (lift != null && tickLift()) return;
         if (snapshot.get().motion().energy() > performance.stats().capacity()) {
             state = state.withHealth(snapshot.get().health(), performance.stats().capacity()); snapshot = supported();
         }
@@ -295,6 +316,41 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
             }
         }
         setDeltaMovement(actual); project();
+    }
+    private void releaseLift() {
+        if (lift == null) return;
+        lift = null; setDeltaMovement(Vec3.ZERO); intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE;
+        state.snapshot().ifPresent(snapshot -> state = state.withMotion(new VehicleState.Pose(level().dimension().location(), getX(), getY(), getZ()),
+                new SpeederMotion.State(0, 0, snapshot.motion().yaw(), snapshot.motion().energy())));
+        project();
+    }
+    private boolean tickLift() {
+        if (lift == null || !(level() instanceof ServerLevel world)) return false;
+        var lease = lift; var actor = world.getServer().getPlayerList().getPlayer(lease.actor()); var spec = lease.spec();
+        long now = world.getServer().overworld().getGameTime();
+        var snapshot = supported();
+        if (actor == null || actor.hasDisconnected() || !ownedBy(actor) || actor.isPassenger() || !getPassengers().isEmpty() || guestSavePending
+                || now < lease.start() || now >= lease.until() || snapshot.isEmpty()
+                || com.legacyoftheforce.core.api.PlayerProgressAccess.snapshot(actor).filter(progress -> !progress.unavailable() && progress.level() >= spec.level()).isEmpty()
+                || actor.getEyePosition().distanceToSqr(getBoundingBox().getCenter()) > spec.range() * spec.range()) { releaseLift(); return false; }
+        var performance = SpeederPerformance.inspect(snapshot.get(), SpeederCatalog.definitions());
+        if (performance.isEmpty() || performance.get().wrecked() || !SpeederRetirement.supportedStorage(this) || performance.get().stats().mass() > spec.massLimit()
+                || SpeederClass.of(snapshot.get().blueprint().plan().orElseThrow(), performance.get().stats().mass(), SpeederCatalog.definitions()) != SpeederClass.LIGHT) { releaseLift(); return false; }
+        var eye = actor.getEyePosition(); var center = getBoundingBox().getCenter();
+        int steps = Math.max(1, (int)Math.ceil(eye.distanceTo(center) * 2));
+        for (int index = 0; index <= steps; index++) if (!world.hasChunkAt(BlockPos.containing(eye.lerp(center, index / (double)steps)))) { releaseLift(); return false; }
+        if (world.clip(new ClipContext(eye, center, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, actor)).getType() != HitResult.Type.MISS) { releaseLift(); return false; }
+        double dy = Math.clamp(lease.top() - getY(), 0, spec.step()); var swept = getBoundingBox().expandTowards(0, dy, 0);
+        if (!loadedAndAllowed(swept, actor) || !world.noCollision(this, swept)) { releaseLift(); return false; }
+        for (var pos : BlockPos.betweenClosedStream(swept).toList()) if (!world.getFluidState(pos).isEmpty() || !lease.policy().mayMoveEntity(actor, this, pos)) { releaseLift(); return false; }
+        if (now == lastLiftStep) return true;
+        lastLiftStep = now;
+        var before = position(); move(MoverType.SELF, new Vec3(0, dy, 0)); var actual = position().subtract(before);
+        if (Math.abs(actual.y - dy) > .00001 || Math.abs(actual.x) + Math.abs(actual.z) > .00001) { releaseLift(); return false; }
+        state = state.withMotion(new VehicleState.Pose(world.dimension().location(), getX(), getY(), getZ()), new SpeederMotion.State(0, 0, snapshot.get().motion().yaw(), snapshot.get().motion().energy()));
+        setDeltaMovement(actual); intent = SpeederMotion.Input.parked(); lastInput = Long.MIN_VALUE; hurtMarked = true; project();
+        if (tickCount % 6 == 0) world.sendParticles(net.minecraft.core.particles.ParticleTypes.ENCHANT, getX(), getY() + .2, getZ(), 3, getBbWidth() / 2, .15, getBbWidth() / 2, .01);
+        return true;
     }
     private OptionalDouble clearance() {
         var bottom = position(); var end = bottom.add(0, -6, 0);

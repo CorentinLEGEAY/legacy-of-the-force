@@ -241,3 +241,6 @@ Résolution : modifier le cristal existant vers attuned=true, console solved=tru
 
 
 Pratique des primitives : `core.api.PrimitivePowerRules` ne contient que les quatre IDs stables et des fournisseurs de niveaux installés par Force ; RPG consulte le contrat et son propre état. Les contrôleurs conservent toute validation d’action. `PrimitivePractice` crédite après l’effet payé, et seulement après la clôture durable pour les blocs/groupes ; récupération et annulation ne passent pas par ce chemin. La preuve joueur peut suivre la preuve monde sans rouvrir une opération close. Les niveaux et économies sont projetés au client, qui ne choisit ni usage ni contexte.
+
+
+Soulèvement : Force ne lit pas la structure de Speeder ; il soumet un `VehicleLiftSpec` borné et prépayé à `ForceTargetAdapter.beginLift`. Speeder garde un bail runtime avec UUID acteur, limites et horloge, valide chaque mouvement et expose `lifting/endLift` pour l’annulation du module Force. Ce bail n’est jamais une référence Java dans la sauvegarde : seules pose native et motion normales sont persistées, chargement sans contrôle actif. Pendant le maintien, les interfaces de stockage/maintenance/embarquement refusent le véhicule même si sa vitesse projetée est nulle.

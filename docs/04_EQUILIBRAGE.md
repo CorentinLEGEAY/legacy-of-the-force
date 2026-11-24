@@ -112,3 +112,6 @@ Gardien310PV, Seigneur300PV, dégâts de base6, XP1700, trois poussières, crist
 
 
 Ilum, complément du lot C : minerai fixe3 par nouvelle caverne,1fragment par bloc sans bonus Fortune/Silk,1alliage par fonte (200ticks four/100 haut-fourneau, XP vanilla0,5). Victoire éligible : alliages3 configurables et chance25% de cristal bleu configurée, sans toucher aux ±25 verrouillés. Propulseur cryogénique2,5kg/poussée8/portance14/stabilité0,08, vectoriel1,5/10/8/0,1. JSON et recette serveur ; chiffres non validés en campagne.
+
+
+Soulèvement de véhicule70 : défaut60ticks prépayés, montée1,2bloc à0,08/tick, masse maximale20 (et limite globale existante), léger vide uniquement. Coût Force20+masse×(vehicle.massCost+durée/20×0,8) puis maîtrise/affinité ; cooldown maximum entre délai habituel et durée. Les limites de bail sont configurables dans Force, avec plafonds absolus contrôlés par spec. Pas de dépense/recharge batterie, pas de remboursement anticipé, pas de projection95. Valeurs non validées en jeu.

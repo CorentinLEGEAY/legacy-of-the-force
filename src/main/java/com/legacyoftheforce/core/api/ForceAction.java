@@ -1,3 +1,3 @@
 package com.legacyoftheforce.core.api;
 
-public enum ForceAction { PUSH, PULL, STABILIZE, BRAKE }
+public enum ForceAction { PUSH, PULL, STABILIZE, BRAKE, LIFT }

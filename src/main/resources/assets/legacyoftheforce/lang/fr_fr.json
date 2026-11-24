@@ -671,5 +671,8 @@
   "power.legacyoftheforce.telekinetic_impulse": "Poussées et attractions",
   "power.legacyoftheforce.block_telekinesis": "Télékinésie de blocs",
   "power.legacyoftheforce.block_group": "Assemblages de blocs",
-  "power.legacyoftheforce.vehicle_control": "Stabilisation et freinage"
+  "power.legacyoftheforce.vehicle_control": "Stabilisation et freinage",
+  "force.legacyoftheforce.vehicle_lifted": "Speeder soulevé brièvement. V ou G pour le libérer.",
+  "force.legacyoftheforce.vehicle_released": "Speeder libéré : retour à sa physique normale.",
+  "key.legacyoftheforce.vehicle_lift": "Soulever son speeder léger vide (niveau 70)"
 }

@@ -13,4 +13,7 @@ public interface ForceTargetAdapter {
     default void applyImpulse(Vec3 velocity) { throw new UnsupportedOperationException("Target does not accept impulses"); }
     /** Called only after canManipulate, on the server thread. Retention is finite and within [0,1]. */
     default void dampMotion(ServerPlayer actor, ForceAction action, double retention) { throw new UnsupportedOperationException("Target does not accept damping"); }
+    default boolean beginLift(ServerPlayer actor, VehicleLiftSpec spec) { return false; }
+    default boolean lifting(UUID actor) { return false; }
+    default void endLift(UUID actor) {}
 }

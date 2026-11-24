@@ -1,0 +1,31 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:endor_root_grotto",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:endor_lookout",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:endor_ruins",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:endor_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:endor_sith_sanctum",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 610493,
+    "spacing": 14,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}

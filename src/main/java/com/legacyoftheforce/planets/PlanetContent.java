@@ -27,6 +27,7 @@ public final class PlanetContent {
     public static final Supplier<BlockItem> TERMINAL_ITEM = ITEMS.register("galactic_terminal", () -> new BlockItem(TERMINAL.get(), new Item.Properties()));
     public static final Supplier<Item> COORDINATES = ITEMS.register("ilum_coordinates", () -> new Item(new Item.Properties().stacksTo(16)));
     public static final Supplier<PlanetFieldNotesItem> DESERT_NOTES = ITEMS.register("tatooine_field_notes", () -> new PlanetFieldNotesItem(PlanetId.TATOOINE, new Item.Properties().stacksTo(1)));
+    public static final Supplier<PlanetFieldNotesItem> FOREST_NOTES = ITEMS.register("endor_field_notes", () -> new PlanetFieldNotesItem(PlanetId.ENDOR, new Item.Properties().stacksTo(1)));
     private static final java.util.Map<PlanetId,Supplier<Item>> CHARTS=new java.util.EnumMap<>(PlanetId.class);
     static{for(var planet:PlanetId.values())if(planet!=PlanetId.ILUM)CHARTS.put(planet,ITEMS.register(planet.key()+"_coordinates",()->new Item(new Item.Properties().stacksTo(16))));}
     public static Item coordinates(PlanetId planet){return planet==PlanetId.ILUM?COORDINATES.get():CHARTS.get(planet).get();}
@@ -42,6 +43,13 @@ public final class PlanetContent {
     public static final Supplier<Feature<TatooineLandscapeFeature.Settings>> DUNES = FEATURES.register("tatooine_landscape", TatooineLandscapeFeature::new);
     public static final Supplier<StructureType<TatooineSiteStructure>> DESERT_SITE = STRUCTURES.register("tatooine_site", () -> () -> TatooineSiteStructure.CODEC);
     public static final Supplier<StructurePieceType> DESERT_PIECE = PIECES.register("tatooine_site", () -> TatooineSitePiece::new);
+    public static final Supplier<IlumCrystalBlock> ENDOR_CRYSTAL = BLOCKS.register("endor_crystal_cluster", () -> new IlumCrystalBlock(BlockBehaviour.Properties.of()
+            .strength(4f).requiresCorrectToolForDrops().noOcclusion().lightLevel(state -> 8).sound(net.minecraft.world.level.block.SoundType.AMETHYST)));
+    public static final Supplier<net.minecraft.world.level.block.Block> RESIN_WOOD = BLOCKS.register("endor_resin_wood", () -> new net.minecraft.world.level.block.Block(
+            BlockBehaviour.Properties.of().strength(2.5f).requiresCorrectToolForDrops().sound(net.minecraft.world.level.block.SoundType.WOOD)));
+    public static final Supplier<Feature<EndorCanopyFeature.Settings>> CANOPY = FEATURES.register("endor_canopy", EndorCanopyFeature::new);
+    public static final Supplier<StructureType<EndorSiteStructure>> FOREST_SITE = STRUCTURES.register("endor_site", () -> () -> EndorSiteStructure.CODEC);
+    public static final Supplier<StructurePieceType> FOREST_PIECE = PIECES.register("endor_site", () -> EndorSitePiece::new);
     public static final Supplier<StructureType<IlumSiteStructure>> SITE = STRUCTURES.register("ilum_site", () -> () -> IlumSiteStructure.CODEC);
     public static final Supplier<StructurePieceType> SITE_PIECE = PIECES.register("ilum_site", () -> IlumSitePiece::new);
     public static ResourceLocation id(String name) { return ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, name); }
@@ -51,6 +59,7 @@ public final class PlanetContent {
             if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(TERMINAL_ITEM.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(COORDINATES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(DESERT_NOTES.get());
+            if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(FOREST_NOTES.get());
             if(event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES))CHARTS.values().forEach(chart->event.accept(chart.get()));
         });
     }

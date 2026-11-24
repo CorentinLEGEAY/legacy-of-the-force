@@ -48,6 +48,20 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
                     planned.set(5, crystal);
                 }
             }
+            if (getBlockState().getBlock() instanceof BossAltarBlock block && block.kind().forest()) {
+                planned.set(0, new ItemStack(BossContent.FOREST_RELIC.get()));
+                planned.set(2, new ItemStack(com.legacyoftheforce.content.PlanetaryMaterials.item("endor_resin"), BossConfig.FOREST_MATERIALS.get()));
+                var design = com.legacyoftheforce.core.api.SaberDesigns.create("double");
+                if (design.isEmpty()) throw new IllegalStateException("Missing forest design reward");
+                planned.set(3, design);
+                planned.set(4, new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:mustafar_coordinates"))));
+                if (Math.floorMod(event.hashCode(), 100) < BossConfig.FOREST_CRYSTAL_CHANCE.get()) {
+                    var identity = UUID.nameUUIDFromBytes(("expedition-crystal/" + block.kind().dimension() + "/" + event).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    var crystal = com.legacyoftheforce.core.api.PlanetaryCrystals.create(block.kind().dimension(), identity);
+                    if (crystal.isEmpty()) throw new IllegalStateException("Missing forest crystal reward");
+                    planned.set(5, crystal);
+                }
+            }
         }
         items = planned; lootVictory = event; setChanged();
     }

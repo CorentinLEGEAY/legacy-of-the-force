@@ -14,6 +14,7 @@ public final class ClientBootstrap {
     public ClientBootstrap(ModContainer container, IEventBus modBus) {
         container.registerConfig(ModConfig.Type.CLIENT, ClientConfig.SPEC);
         NeoForge.EVENT_BUS.addListener(new DevelopmentWindowPlacement()::tick);
+        NeoForge.EVENT_BUS.register(new PlanetAtmosphere());
         var hud = new ProgressHud();
         ClientProjection.install(hud::receive);
         NeoForge.EVENT_BUS.addListener(hud::render);
@@ -34,6 +35,9 @@ public final class ClientBootstrap {
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.KNIGHT.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.WANDERING_KNIGHT));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.EXILE.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.DESERT_EXILE));
             event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ICE.get(), ArenaIceRenderer::new);
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.NATURE.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.NATURE_KEEPER));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ASSASSIN.get(), context -> new IlumBossRenderer(context, com.legacyoftheforce.bosses.BossKind.NIGHT_ASSASSIN));
+            event.registerEntityRenderer(com.legacyoftheforce.bosses.BossContent.ILLUSION.get(), ArenaIllusionRenderer::new);
         });
         modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) ->
                 event.registerEntityRenderer(com.legacyoftheforce.speeder.SpeederContent.VEHICLE.get(), SpeederRenderer::new));

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RIR",
+    "PCP",
+    " R "
+  ],
+  "key": {
+    "R": {
+      "item": "legacyoftheforce:endor_resin"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "item": "minecraft:spruce_planks"
+    },
+    "C": {
+      "item": "legacyoftheforce:chassis_light"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:chassis_forest",
+    "count": 1
+  }
+}

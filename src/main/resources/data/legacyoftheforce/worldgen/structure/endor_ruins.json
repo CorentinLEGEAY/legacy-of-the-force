@@ -1,0 +1,11 @@
+{
+  "type": "legacyoftheforce:endor_site",
+  "site_kind": 2,
+  "biomes": [
+    "legacyoftheforce:endor_clearings",
+    "legacyoftheforce:endor_giant_forest"
+  ],
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

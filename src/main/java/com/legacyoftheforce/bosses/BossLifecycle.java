@@ -47,7 +47,8 @@ public final class BossLifecycle implements ProtectionPolicy {
     @Override public boolean allowsEntity(ServerPlayer actor, Entity target, BlockPos pos) {
         if (!protectedAt(actor.serverLevel(), pos)) return true;
         if (target instanceof IlumBossEntity boss) return boss.participant(actor);
-        return target instanceof ArenaIceEntity ice && actor.serverLevel().getEntity(ice.owner()) instanceof IlumBossEntity boss && boss.participant(actor);
+        if (target instanceof ArenaIllusionEntity illusion && illusion.owner() != null && actor.serverLevel().getEntity(illusion.owner()) instanceof IlumBossEntity boss) return boss.participant(actor);
+        return target instanceof ArenaIceEntity ice && ice.owner() != null && actor.serverLevel().getEntity(ice.owner()) instanceof IlumBossEntity boss && boss.participant(actor);
     }
     @SubscribeEvent public void breakBlock(BlockEvent.BreakEvent event) { if (protectedAt(event.getLevel(), event.getPos())) event.setCanceled(true); }
     @SubscribeEvent public void place(BlockEvent.EntityPlaceEvent event) { if (protectedAt(event.getLevel(), event.getPos())) event.setCanceled(true); }
@@ -74,5 +75,16 @@ public final class BossLifecycle implements ProtectionPolicy {
         var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer(); if (server == null || !server.isSameThread() || server.overworld().getGameTime() != event.tick()) return;
         var level = server.getLevel(event.dimension()); var actor = server.getPlayerList().getPlayer(event.actorId());
         if (actor != null && level != null && level.getEntity(event.targetId()) instanceof ArenaIceEntity ice) ice.deflected(actor);
+    }
+    @SubscribeEvent public void reveal(PowerUseCommitted event) {
+        if (event.actor == null || event.context == null || event.dimension == null) return;
+        var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null || !server.isSameThread() || server.overworld().getGameTime() != event.tick) return;
+        var level = server.getLevel(event.dimension); var actor = server.getPlayerList().getPlayer(event.actor);
+        if (level == null || actor == null || !(level.getEntity(event.context) instanceof IlumBossEntity boss)
+                || boss.kind() != BossKind.NIGHT_ASSASSIN || !boss.participant(actor) || !boss.hasEffect(net.minecraft.world.effect.MobEffects.GLOWING)) return;
+        if (boss.attack() == BossAttack.SHADOW_DOUBLE || !level.getEntitiesOfClass(ArenaIllusionEntity.class, BossArenaService.bounds(boss.altar()), illusion -> boss.getUUID().equals(illusion.owner())).isEmpty()) {
+            boss.support(actor); boss.arenaObjectDisrupted();
+        }
     }
 }

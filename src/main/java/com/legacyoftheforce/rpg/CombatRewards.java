@@ -61,7 +61,7 @@ public final class CombatRewards {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onDeath(LivingDeathEvent event) {
-        if (!(event.getEntity() instanceof Mob victim) || victim.level().isClientSide() || victim.getType().is(EXCLUDED) || victim.getType().is(BOSS)) return;
+        if (!(event.getEntity() instanceof Mob victim) || victim.level().isClientSide() || victim instanceof com.legacyoftheforce.core.api.EncounterBoss || victim.getType().is(EXCLUDED) || victim.getType().is(BOSS)) return;
         var actor = event.getSource().getEntity() instanceof ServerPlayer direct ? direct : null;
         var credit = victim.getData(ProgressAttachments.KILL_CREDIT);
         if (actor == null && event.getSource().is(DamageTypes.FALL)) {

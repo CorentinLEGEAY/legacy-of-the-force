@@ -1,0 +1,95 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.7,
+  "downfall": 0.85,
+  "effects": {
+    "fog_color": 5401953,
+    "sky_color": 10336445,
+    "water_color": 4094059,
+    "water_fog_color": 1720119,
+    "grass_color": 6722115,
+    "foliage_color": 4748092,
+    "particle": {
+      "probability": 0.002,
+      "options": {
+        "type": "minecraft:spore_blossom_air"
+      }
+    }
+  },
+  "carvers": {
+    "air": [
+      "minecraft:cave",
+      "minecraft:canyon"
+    ]
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_copper"
+    ],
+    [],
+    [],
+    [],
+    [
+      "legacyoftheforce:endor_canopy"
+    ]
+  ],
+  "spawn_costs": {},
+  "spawners": {
+    "creature": [
+      {
+        "type": "minecraft:wolf",
+        "weight": 4,
+        "minCount": 1,
+        "maxCount": 3
+      },
+      {
+        "type": "minecraft:fox",
+        "weight": 4,
+        "minCount": 1,
+        "maxCount": 2
+      },
+      {
+        "type": "minecraft:rabbit",
+        "weight": 6,
+        "minCount": 2,
+        "maxCount": 3
+      }
+    ],
+    "monster": [
+      {
+        "type": "minecraft:spider",
+        "weight": 50,
+        "minCount": 1,
+        "maxCount": 3
+      },
+      {
+        "type": "minecraft:skeleton",
+        "weight": 30,
+        "minCount": 1,
+        "maxCount": 2
+      },
+      {
+        "type": "minecraft:enderman",
+        "weight": 3,
+        "minCount": 1,
+        "maxCount": 1
+      }
+    ],
+    "ambient": [
+      {
+        "type": "minecraft:bat",
+        "weight": 5,
+        "minCount": 1,
+        "maxCount": 2
+      }
+    ]
+  }
+}

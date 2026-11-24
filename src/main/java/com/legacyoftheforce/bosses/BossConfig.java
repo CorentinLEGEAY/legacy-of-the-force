@@ -15,6 +15,8 @@ public final class BossConfig {
     public static final ModConfigSpec.IntValue DESERT_MATERIALS;
     public static final ModConfigSpec.IntValue DESERT_COVER_ENERGY;
     public static final ModConfigSpec.IntValue DESERT_CRYSTAL_CHANCE;
+    public static final ModConfigSpec.DoubleValue NATURE_HEALTH, ASSASSIN_HEALTH, FOREST_DAMAGE, FOREST_STEP, FOREST_HEAL, FOREST_WARD;
+    public static final ModConfigSpec.IntValue FOREST_XP, FOREST_MATERIALS, FOREST_CRYSTAL_CHANCE, ROOT_TICKS, ROOT_RECOVERY, ILLUSION_TICKS, FOREST_WARD_TICKS;
     private record AttackValues(ModConfigSpec.IntValue windup, ModConfigSpec.IntValue cooldown, ModConfigSpec.DoubleValue range, ModConfigSpec.DoubleValue damage, ModConfigSpec.IntValue energy) {}
     private static final java.util.Map<BossAttack, AttackValues> ATTACKS = new java.util.EnumMap<>(BossAttack.class);
     static {
@@ -43,6 +45,19 @@ public final class BossConfig {
         DESERT_MATERIALS = b.defineInRange("tatooine.rewardSilica", 3, 1, 16);
         DESERT_COVER_ENERGY = b.defineInRange("tatooine.coverEnergy", 12, 4, 40);
         DESERT_CRYSTAL_CHANCE = b.defineInRange("tatooine.expeditionCrystalChancePercent", 25, 0, 100);
+        NATURE_HEALTH = b.defineInRange("endor.natureHealth", 265d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        ASSASSIN_HEALTH = b.defineInRange("endor.assassinHealth", 245d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        FOREST_DAMAGE = b.defineInRange("endor.baseDamage", 5d, 1, 40);
+        FOREST_STEP = b.defineInRange("endor.maximumDashDistance", 2.2d, .5, 3);
+        FOREST_HEAL = b.defineInRange("endor.renewalHealthFractionPerPhase", .04d, 0, .08);
+        FOREST_WARD = b.defineInRange("endor.wardDamageMultiplier", .5d, .2, 1);
+        FOREST_WARD_TICKS = b.defineInRange("endor.wardTicks", 50, 20, 80);
+        FOREST_XP = b.defineInRange("endor.rewardXp", 1200, 1, 100000);
+        FOREST_MATERIALS = b.defineInRange("endor.rewardResin", 3, 1, 16);
+        FOREST_CRYSTAL_CHANCE = b.defineInRange("endor.expeditionCrystalChancePercent", 25, 0, 100);
+        ROOT_TICKS = b.defineInRange("endor.rootSlowTicks", 24, 10, 40);
+        ROOT_RECOVERY = b.defineInRange("endor.rootRecoveryTicks", 160, 80, 400);
+        ILLUSION_TICKS = b.defineInRange("endor.illusionTicks", 80, 20, 120);
         DESERT_STEP = b.defineInRange("tatooine.stepDistance", 1.6d, .4, 2.5);
         SAND_PUSH = b.defineInRange("tatooine.pushSpeed", .24d, .05, .4);
         DESERT_COUNTER_WINDOW = b.defineInRange("tatooine.counterWindowTicks", 100, 20, 200);
@@ -67,13 +82,13 @@ public final class BossConfig {
     }
     static int windup(BossAttack attack) { return Math.max(WINDUP.get(), ATTACKS.get(attack).windup.get()); }
     static double health(BossKind kind, int participants) {
-        if (!kind.desert()) return health(participants);
-        double base = kind == BossKind.WANDERING_KNIGHT ? KNIGHT_HEALTH.get() : EXILE_HEALTH.get(), extra = GROUP_HEALTH.get();
+        if (!kind.desert() && !kind.forest()) return health(participants);
+        double base = switch (kind) { case WANDERING_KNIGHT -> KNIGHT_HEALTH.get(); case DESERT_EXILE -> EXILE_HEALTH.get(); case NATURE_KEEPER -> NATURE_HEALTH.get(); default -> ASSASSIN_HEALTH.get(); }, extra = GROUP_HEALTH.get();
         return BossHealthRules.scaled(Double.isFinite(base) ? Math.clamp(base, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH) : 250,
                 Double.isFinite(extra) ? Math.clamp(extra, 0, 1) : .35, participants);
     }
-    static int xp(BossKind kind) { return kind.desert() ? DESERT_XP.get() : XP.get(); }
-    static float damage(BossKind kind, BossAttack attack) { return kind.desert() ? (float)(DESERT_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : damage(attack); }
+    static int xp(BossKind kind) { return kind.forest() ? FOREST_XP.get() : kind.desert() ? DESERT_XP.get() : XP.get(); }
+    static float damage(BossKind kind, BossAttack attack) { return kind.forest() ? (float)(FOREST_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : kind.desert() ? (float)(DESERT_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : damage(attack); }
     static int cooldown(BossAttack attack) { return ATTACKS.get(attack).cooldown.get(); }
     static double range(BossAttack attack) { return ATTACKS.get(attack).range.get(); }
     static float damage(BossAttack attack) { return (float)(DAMAGE.get() * ATTACKS.get(attack).damage.get()); }

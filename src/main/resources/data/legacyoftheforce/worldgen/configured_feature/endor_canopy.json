@@ -1,0 +1,9 @@
+{
+  "type": "legacyoftheforce:endor_canopy",
+  "config": {
+    "tree_chance": 1,
+    "minimum_height": 24,
+    "maximum_height": 34,
+    "fern_attempts": 24
+  }
+}

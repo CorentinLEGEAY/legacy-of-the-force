@@ -2,6 +2,10 @@
   "replace": false,
   "values": [
     "legacyoftheforce:ilum_guardian",
-    "legacyoftheforce:ilum_frost_lord"
+    "legacyoftheforce:ilum_frost_lord",
+    "legacyoftheforce:tatooine_wandering_knight",
+    "legacyoftheforce:tatooine_desert_exile",
+    "legacyoftheforce:endor_nature_keeper",
+    "legacyoftheforce:endor_night_assassin"
   ]
 }

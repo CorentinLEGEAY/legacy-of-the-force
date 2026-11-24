@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "family": "chassis",
+  "mass": 4.2,
+  "thrust": 0,
+  "lift": 0,
+  "capacity": 0,
+  "stability": 1.2,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 18
+    },
+    {
+      "item": "legacyoftheforce:endor_resin",
+      "count": 1
+    }
+  ]
+}

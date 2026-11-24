@@ -39,10 +39,12 @@ public final class VehicleForceController {
         int required = action == ForceAction.STABILIZE ? ForceConfig.VEHICLE_STABILIZE_LEVEL.get() : ForceConfig.VEHICLE_BRAKE_LEVEL.get();
         if (state.get().level() < required) return ForceResult.no("level_required");
         if (!progress.powerReady(actor.getUUID(), POWER_ID)) return ForceResult.no("cooldown");
-        double cost = ForceConfig.VEHICLE_BASE_COST.get() + mass * ForceConfig.VEHICLE_MASS_COST.get();
-        if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.VEHICLE_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         double retention = 1 - (1 - ForceConfig.VEHICLE_RETENTION.get()) * (1 - resistance);
+        if (retention >= 1 - .000001) return ForceResult.no("resistant_target");
+        double cost = (ForceConfig.VEHICLE_BASE_COST.get() + mass * ForceConfig.VEHICLE_MASS_COST.get()) * PrimitivePractice.multiplier(progress, actor, POWER_ID) * CrystalAffinityAccess.get(actor).telekinesisCost();
+        if (!progress.tryStartPower(actor.getUUID(), POWER_ID, cost, ForceConfig.VEHICLE_COOLDOWN.get())) return ForceResult.no("not_enough_force");
         adapter.dampMotion(actor, action, retention);
+        PrimitivePractice.committed(progress, actor, POWER_ID, target.getUUID(), cost);
         return ForceResult.yes(action == ForceAction.STABILIZE ? "vehicle_stabilized" : "vehicle_braked");
     }
     private boolean loaded(ServerPlayer actor, Vec3 start, Vec3 end) {

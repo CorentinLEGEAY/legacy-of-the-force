@@ -28,6 +28,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** One world coordinator, server thread only. Active sessions are projections of durable operations. */
 public final class BlockMoveCoordinator {
+    public static final String POWER_ID = "legacyoftheforce:block_telekinesis";
     public static final String DISPLAY_MARKER = "legacyoftheforce:block_move";
     private static final TagKey<Block> LIGHT = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, "force_light_blocks"));
     private static final TagKey<Block> STONE = TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(LegacyOfTheForce.MOD_ID, "force_stone_blocks"));
@@ -75,7 +76,7 @@ public final class BlockMoveCoordinator {
         if (snapshot.get().level() < required) return ForceResult.no("level_required");
         if (sessions.values().stream().filter(s -> s.record.dimension().equals(level.dimension())).count() >= ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
         double mass = original.is(STONE) ? ForceConfig.STONE_MASS.get() : ForceConfig.LIGHT_MASS.get();
-        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (snapshot.get().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockMoveRecord(UUID.randomUUID(), actor.getUUID(), level.dimension(), source.immutable(), null, original, mass);
         try {
@@ -95,7 +96,7 @@ public final class BlockMoveCoordinator {
             tag.put("block_state", NbtUtils.writeBlockState(original)); tag.putInt("teleport_duration", 3);
             display.load(tag); display.setUUID(record.id());
             display.getPersistentData().putInt(DISPLAY_MARKER, 1);
-            var session = new Session(record, source.getCenter(), display);
+            var session = new Session(record, source.getCenter(), display, cost);
             sessions.put(actor.getUUID(), session);
             updateDisplay(session);
             if (!level.addFreshEntity(display)) throw new IOException("Cannot create block projection");
@@ -134,8 +135,9 @@ public final class BlockMoveCoordinator {
             finishCommitted(staged);
             close(staged, OperationPhase.COMMITTED);
             release(actor.getUUID());
-            return ForceResult.yes("deposited");
         } catch (IOException | RuntimeException failure) { return fail(actor.getUUID(), failure); }
+        PrimitivePractice.committed(progress, actor, POWER_ID, PrimitivePractice.location(record.dimension(), record.source()), session.paid);
+        return ForceResult.yes("deposited");
     }
 
     public ForceResult cancel(UUID actor) {
@@ -161,7 +163,7 @@ public final class BlockMoveCoordinator {
                 || !protection.mayModify(actor, actor.serverLevel(), record.source(), ModificationKind.GRAB)) {
             interrupt(actor, "cancelled"); return;
         }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost())) {
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) {
             interrupt(actor, "not_enough_force"); return;
         }
         var target = actor.getEyePosition().add(actor.getLookAngle().scale(Math.min(ForceConfig.HOLD_DISTANCE.get(), ForceConfig.RANGE.get() - 0.5)));
@@ -298,6 +300,7 @@ public final class BlockMoveCoordinator {
         private BlockMoveRecord record;
         private Vec3 position;
         private final Display.BlockDisplay display;
-        private Session(BlockMoveRecord record, Vec3 position, Display.BlockDisplay display) { this.record = record; this.position = position; this.display = display; }
+        private final double paid;
+        private Session(BlockMoveRecord record, Vec3 position, Display.BlockDisplay display, double paid) { this.paid = paid; this.record = record; this.position = position; this.display = display; }
     }
 }

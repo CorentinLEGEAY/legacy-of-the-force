@@ -17,7 +17,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /** All eligibility states and costs shown by the tree are projected from the server. */
 public final class SkillMenu extends AbstractContainerMenu {
     public static final List<List<String>> BRANCHES=List.of(List.of("sense","leap","speed","reflexes","freeze","levitate","throw","wave","dominate"),List.of("protect","heal","support"),List.of("fear","choke","drain","lightning","chain_lightning"));
-    public static final List<String> IDS=BRANCHES.stream().flatMap(Collection::stream).toList();
+    public static final int LEARNABLE_COUNT=BRANCHES.stream().mapToInt(List::size).sum();
+    public static final List<String> IDS=java.util.stream.Stream.concat(BRANCHES.stream().flatMap(Collection::stream),com.legacyoftheforce.core.api.PrimitivePowerRules.PATHS.stream()).toList();
     private static final DeferredRegister<MenuType<?>> MENUS=DeferredRegister.create(Registries.MENU,LegacyOfTheForce.MOD_ID);
     public static final Supplier<MenuType<SkillMenu>> TYPE=MENUS.register("skills",()->new MenuType<>(SkillMenu::new,FeatureFlags.DEFAULT_FLAGS));
     private final Inventory inventory;private final DataSlot level=DataSlot.standalone(),points=DataSlot.standalone(),alignment=DataSlot.standalone(),status=DataSlot.standalone();private final List<DataSlot> states=new ArrayList<>(),levels=new ArrayList<>(),costs=new ArrayList<>(),parents=new ArrayList<>();private final List<DataSlot> ranks=new ArrayList<>(),uses=new ArrayList<>(),thresholds=new ArrayList<>(),energyPercent=new ArrayList<>();private long nextRequest;
@@ -31,11 +32,12 @@ public final class SkillMenu extends AbstractContainerMenu {
         if(inventory.player instanceof ServerPlayer actor) {var progress=actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot();var learned=actor.getData(ProgressAttachments.LEARNED_POWERS);level.set(progress.level());points.set(Math.min(32767,progress.skillPoints()));alignment.set(progress.alignmentTenths());
             for(int index=0;index<IDS.size();index++) {String id="legacyoftheforce:"+IDS.get(index);var definition=PowerCatalog.get(id);int state=0;
                 if(definition.isPresent()) {var rule=definition.get();levels.get(index).set(rule.requirement().requiredLevel());costs.get(index).set(rule.points());parents.get(index).set(rule.prerequisite().isEmpty()?-1:IDS.indexOf(rule.prerequisite().substring(rule.prerequisite().indexOf(':')+1)));boolean eligible=rule.requirement().isEligible(progress);if(learned.knows(id))state=eligible?3:2;else if(learned.canLearn(id)&&eligible&&progress.skillPoints()>=rule.points()&&(rule.prerequisite().isEmpty()||learned.knows(rule.prerequisite())))state=1;}
+                else if (index >= LEARNABLE_COUNT) {int required=com.legacyoftheforce.core.api.PrimitivePowerRules.minimum(id);levels.get(index).set(required);costs.get(index).set(0);parents.get(index).set(-1);state=com.legacyoftheforce.core.api.PrimitivePowerRules.eligible(progress,id)?3:0;}
                 else {levels.get(index).set(101);costs.get(index).set(0);parents.get(index).set(-1);}states.get(index).set(state);var mastery=actor.getData(ProgressAttachments.POWER_MASTERY).snapshot(id);ranks.get(index).set(mastery.rank());uses.get(index).set(mastery.significantUses());thresholds.get(index).set(mastery.nextThreshold());energyPercent.get(index).set((int)Math.round(mastery.energyMultiplier()*100));
             }
         }super.broadcastChanges();
     }
-    @Override public boolean clickMenuButton(Player player,int button) {if(!(player instanceof ServerPlayer actor)||actor.isFakePlayer()||!actor.server.isSameThread()||actor.containerMenu!=this||!stillValid(actor)||button<0||button>=IDS.size())return false;long now=actor.server.overworld().getGameTime();if(now<nextRequest)return false;nextRequest=now+10;boolean learned=new ProgressService().learnPower(actor.getUUID(),"legacyoftheforce:"+IDS.get(button));status.set(learned?1:2);broadcastChanges();return learned;}
+    @Override public boolean clickMenuButton(Player player,int button) {if(!(player instanceof ServerPlayer actor)||actor.isFakePlayer()||!actor.server.isSameThread()||actor.containerMenu!=this||!stillValid(actor)||button<0||button>=LEARNABLE_COUNT)return false;long now=actor.server.overworld().getGameTime();if(now<nextRequest)return false;nextRequest=now+10;boolean learned=new ProgressService().learnPower(actor.getUUID(),"legacyoftheforce:"+IDS.get(button));status.set(learned?1:2);broadcastChanges();return learned;}
     @Override public boolean stillValid(Player player) {return player==inventory.player&&player.isAlive()&&!player.isSpectator();}
     @Override public ItemStack quickMoveStack(Player player,int index) {return ItemStack.EMPTY;}
 }

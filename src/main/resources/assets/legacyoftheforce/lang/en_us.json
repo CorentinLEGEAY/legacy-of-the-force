@@ -663,5 +663,13 @@
   "notes.legacyoftheforce.ilum.1": "Frost metal veins lie in the floors of new caverns. An iron pickaxe yields fragments to smelt.",
   "notes.legacyoftheforce.ilum.2": "Cryogenic thrusters favor lift, with more mass and less thrust than standard vector thrusters.",
   "notes.legacyoftheforce.ilum.3": "Guardian and Frost Lord altars start a challenge. Protective ice and projectiles are real temporary objects.",
-  "notes.legacyoftheforce.ilum.4": "Eligible victories yield metal, coordinates and sometimes blue kyber. Rewards have personal and arena cooldowns."
+  "notes.legacyoftheforce.ilum.4": "Eligible victories yield metal, coordinates and sometimes blue kyber. Rewards have personal and arena cooldowns.",
+  "power.legacyoftheforce.show_tree": "Skill tree",
+  "power.legacyoftheforce.show_practice": "Practice",
+  "power.legacyoftheforce.branch_3": "Force actions: practice",
+  "power.legacyoftheforce.primitive_node": "Level %s · automatic unlock, no skill points. Practice requires a real effect; repeats are limited.",
+  "power.legacyoftheforce.telekinetic_impulse": "Push and pull",
+  "power.legacyoftheforce.block_telekinesis": "Block telekinesis",
+  "power.legacyoftheforce.block_group": "Block assemblies",
+  "power.legacyoftheforce.vehicle_control": "Stabilize and brake"
 }

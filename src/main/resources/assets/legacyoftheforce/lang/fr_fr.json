@@ -663,5 +663,13 @@
   "notes.legacyoftheforce.ilum.1": "Les veines de métal gelé sont dans les sols des nouvelles cavernes. Une pioche de fer permet de récupérer des éclats à fondre.",
   "notes.legacyoftheforce.ilum.2": "Le propulseur cryogénique favorise la portance, avec plus de masse et moins de poussée que le vectoriel standard.",
   "notes.legacyoftheforce.ilum.3": "Les autels du Gardien et du Seigneur du Givre lancent un défi. Glaçons protecteurs et projectiles sont de vrais objets temporaires.",
-  "notes.legacyoftheforce.ilum.4": "Une victoire éligible fournit du métal, des coordonnées et parfois un cristal bleu. Les récompenses ont un délai personnel et une recharge d’arène."
+  "notes.legacyoftheforce.ilum.4": "Une victoire éligible fournit du métal, des coordonnées et parfois un cristal bleu. Les récompenses ont un délai personnel et une recharge d’arène.",
+  "power.legacyoftheforce.show_tree": "Arbre",
+  "power.legacyoftheforce.show_practice": "Pratique",
+  "power.legacyoftheforce.branch_3": "Actions de Force : pratique",
+  "power.legacyoftheforce.primitive_node": "Niveau %s · déblocage automatique, sans point. La pratique exige un effet réel ; répétitions limitées.",
+  "power.legacyoftheforce.telekinetic_impulse": "Poussées et attractions",
+  "power.legacyoftheforce.block_telekinesis": "Télékinésie de blocs",
+  "power.legacyoftheforce.block_group": "Assemblages de blocs",
+  "power.legacyoftheforce.vehicle_control": "Stabilisation et freinage"
 }

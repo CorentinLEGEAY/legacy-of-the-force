@@ -21,6 +21,7 @@ import net.minecraft.world.phys.*;
 
 /** Bounded connected selection, one group collider and one durable world transaction. */
 final class BlockGroupCoordinator {
+    public static final String POWER_ID = "legacyoftheforce:block_group";
     private static final TagKey<Block> LIGHT = tag("force_light_blocks"), STONE = tag("force_stone_blocks");
     private final MinecraftServer server;
     private final DurableOperationStore store;
@@ -87,7 +88,7 @@ final class BlockGroupCoordinator {
             for (var direction : Direction.values()) queue.add(pos.relative(direction));
         }
         if (members.size() + otherBlocks + blockCount(world.dimension()) > ServerConfig.MAX_BLOCKS_PER_DIMENSION.get()) return ForceResult.no("budget");
-        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
+        double cost = (ForceConfig.BASE_COST.get()+mass*ForceConfig.MASS_COST.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (progress.get(actor.getUUID()).orElseThrow().forceEnergy() < cost) return ForceResult.no("not_enough_force");
         var record = new BlockGroupRecord(UUID.randomUUID(), actor.getUUID(), world.dimension(), pivot, members, null, 0);
         try {
@@ -96,7 +97,7 @@ final class BlockGroupCoordinator {
             // Every original position is reserved before HELD; partial installation recovers the whole before-image.
             for (var member : members) if (!anchors.place(world, member.source(), record.id())) throw new IOException("Cannot reserve group source");
             barrier.persist(world, record.sources()); store.transition(record.id(), OperationPhase.PREPARED, OperationPhase.HELD, record.payload());
-            var session = new Session(record); sessions.put(actor.getUUID(), session);
+            var session = new Session(record, cost); sessions.put(actor.getUUID(), session);
             for (var member : members) {
                 var display = new Display.BlockDisplay(EntityType.BLOCK_DISPLAY, world);
                 var data = new CompoundTag(); display.saveWithoutId(data); data.put("block_state", NbtUtils.writeBlockState(member.state())); data.putInt("teleport_duration", 3);
@@ -125,7 +126,7 @@ final class BlockGroupCoordinator {
         if (!server.isSameThread() || recoveryPending) return ForceResult.no("recovery_pending");
         if (session.velocity != null) return ForceResult.no("cooldown");
         if (level(actor) < ForceConfig.GROUP_THROW_LEVEL.get()) return ForceResult.no("level_required");
-        double cost = (ForceConfig.GROUP_THROW_BASE.get()+session.record.mass()*ForceConfig.GROUP_THROW_MASS.get())*CrystalAffinityAccess.get(actor).telekinesisCost();
+        double cost = (ForceConfig.GROUP_THROW_BASE.get()+session.record.mass()*ForceConfig.GROUP_THROW_MASS.get())*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID);
         if (!progress.trySpendForceEnergy(actor.getUUID(), cost)) return ForceResult.no("not_enough_force");
         double speed = ForceConfig.GROUP_THROW_SPEED.get() / Math.sqrt(Math.max(1, session.record.mass()));
         session.velocity = actor.getLookAngle().scale(speed); session.flightTicks = ForceConfig.GROUP_FLIGHT_TICKS.get();
@@ -154,8 +155,10 @@ final class BlockGroupCoordinator {
             store.transition(record.id(), OperationPhase.HELD, OperationPhase.DESTINATION_STAGED, record.payload()); session.record = record;
             for (var member : record.members()) if (!anchors.place(world, destination.offset(record.offset(member)), record.id())) throw new IOException("Cannot reserve group destination");
             barrier.persist(world, record.positions()); store.transition(record.id(), OperationPhase.DESTINATION_STAGED, OperationPhase.COMMITTED, record.payload());
-            finish(record, true); close(record, OperationPhase.COMMITTED); release(actor.getUUID()); return ForceResult.yes("group_deposited");
+            finish(record, true); close(record, OperationPhase.COMMITTED); release(actor.getUUID());
         } catch (IOException | RuntimeException failure) { return fail(actor.getUUID(), failure); }
+        PrimitivePractice.committed(progress, actor, POWER_ID, PrimitivePractice.location(record.dimension(), record.pivot()), session.paid);
+        return ForceResult.yes("group_deposited");
     }
     ForceResult cancel(UUID actor) {
         var session = sessions.get(actor); if (session == null) return ForceResult.no("not_holding");
@@ -174,7 +177,7 @@ final class BlockGroupCoordinator {
                 || session.displays.stream().anyMatch(Entity::isRemoved)) { cancel(actor.getUUID()); return; }
         for (var member : session.record.members()) if (!actor.serverLevel().hasChunkAt(member.source())
                 || !protection.mayModify(actor, actor.serverLevel(), member.source(), ModificationKind.GRAB)) { cancel(actor.getUUID()); return; }
-        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost())) { cancel(actor.getUUID()); return; }
+        if (actor.tickCount % 20 == 0 && !progress.trySpendForceEnergy(actor.getUUID(), session.record.mass()*ForceConfig.HOLD_COST.get()*CrystalAffinityAccess.get(actor).telekinesisCost()*PrimitivePractice.multiplier(progress, actor, POWER_ID))) { cancel(actor.getUUID()); return; }
         if (!inRange(actor, session.position)) { cancel(actor.getUUID()); return; }
         Vec3 next;
         if (session.velocity == null) {
@@ -308,8 +311,9 @@ final class BlockGroupCoordinator {
     }
     private void release(UUID actor) { var session = sessions.remove(actor); if (session != null) session.displays.forEach(Entity::discard); progress.setChanneling(actor, false); }
     private static final class Session {
+        final double paid;
         BlockGroupRecord record; Vec3 position; Vec3 velocity; int flightTicks; int renderedTurns = -1;
         final List<Display.BlockDisplay> displays = new ArrayList<>(); final Set<UUID> hit = new HashSet<>();
-        Session(BlockGroupRecord record) { this.record = record; position = record.pivot().getCenter(); }
+        Session(BlockGroupRecord record, double paid) { this.paid = paid; this.record = record; position = record.pivot().getCenter(); }
     }
 }

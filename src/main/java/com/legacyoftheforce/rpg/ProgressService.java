@@ -15,7 +15,7 @@ public final class ProgressService implements PlayerProgressService {
     }
     @Override public boolean creditPowerUse(UUID playerId,String id,UUID context) {
         var actor=onlinePlayer(playerId);
-        if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||context==null||context.equals(playerId)||!hasLearnedPower(playerId,id))return false;
+        if(actor==null||actor.isFakePlayer()||actor.isSpectator()||!actor.isAlive()||context==null||context.equals(playerId)||!(hasLearnedPower(playerId,id)||com.legacyoftheforce.core.api.PrimitivePowerRules.eligible(actor.getData(ProgressAttachments.PLAYER_PROGRESS).snapshot(),id)))return false;
         if(!actor.getData(ProgressAttachments.POWER_MASTERY).credit(id,context,actor.server.overworld().getGameTime()))return false;
         try{new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);return true;}
         catch(java.io.IOException|RuntimeException failure){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Mastery save uncertain; native aggregate retained",failure);actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("rpg.legacyoftheforce.mastery_pending"));return false;}

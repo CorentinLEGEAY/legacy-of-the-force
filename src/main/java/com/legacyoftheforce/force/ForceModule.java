@@ -39,6 +39,9 @@ public final class ForceModule {
         this.mobs = new MobForceController(progress, protection);
         this.vehicles = new VehicleForceController(progress, protection);
         this.advanced = new AdvancedPowers(progress, protection);
+        PrimitivePowerRules.install(Map.of("telekinetic_impulse", () -> Math.min(ForceConfig.PUSH_LEVEL.get(), ForceConfig.PULL_LEVEL.get()),
+                "block_telekinesis", ForceConfig.BLOCK_LEVEL::get, "block_group", () -> ForceConfig.GROUP_LEVELS.get().stream().mapToInt(Integer::intValue).min().orElse(100),
+                "vehicle_control", () -> Math.min(ForceConfig.VEHICLE_STABILIZE_LEVEL.get(), ForceConfig.VEHICLE_BRAKE_LEVEL.get())));
     }
     @SubscribeEvent public void started(ServerStartedEvent event) {
         try {

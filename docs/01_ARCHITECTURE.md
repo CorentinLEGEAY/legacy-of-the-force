@@ -253,3 +253,6 @@ Déplacement d’items : le cœur expose `DroppedItemOwnership` en lecture et `E
 
 
 Suspension de mobs : baux runtime `MobSuspensionController`, pas de potion LEVITATION ni modification NoGravity/NoAI. Le mixin commun d’Entity.move ne garde que les Mob dont l’instance exacte est louée ; un permis ThreadLocal à usage unique laisse passer le seul pas prévalidé. Les autres déplacements pendant le bail sont bloqués ; les entités hors bail et le client ne sont pas affectés. La progression vient de la montée réelle, le marqueur existant de contrôle interrompt la reprise sur disque. La fermeture n’appelle aucune fabrique d’entité et ne rembobine pas la position/les effets d’un autre système.
+
+
+Cristaux et exploration : `CrystalIdentityAccess.Observation` projette UUID+origine validés depuis le module propriétaire ; un lecteur historique UUID seul laisse l’origine inconnue, sans fallback implicite Ilum. Les contrôles d’unicité continuent d’utiliser `identified`, les nouveaux objectifs planétaires consultent `inspect/origin`. Ne pas confondre couleur visible et provenance (corruption/purification conservent l’origine). Ne pas réinterpréter un UUID de vieux journal comme une nouvelle preuve de planète.

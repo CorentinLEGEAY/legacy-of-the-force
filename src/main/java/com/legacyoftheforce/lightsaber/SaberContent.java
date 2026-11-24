@@ -70,16 +70,13 @@ public final class SaberContent {
         plan.put(SaberSlot.EMITTER, id(emitter == 1 ? "emitter_claw" : "emitter_basic")); return Map.copyOf(plan);
     }
     public static void register(IEventBus bus) {
-        com.legacyoftheforce.core.api.CrystalIdentityAccess.install(stack -> {
+        com.legacyoftheforce.core.api.CrystalIdentityAccess.installInspector(stack -> {
             if (stack.getCount() != 1) return java.util.Optional.empty();
-            if (stack.is(KYBER.get())) {
-                var data = stack.get(KYBER_DATA.get()); return data == null ? java.util.Optional.empty() : data.state().map(KyberData.State::id);
-            }
-            if (stack.is(SABER.get())) {
-                var data = stack.get(ASSEMBLY.get());
-                if (data != null && data.supported()) return data.crystal().flatMap(KyberData::state).map(KyberData.State::id);
-            }
-            return java.util.Optional.empty();
+            KyberData crystal=null;
+            if (stack.is(KYBER.get())) crystal=stack.get(KYBER_DATA.get());
+            else if (stack.is(SABER.get())) {var data=stack.get(ASSEMBLY.get());if(data!=null&&data.supported())crystal=data.crystal().orElse(null);}
+            if(crystal==null||crystal.state().isEmpty())return java.util.Optional.empty();
+            return java.util.Optional.of(new com.legacyoftheforce.core.api.CrystalIdentityAccess.Observation(crystal.state().orElseThrow().id(),ResourceLocation.parse(crystal.kind().orElseThrow().planet())));
         }); ITEMS.register(bus); BLOCKS.register(bus); COMPONENTS.register(bus); MENUS.register(bus); SOUNDS.register(bus); ATTACHMENTS.register(bus); LOOT_FUNCTIONS.register(bus); }
     public static void creative(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) PART_NAMES.forEach(name -> event.accept(partItem(name)));

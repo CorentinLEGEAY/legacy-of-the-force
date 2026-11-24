@@ -78,7 +78,8 @@ public final class QuestLifecycle {
         UUID crystal = null;
         if (view.get().crystal() == null) for (int slot = 0; slot < actor.getInventory().getContainerSize(); slot++) {
             var stack = actor.getInventory().getItem(slot);
-            var id = CrystalIdentityAccess.identified(stack); if (id.isPresent()) { crystal = id.get(); break; }
+            var observation = CrystalIdentityAccess.inspect(stack);
+            if (observation.isPresent() && net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:ilum").equals(observation.get().origin())) { crystal = observation.get().id(); break; }
         }
         try {
             var next = before.observe(holocron, actor.level().dimension().location().toString().equals("legacyoftheforce:ilum"), crystal);

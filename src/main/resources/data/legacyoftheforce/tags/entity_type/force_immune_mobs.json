@@ -1,1 +1,15 @@
-{"replace":false,"values":["minecraft:ender_dragon","minecraft:wither","minecraft:warden"]}
+{
+  "replace": false,
+  "values": [
+    "minecraft:ender_dragon",
+    "minecraft:wither",
+    "minecraft:warden",
+    "legacyoftheforce:person_jedi",
+    "legacyoftheforce:person_hermit",
+    "legacyoftheforce:person_sith",
+    "legacyoftheforce:person_explorer",
+    "legacyoftheforce:person_merchant",
+    "legacyoftheforce:person_pilot",
+    "legacyoftheforce:person_hunter"
+  ]
+}

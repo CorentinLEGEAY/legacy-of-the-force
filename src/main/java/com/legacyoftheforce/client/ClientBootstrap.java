@@ -53,6 +53,8 @@ public final class ClientBootstrap {
         modBus.addListener(forceKeys::register);
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event)->event.register(com.legacyoftheforce.rpg.SkillMenu.TYPE.get(),SkillScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> event.register(com.legacyoftheforce.quests.QuestContent.JOURNAL.get(), QuestJournalScreen::new));
+        modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event)->event.register(com.legacyoftheforce.quests.QuestContent.CONVERSATION.get(),ConversationScreen::new));
+        modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event)->com.legacyoftheforce.quests.QuestContent.people().values().forEach(type->event.registerEntityRenderer(type.get(),AdventurePersonRenderer::new)));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) -> event.register(com.legacyoftheforce.planets.PlanetContent.TERMINAL_MENU.get(), GalacticTerminalScreen::new));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) ->
                 event.register(com.legacyoftheforce.lightsaber.SaberContent.MENU.get(), SaberWorkshopScreen::new));

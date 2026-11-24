@@ -45,6 +45,12 @@ public final class LegacyOfTheForce {
         com.legacyoftheforce.planets.PlanetContent.register(modBus);
         com.legacyoftheforce.quests.QuestContent.register(modBus);
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.quests.QuestLifecycle());
+        NeoForge.EVENT_BUS.register(new com.legacyoftheforce.quests.PeopleService());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.AddReloadListenerEvent event)->event.addListener(new com.legacyoftheforce.quests.PeopleCatalog()));
+        container.registerConfig(ModConfig.Type.SERVER,com.legacyoftheforce.quests.PeopleConfig.SPEC,"legacyoftheforce-people.toml");
+        com.legacyoftheforce.core.api.AdventurePeople.install((level,key)->{
+            try {var role=com.legacyoftheforce.quests.AdventureRole.valueOf(key.toUpperCase(java.util.Locale.ROOT));return com.legacyoftheforce.quests.QuestContent.people().get(role).get().create(level);}catch(IllegalArgumentException unknown){return null;}
+        });
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.quests.QuestCatalog::register);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.planets.TravelConfig.SPEC, "legacyoftheforce-travel.toml");
         NeoForge.EVENT_BUS.register(new com.legacyoftheforce.planets.TravelLifecycle());

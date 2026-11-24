@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "help": {
+    "item": "minecraft:copper_ingot",
+    "count": 4
+  },
+  "trade": {
+    "price": {
+      "item": "minecraft:emerald",
+      "count": 3
+    },
+    "result": "legacyoftheforce:speeder_repair_kit",
+    "count": 1,
+    "minimumReputation": 0
+  }
+}

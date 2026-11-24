@@ -33,6 +33,7 @@ public final class JedhaSitePiece extends StructurePiece {
     @Override public void postProcess(WorldGenLevel world, StructureManager manager, ChunkGenerator generator, RandomSource random, BoundingBox clip, ChunkPos chunk, BlockPos pivot) {
         if (kind < 0) return;
         if (kind == 0) chamber(world, clip); else if (kind == 1) archive(world, clip); else if (kind == 2) ruins(world, clip); else arena(world, clip);
+        if(kind==2)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(3,1,7),"pilot");
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/jedha_expedition"));
         if (kind < 3) createChest(world, clip, random, 9, 1, 9, loot);
     }

@@ -34,6 +34,8 @@ public final class MustafarSitePiece extends StructurePiece {
         if (kind < 0) return;
         if (kind >= 3) { arena(world, clip); return; }
         if (kind == 0) vault(world, clip); else if (kind == 1) refinery(world, clip); else ruins(world, clip);
+        if(kind==2)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(3,1,7),"hunter");
+        if(kind==1)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(6,1,3),"sith");
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/mustafar_expedition"));
         createChest(world, clip, random, 9, 1, 9, loot);
     }

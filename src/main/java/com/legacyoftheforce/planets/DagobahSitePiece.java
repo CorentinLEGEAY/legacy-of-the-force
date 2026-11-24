@@ -34,6 +34,7 @@ public final class DagobahSitePiece extends StructurePiece {
         if (kind < 0) return;
         if (kind >= 3) { arena(world, clip); return; }
         if (kind == 0) grotto(world, clip); else if (kind == 1) hut(world, clip); else ruins(world, clip);
+        if(kind==2)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(3,1,7),"hermit");
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/dagobah_expedition"));
         createChest(world, clip, random, 9, kind == 1 ? 4 : 1, 9, loot);
     }

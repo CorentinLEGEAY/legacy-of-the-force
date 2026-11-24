@@ -34,6 +34,8 @@ public final class TatooineSitePiece extends StructurePiece {
         if (kind < 0) return;
         if (kind >= 3) { arena(world, clip); return; }
         if (kind == 0) mine(world, clip); else if (kind == 1) settlement(world, clip); else wreck(world, clip);
+        if(kind==2)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(3,1,7),"merchant");
+        if(kind==1)com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(6,1,6),"jedi");
         var loot = ResourceKey.create(net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/tatooine_expedition"));
         createChest(world, clip, random, kind == 0 ? 10 : 6, 1, kind == 0 ? 10 : 9, loot);
     }

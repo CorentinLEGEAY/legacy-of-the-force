@@ -34,5 +34,6 @@ public final class EchoRuinPiece extends StructurePiece {
         }
         placeBlock(world, Blocks.CHISELED_STONE_BRICKS.defaultBlockState(), 3, 1, 4, clip);
         placeBlock(world, QuestContent.HOLOCRON.get().defaultBlockState(), 3, 2, 4, clip);
+        com.legacyoftheforce.core.api.AdventurePeople.place(world,clip,getWorldPos(2,1,2),"explorer");
     }
 }

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "help": {
+    "item": "minecraft:copper_ingot",
+    "count": 4
+  },
+  "trade": {
+    "price": {
+      "item": "minecraft:emerald",
+      "count": 2
+    },
+    "result": "legacyoftheforce:speeder_energy_cell",
+    "count": 1,
+    "minimumReputation": 0
+  }
+}

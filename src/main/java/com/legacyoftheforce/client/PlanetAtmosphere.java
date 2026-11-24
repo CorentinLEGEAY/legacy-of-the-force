@@ -11,9 +11,9 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 public final class PlanetAtmosphere {
     @SubscribeEvent public void fog(ViewportEvent.RenderFog event) {
         var level = Minecraft.getInstance().level;
-        if (level == null || !ClientConfig.PLANET_ATMOSPHERE.get() || !(level.dimension().equals(PlanetId.ENDOR.dimension()) || level.dimension().equals(PlanetId.DAGOBAH.dimension()))
+        if (level == null || !ClientConfig.PLANET_ATMOSPHERE.get() || !(level.dimension().equals(PlanetId.ENDOR.dimension()) || level.dimension().equals(PlanetId.DAGOBAH.dimension()) || level.dimension().equals(PlanetId.ILUM.dimension()))
                 || event.getType() != FogType.NONE || event.getMode() != FogRenderer.FogMode.FOG_TERRAIN) return;
-        float far = (float)Math.min(event.getFarPlaneDistance(), level.dimension().equals(PlanetId.DAGOBAH.dimension()) ? ClientConfig.SWAMP_FOG_DISTANCE.get() : ClientConfig.FOREST_FOG_DISTANCE.get());
+        float far = (float)Math.min(event.getFarPlaneDistance(), level.dimension().equals(PlanetId.ILUM.dimension()) ? ClientConfig.ILUM_FOG_DISTANCE.get() : level.dimension().equals(PlanetId.DAGOBAH.dimension()) ? ClientConfig.SWAMP_FOG_DISTANCE.get() : ClientConfig.FOREST_FOG_DISTANCE.get());
         if (!Float.isFinite(far) || far <= 0) return;
         event.setFarPlaneDistance(far); event.setNearPlaneDistance(Math.min(event.getNearPlaneDistance(), far * .5f)); event.setCanceled(true);
     }

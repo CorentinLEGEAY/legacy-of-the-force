@@ -126,3 +126,9 @@ Attraction d’items : niveau1,100ticks maximum,0,25bloc/tick, un acteur/cible e
 
 
 Suspension de mobs : coût initial de la compétence apprise (24 par défaut), durée40ticks par définition, plafond100 ; masse maximale8, montée magnitude×(1−résistance) jusqu’à2,5blocs, vitesse0,1/tick. Entretien = énergie de définition×fraction de canal0,1 toutes5ticks par défaut, puis distance/maîtrise/affinité ; pas de ressource gratuite. Pratique après montée0,5 de cible dangereuse seulement. Cibles boss exclues de ce soulèvement, impulsions sur posture vulnérable toujours distinctes. Paramètres dans Force et fichiers powers ; chiffres NON TESTÉS en campagne.
+
+## Lot environnement (codé, campagne différée)
+
+Ilum : exposition600ticks, lenteurI60ticks, ciel ouvert sans immunité native contre le gel ; cuir/abri/passager protègent, aucun dégât ajouté. `legacyoftheforce-travel.toml` : environment.ilum coldEnabled/exposureTicks100–2400/slownessTicks20–100. Ceci remplace le report historique du froid, sans toucher au gel de neige poudreuse vanilla.
+
+Véhicules : environment.vehicles.enabled ; snowSpeedFactor0,92/sand0,94/mud0,90/heat0,96/storm0,92, bornes0,8–1 ; energyFactor1,08 borné1–1,25. Un seul environnement à la fois. adaptedPenaltyFraction0,25 (0–1) garde25% de la pénalité avec au moins un module adapté fonctionnel. Tags item speeder_environment/snow,sand,mud,heat,storm rechargeables ; modules par défaut documentés dans03. Échantillonnage20ticks, annonce200ticks minimum, aucun chargement forcé. La vitesse et la demande changent, jamais la masse ou le coût déjà inscrit dans un journal. Valeurs à mesurer en campagne globale.

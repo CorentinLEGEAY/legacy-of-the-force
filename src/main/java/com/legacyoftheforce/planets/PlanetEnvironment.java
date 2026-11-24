@@ -11,10 +11,15 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /** Gentle server effects; shelter, a head covering or fire resistance suffice on Tatooine. */
 public final class PlanetEnvironment {
+    private final Map<UUID,Integer> coldExposure = new HashMap<>();
     private final Map<UUID, Integer> exposure = new HashMap<>();
     private final Map<UUID, Integer> lavaExposure = new HashMap<>();
     @SubscribeEvent public void tick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer actor) || actor.tickCount % 20 != 0) return;
+        if(actor.level().dimension().equals(PlanetId.ILUM.dimension())) {
+            exposure.remove(actor.getUUID()); lavaExposure.remove(actor.getUUID()); cold(actor); return;
+        }
+        coldExposure.remove(actor.getUUID());
         if (actor.level().dimension().equals(PlanetId.DAGOBAH.dimension())) {
             exposure.remove(actor.getUUID()); lavaExposure.remove(actor.getUUID());
             if (TravelConfig.MUD_DRAG.get() && actor.isAlive() && !actor.isCreative() && !actor.isSpectator() && !actor.isFakePlayer() && actor.onGround() && !actor.isPassenger()
@@ -39,6 +44,19 @@ public final class PlanetEnvironment {
         actor.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, TravelConfig.HEAT_DURATION.get(), 0));
         if (before < threshold) actor.displayClientMessage(net.minecraft.network.chat.Component.translatable("travel.legacyoftheforce.heat_warning"), true);
     }
+    private void cold(ServerPlayer actor) {
+        // Native freeze-immunity wearables include leather; no damage or frozen-tick accumulation is added.
+        if(!TravelConfig.ILUM_COLD.get()||!actor.isAlive()||actor.isCreative()||actor.isSpectator()||actor.isFakePlayer()
+                ||actor.isPassenger()||!actor.canFreeze()||!actor.serverLevel().canSeeSky(actor.blockPosition())) {
+            coldExposure.remove(actor.getUUID()); return;
+        }
+        if(coldExposure.size()>=1024&&!coldExposure.containsKey(actor.getUUID()))return;
+        int before=coldExposure.getOrDefault(actor.getUUID(),0), threshold=TravelConfig.COLD_EXPOSURE.get();
+        int after=Math.min(threshold,before+20); coldExposure.put(actor.getUUID(),after);
+        if(after<threshold)return;
+        actor.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,TravelConfig.COLD_DURATION.get(),0));
+        if(before<threshold)actor.displayClientMessage(net.minecraft.network.chat.Component.translatable("travel.legacyoftheforce.cold_warning"),true);
+    }
     private void volcanic(ServerPlayer actor) {
         if (!TravelConfig.VOLCANIC_HEAT.get() || !actor.isAlive() || actor.isCreative() || actor.isSpectator() || actor.isFakePlayer()
                 || actor.hasEffect(MobEffects.FIRE_RESISTANCE) || !nearExposedLava(actor)) { lavaExposure.remove(actor.getUUID()); return; }
@@ -59,6 +77,6 @@ public final class PlanetEnvironment {
         }
         return false;
     }
-    @SubscribeEvent public void logout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) { exposure.remove(event.getEntity().getUUID()); lavaExposure.remove(event.getEntity().getUUID()); }
-    @SubscribeEvent public void stopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) { exposure.clear(); lavaExposure.clear(); }
+    @SubscribeEvent public void logout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) { exposure.remove(event.getEntity().getUUID()); lavaExposure.remove(event.getEntity().getUUID()); coldExposure.remove(event.getEntity().getUUID()); }
+    @SubscribeEvent public void stopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) { exposure.clear(); lavaExposure.clear(); coldExposure.clear(); }
 }

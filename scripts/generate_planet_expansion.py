@@ -234,46 +234,46 @@ def language():
         path = ASSETS / f'lang/{lang}.json'
         content = json.loads(path.read_text(encoding='utf-8'))
         french = lang == 'fr_fr'
-        info = [('ilum', 'Ilum', 'Glaces · cristal bleu/parade · dangers modérés', 'Ice · blue kyber/parry · moderate danger'),
-                ('tatooine', 'Tatooine', 'Dunes et canyons · jaune/endurance · mines et épaves', 'Dunes and canyons · yellow/endurance · mines and wrecks'),
-                ('endor', 'Endor', 'Forêts géantes · vert/régénération Force', 'Giant forests · green/Force regeneration'),
-                ('mustafar', 'Mustafar', 'Volcans et lave · orange/puissance · danger extrême', 'Volcanoes and lava · orange/power · extreme danger'),
-                ('dagobah', 'Dagobah', 'Marais et brume · cyan/télékinésie', 'Swamps and fog · cyan/telekinesis'),
-                ('jedha', 'Jedha', 'Falaises et sanctuaires · violet/pouvoirs avancés', 'Cliffs and sanctuaries · purple/advanced powers')]
+        info = [('ilum', 'Ilum', 'Glaces Â· cristal bleu/parade Â· dangers modÃ©rÃ©s', 'Ice Â· blue kyber/parry Â· moderate danger'),
+                ('tatooine', 'Tatooine', 'Dunes et canyons Â· jaune/endurance Â· mines et Ã©paves', 'Dunes and canyons Â· yellow/endurance Â· mines and wrecks'),
+                ('endor', 'Endor', 'ForÃªts gÃ©antes Â· vert/rÃ©gÃ©nÃ©ration Force', 'Giant forests Â· green/Force regeneration'),
+                ('mustafar', 'Mustafar', 'Volcans et lave Â· orange/puissance Â· danger extrÃªme', 'Volcanoes and lava Â· orange/power Â· extreme danger'),
+                ('dagobah', 'Dagobah', 'Marais et brume Â· cyan/tÃ©lÃ©kinÃ©sie', 'Swamps and fog Â· cyan/telekinesis'),
+                ('jedha', 'Jedha', 'Falaises et sanctuaires Â· violet/pouvoirs avancÃ©s', 'Cliffs and sanctuaries Â· purple/advanced powers')]
         for key, name, fr, en in info:
             content[f'travel.legacyoftheforce.planet_{key}'] = name
             content[f'travel.legacyoftheforce.info_{key}'] = fr if french else en
-            content[f'item.legacyoftheforce.{key}_coordinates'] = f'Coordonnées : {name}' if french else f'{name} coordinates'
+            content[f'item.legacyoftheforce.{key}_coordinates'] = f'CoordonnÃ©es : {name}' if french else f'{name} coordinates'
         content['block.legacyoftheforce.tatooine_crystal_cluster'] = 'Formation de kyber des dunes' if french else 'Dune kyber formation'
-        content['block.legacyoftheforce.tatooine_silica_ore'] = 'Grès à silice de Tatooine' if french else 'Tatooine silica sandstone'
+        content['block.legacyoftheforce.tatooine_silica_ore'] = 'GrÃ¨s Ã  silice de Tatooine' if french else 'Tatooine silica sandstone'
         content.update({
             'entity.legacyoftheforce.tatooine_wandering_knight': 'Chevalier Errant' if french else 'Wandering Knight',
-            'entity.legacyoftheforce.tatooine_desert_exile': 'Exilé du Désert' if french else 'Desert Exile',
+            'entity.legacyoftheforce.tatooine_desert_exile': 'ExilÃ© du DÃ©sert' if french else 'Desert Exile',
             'block.legacyoftheforce.tatooine_jedi_altar': 'Autel du Chevalier Errant' if french else 'Wandering Knight altar',
-            'block.legacyoftheforce.tatooine_sith_altar': 'Autel de l’Exilé du Désert' if french else 'Desert Exile altar',
+            'block.legacyoftheforce.tatooine_sith_altar': 'Autel de lâ€™ExilÃ© du DÃ©sert' if french else 'Desert Exile altar',
             'item.legacyoftheforce.tatooine_boss_relic': 'Relique des dunes' if french else 'Dune relic',
             'item.legacyoftheforce.engine_racer': 'Moteur de course de Tatooine' if french else 'Tatooine racing engine',
-            'travel.legacyoftheforce.heat_warning': 'Le soleil vous fatigue : couvrez votre tête ou cherchez de l’ombre.' if french else 'The sun is wearing you down: cover your head or find shade.',
-            'item.legacyoftheforce.tatooine_field_notes': 'Carnet d’expédition : Tatooine' if french else 'Tatooine expedition notes',
-            'entity.legacyoftheforce.arena_ice': 'Objet d’arène' if french else 'Arena object',
-            'boss.legacyoftheforce.step_inside': 'Entrez dans l’arène avant de lancer l’épreuve.' if french else 'Step inside the arena before starting the trial.',
+            'travel.legacyoftheforce.heat_warning': 'Le soleil vous fatigue : couvrez votre tÃªte ou cherchez de lâ€™ombre.' if french else 'The sun is wearing you down: cover your head or find shade.',
+            'item.legacyoftheforce.tatooine_field_notes': 'Carnet dâ€™expÃ©dition : Tatooine' if french else 'Tatooine expedition notes',
+            'entity.legacyoftheforce.arena_ice': 'Objet dâ€™arÃ¨ne' if french else 'Arena object',
+            'boss.legacyoftheforce.step_inside': 'Entrez dans lâ€™arÃ¨ne avant de lancer lâ€™Ã©preuve.' if french else 'Step inside the arena before starting the trial.',
         })
         notes = [
-            ('Les entrées des mines se repèrent dans les plateaux de grès. Leur escalier descend vers une formation jaune rare.', 'Look for mine entrances in sandstone plateaus. Their stairs descend to a rare yellow formation.'),
-            ('Le Chevalier Errant riposte après une frappe gardée. Déplacer ou briser son couvert de grès ouvre sa défense.', 'The Wandering Knight counters a guarded hit. Moving or breaking his sandstone cover opens his defense.'),
-            ('L’Exilé annonce ses rafales et sa tempête. Mettez un pilier entre vous et le danger ; déplacer ses pierres brise sa concentration.', 'The Exile signals gusts and storms. Put a pillar between yourself and danger; moving his stones breaks his focus.'),
-            ('L’anneau de sable laisse son centre libre et peut être sauté. Au soleil, un couvre-chef, l’ombre ou l’eau limitent la fatigue.', 'The sand ring leaves a safe center and can be jumped. Head coverings, shade or water limit sun fatigue.'),
-            ('La silice entre dans le moteur de course : plus de propulsion, moins de portance. Les épaves peuvent contenir une carte vers Endor.', 'Silica is used in racing engines: more thrust, less lift. Wrecks can hold an Endor chart.'),
+            ('Les entrÃ©es des mines se repÃ¨rent dans les plateaux de grÃ¨s. Leur escalier descend vers une formation jaune rare.', 'Look for mine entrances in sandstone plateaus. Their stairs descend to a rare yellow formation.'),
+            ('Le Chevalier Errant riposte aprÃ¨s une frappe gardÃ©e. DÃ©placer ou briser son couvert de grÃ¨s ouvre sa dÃ©fense.', 'The Wandering Knight counters a guarded hit. Moving or breaking his sandstone cover opens his defense.'),
+            ('Lâ€™ExilÃ© annonce ses rafales et sa tempÃªte. Mettez un pilier entre vous et le danger ; dÃ©placer ses pierres brise sa concentration.', 'The Exile signals gusts and storms. Put a pillar between yourself and danger; moving his stones breaks his focus.'),
+            ('Lâ€™anneau de sable laisse son centre libre et peut Ãªtre sautÃ©. Au soleil, un couvre-chef, lâ€™ombre ou lâ€™eau limitent la fatigue.', 'The sand ring leaves a safe center and can be jumped. Head coverings, shade or water limit sun fatigue.'),
+            ('La silice entre dans le moteur de course : plus de propulsion, moins de portance. Les Ã©paves peuvent contenir une carte vers Endor.', 'Silica is used in racing engines: more thrust, less lift. Wrecks can hold an Endor chart.'),
         ]
         for index, (fr, en) in enumerate(notes):
             content[f'notes.legacyoftheforce.tatooine.{index}'] = fr if french else en
-        attacks = [('sidestep', 'Pas de côté', 'Sidestep'), ('riposte', 'Riposte', 'Riposte'), ('vault', 'Bond offensif', 'Vaulting strike'),
-                   ('crosscut', 'Croisé des dunes', 'Dune crosscut'), ('sand_gust', 'Rafale de sable', 'Sand gust'), ('repulse', 'Poussée frontale', 'Frontal repulse'),
-                   ('sandstorm', 'Tempête localisée', 'Focused sandstorm'), ('sand_ring', 'Anneau des sables', 'Sand ring')]
+        attacks = [('sidestep', 'Pas de cÃ´tÃ©', 'Sidestep'), ('riposte', 'Riposte', 'Riposte'), ('vault', 'Bond offensif', 'Vaulting strike'),
+                   ('crosscut', 'CroisÃ© des dunes', 'Dune crosscut'), ('sand_gust', 'Rafale de sable', 'Sand gust'), ('repulse', 'PoussÃ©e frontale', 'Frontal repulse'),
+                   ('sandstorm', 'TempÃªte localisÃ©e', 'Focused sandstorm'), ('sand_ring', 'Anneau des sables', 'Sand ring')]
         for key, fr, en in attacks:
             content['boss.legacyoftheforce.attack.' + key] = fr if french else en
         content['travel.legacyoftheforce.help'] = (
-            'Choisissez une destination et décodez sa carte. Posez un terminal à la base et emportez-en un second. Le départ finance le retour : posez le terminal transporté sur place pour revenir. Une destination indisponible ne permet pas le départ.'
+            'Choisissez une destination et dÃ©codez sa carte. Posez un terminal Ã  la base et emportez-en un second. Le dÃ©part finance le retour : posez le terminal transportÃ© sur place pour revenir. Une destination indisponible ne permet pas le dÃ©part.'
             if french else 'Select a destination and decode its chart. Place one terminal at home and carry another. Departure prepays the return: place the carried terminal on site to go home. Unavailable destinations cannot be travelled to.')
         write(path, content)
 
@@ -292,4 +292,5 @@ if __name__ == '__main__':
     runpy.run_path(str(Path(__file__).with_name('generate_ilum_expansion_assets.py')), run_name='__main__')
     runpy.run_path(str(Path(__file__).with_name('generate_combat_holocrons.py')), run_name='__main__')
     runpy.run_path(str(Path(__file__).with_name('generate_expedition_guides.py')), run_name='__main__')
+    runpy.run_path(str(Path(__file__).with_name('generate_environment_data.py')), run_name='__main__')
     print('Authored navigation and Tatooine resources generated; runtime verification remains pending.')

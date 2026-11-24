@@ -759,5 +759,11 @@
   "quest.legacyoftheforce.expedition.jedha.visit": "Visiter réellement Jedha.",
   "quest.legacyoftheforce.expedition.jedha.crystal": "Observer un cristal provenant de Jedha, libre ou serti.",
   "quest.legacyoftheforce.expedition.jedha.jedi": "Facultatif : victoire éligible contre le Jedi local (alignement −25).",
-  "quest.legacyoftheforce.expedition.jedha.sith": "Facultatif : victoire éligible contre le Sith local (alignement +25)."
+  "quest.legacyoftheforce.expedition.jedha.sith": "Facultatif : victoire éligible contre le Sith local (alignement +25).",
+  "travel.legacyoftheforce.cold_warning": "Le froid vous ralentit. Cherchez un abri ou portez une pièce d’armure en cuir.",
+  "speeder.legacyoftheforce.environment.snow": "Neige : vitesse −%1$s%%, énergie +%2$s%%. Un module adapté atténue cet effet.",
+  "speeder.legacyoftheforce.environment.sand": "Sable : vitesse −%1$s%%, énergie +%2$s%%. Un module adapté atténue cet effet.",
+  "speeder.legacyoftheforce.environment.mud": "Boue : vitesse −%1$s%%, énergie +%2$s%%. Un module adapté atténue cet effet.",
+  "speeder.legacyoftheforce.environment.heat": "Chaleur volcanique : vitesse −%1$s%%, énergie +%2$s%%. Un module adapté atténue cet effet.",
+  "speeder.legacyoftheforce.environment.storm": "Intempéries : vitesse −%1$s%%, énergie +%2$s%%. Un module adapté atténue cet effet."
 }

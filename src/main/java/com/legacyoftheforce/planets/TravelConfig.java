@@ -4,6 +4,9 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class TravelConfig {
     public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.BooleanValue ILUM_COLD, VEHICLE_ENVIRONMENT;
+    public static final ModConfigSpec.IntValue COLD_EXPOSURE,COLD_DURATION;
+    public static final ModConfigSpec.DoubleValue SNOW_SPEED,SAND_SPEED,MUD_SPEED,HEAT_SPEED,STORM_SPEED,ENVIRONMENT_ENERGY,ADAPTED_PENALTY;
     public static final ModConfigSpec.IntValue OUTBOUND_CELLS, RETURN_RESERVE_CELLS, SEARCH_RADIUS, VERTICAL_SEARCH, COOLDOWN, COMBAT_LOCK;
     public static final ModConfigSpec.BooleanValue REQUIRE_PORTABLE;
     public static final ModConfigSpec.BooleanValue DESERT_HEAT, DESERT_DUST;
@@ -35,6 +38,17 @@ public final class TravelConfig {
         RUNE_INTERVAL = builder.defineInRange("jedha.runeInputIntervalTicks", 10, 10, 60);
         RUNE_FAILURE = builder.defineInRange("jedha.runeFailureDelayTicks", 40, 20, 200);
         RUNE_MINING_HARDNESS = builder.defineInRange("jedha.unlockedMiningHardness", 4d, 1, 20);
+        ILUM_COLD=builder.define("environment.ilum.coldEnabled",true);
+        COLD_EXPOSURE=builder.defineInRange("environment.ilum.exposureTicks",600,100,2400);
+        COLD_DURATION=builder.defineInRange("environment.ilum.slownessTicks",60,20,100);
+        VEHICLE_ENVIRONMENT=builder.define("environment.vehicles.enabled",true);
+        SNOW_SPEED=builder.defineInRange("environment.vehicles.snowSpeedFactor",.92,.8,1);
+        SAND_SPEED=builder.defineInRange("environment.vehicles.sandSpeedFactor",.94,.8,1);
+        MUD_SPEED=builder.defineInRange("environment.vehicles.mudSpeedFactor",.9,.8,1);
+        HEAT_SPEED=builder.defineInRange("environment.vehicles.heatSpeedFactor",.96,.8,1);
+        STORM_SPEED=builder.defineInRange("environment.vehicles.stormSpeedFactor",.92,.8,1);
+        ENVIRONMENT_ENERGY=builder.defineInRange("environment.vehicles.energyFactor",1.08,1,1.25);
+        ADAPTED_PENALTY=builder.defineInRange("environment.vehicles.adaptedPenaltyFraction",.25,0,1);
         SPEC = builder.build();
     }
     private TravelConfig() {}

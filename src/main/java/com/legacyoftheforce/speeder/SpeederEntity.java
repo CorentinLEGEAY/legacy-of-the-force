@@ -37,6 +37,10 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     public boolean forceControlled() { return lift != null; }
     private long lastInput = Long.MIN_VALUE;
     private long nextDamage;
+    private com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Effect environment = com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Effect.CLEAR;
+    private long nextEnvironmentSample, nextEnvironmentNotice;
+    private UUID environmentPilot;
+    private com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Kind announcedEnvironment;
     private boolean guestSavePending;
     private long nextGuestChange;
     private int lerpSteps;
@@ -292,7 +296,19 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
         var command = pilot != null && level().getGameTime() - lastInput >= 0 && level().getGameTime() - lastInput <= 8 ? intent : SpeederMotion.Input.parked();
         var stats = performance.stats();
         var loadedStats = new BlueprintValidator.Stats(stats.mass() + getPassengers().size() * SpeederConfig.PILOT_MASS.get(), stats.thrust(), stats.lift(), stats.capacity(), stats.stability());
-        var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor());
+        long now=level().getGameTime();
+        if(now>=nextEnvironmentSample){
+            var working=new HashSet<net.minecraft.resources.ResourceLocation>();var parts=layout.plan().orElseThrow().modules();
+            for(int i=0;i<parts.size();i++)if(snapshot.get().health().get(i)>0)working.add(parts.get(i).kind());
+            environment=com.legacyoftheforce.core.api.VehicleEnvironmentHooks.inspect(new com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Sample((ServerLevel)level(),blockPosition(),working));
+            nextEnvironmentSample=now+20;
+        }
+        if(pilot!=null&&(!pilot.getUUID().equals(environmentPilot)||announcedEnvironment!=environment.kind())&&now>=nextEnvironmentNotice){
+            if(environment.kind()!=com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Kind.NONE)
+                pilot.displayClientMessage(Component.translatable("speeder.legacyoftheforce.environment."+environment.kind().name().toLowerCase(Locale.ROOT),Math.round((1-environment.speed())*100),Math.round((environment.energy()-1)*100)),true);
+            environmentPilot=pilot.getUUID();announcedEnvironment=environment.kind();nextEnvironmentNotice=now+200;
+        }
+        var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor(),environment.speed(),environment.energy());
         double dx = step.dx(), dy = step.dy(), dz = step.dz();
         var target = getBoundingBox().expandTowards(dx, dy, dz);
         for(var rider:getPassengers()) target=target.minmax(rider.getBoundingBox().expandTowards(dx,dy,dz));

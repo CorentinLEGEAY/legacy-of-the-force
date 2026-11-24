@@ -759,5 +759,11 @@
   "quest.legacyoftheforce.expedition.jedha.visit": "Actually visit Jedha.",
   "quest.legacyoftheforce.expedition.jedha.crystal": "Observe kyber originating from Jedha, loose or installed.",
   "quest.legacyoftheforce.expedition.jedha.jedi": "Optional: eligible victory against the local Jedi (alignment −25).",
-  "quest.legacyoftheforce.expedition.jedha.sith": "Optional: eligible victory against the local Sith (alignment +25)."
+  "quest.legacyoftheforce.expedition.jedha.sith": "Optional: eligible victory against the local Sith (alignment +25).",
+  "travel.legacyoftheforce.cold_warning": "The cold slows you. Find shelter or wear a piece of leather armor.",
+  "speeder.legacyoftheforce.environment.snow": "Snow: speed −%1$s%%, energy +%2$s%%. An adapted module reduces this effect.",
+  "speeder.legacyoftheforce.environment.sand": "Sand: speed −%1$s%%, energy +%2$s%%. An adapted module reduces this effect.",
+  "speeder.legacyoftheforce.environment.mud": "Mud: speed −%1$s%%, energy +%2$s%%. An adapted module reduces this effect.",
+  "speeder.legacyoftheforce.environment.heat": "Volcanic heat: speed −%1$s%%, energy +%2$s%%. An adapted module reduces this effect.",
+  "speeder.legacyoftheforce.environment.storm": "Rough weather: speed −%1$s%%, energy +%2$s%%. An adapted module reduces this effect."
 }

@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "legacyoftheforce:stabilizer_gyro",
+    "legacyoftheforce:stabilizer_levitation"
+  ]
+}

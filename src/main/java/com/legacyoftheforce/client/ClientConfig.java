@@ -7,6 +7,7 @@ public final class ClientConfig {
     public static final ModConfigSpec.BooleanValue SHOW_HUD;
     public static final ModConfigSpec.BooleanValue REDUCED_MOTION;
     public static final ModConfigSpec.BooleanValue PLANET_ATMOSPHERE;
+    public static final ModConfigSpec.DoubleValue ILUM_FOG_DISTANCE;
     public static final ModConfigSpec.DoubleValue FOREST_FOG_DISTANCE;
     public static final ModConfigSpec.DoubleValue SWAMP_FOG_DISTANCE;
     static {
@@ -16,6 +17,7 @@ public final class ClientConfig {
         PLANET_ATMOSPHERE = builder.define("planetAtmosphere", true);
         FOREST_FOG_DISTANCE = builder.defineInRange("endorFogDistance", 96d, 48, 192);
         SWAMP_FOG_DISTANCE = builder.defineInRange("dagobahFogDistance", 64d, 32, 128);
+        ILUM_FOG_DISTANCE=builder.defineInRange("ilumFogDistance",112d,48,192);
         SPEC = builder.build();
     }
     private ClientConfig() {}

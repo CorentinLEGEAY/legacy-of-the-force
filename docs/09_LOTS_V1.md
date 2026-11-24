@@ -210,3 +210,11 @@ Ancien guide déjà marqué : ne pas effacer son historique sans preuve ; l’UU
 - Cristaux des six origines, sertis/démontés/corrompus/purifiés et transférés : provenance vraie, UUID distincts ; guide relisible sans objet, sans double économie. Mort et sauvegarde/reconnexion avec progression acquise dans le désordre.
 - Refus IO réel pendant sauvegarde : état désiré conservé, déconnexion, reprise sans effacer visites ni réappliquer inventaire. Hook de sauvegarde changeant l’attachment doit faire refuser la preuve.
 - Recharge des définitions, IDs manquants/malformés, limites réseau128lignes×128caractères, défilement et quatre filtres FR/EN aux résolutions utilisées ; aucun bouton ne donne une récompense. Deux vrais clients voient leurs propres connaissances, aucune progression héritée de l’autre.
+
+## Campagne prévue — environnements (NON EXÉCUTÉE)
+
+- Ilum :599/600ticks en extérieur, abri/cuir de chaque slot/immunité native/passager/mort/déconnexion/dimension ; désactivation et seuils TOML. Zéro dégât ajouté et aucun frozen tick ajouté ; effet dissipé≤durée prévue. Deux clients, compteur borné et pas d’annonce répétée avant une nouvelle exposition.
+- Échantillonnage véhicules : neige/glace/sable/boue sous différents survols≤6blocs, abris, lave avec/sans écran solide, météo, chunk absent et limite de hauteur. Aucun chunk créé/chargé par lecture. Ne pas appliquer la boue sous un plancher plein. Mondes vanilla sans pénalité planétaire.
+- Mouvement : coefficients1/1 reproduisent exactement les cas existants ; demande×facteur avant paiement partiel, charge jamais négative, véhicule vide gratuit et gravité native, conducteur tardif/faux paquets sans autorité météo. Freinage sous nouvelle limite sans effacement instantané de l’élan.
+- Module adapté/endommagé/détruit, tags rechargés, froid-tempête Ilum, malus non empilés, seuils min/max ; réduction effective visible dans les pourcentages. Sortie d’environnement rétablit les valeurs. Aucune différence de plan/HP/cargaison/UUID après sauvegarde et reprise, pas de nouveau journal.
+- Deux vrais clients : message limité à200ticks, conducteur courant seulement ; passager n’ordonne aucun coefficient. Brume Ilum48/112/192 et désactivée, ne pas élargir brume de statut/fluide, évaluer lisibilité et rendu sur écran3.

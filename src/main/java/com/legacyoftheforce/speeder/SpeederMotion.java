@@ -51,6 +51,11 @@ public final class SpeederMotion {
     }
     public static Step tick(State previous, Input input, BlueprintValidator.Stats stats,
             OptionalDouble groundClearance, Settings settings, double engineFactor) {
+        return tick(previous,input,stats,groundClearance,settings,engineFactor,1,1);
+    }
+    public static Step tick(State previous,Input input,BlueprintValidator.Stats stats,OptionalDouble groundClearance,
+            Settings settings,double engineFactor,double environmentSpeed,double environmentEnergy) {
+        range(environmentSpeed,.8,1);range(environmentEnergy,1,1.25);
         range(engineFactor, 0, 1);
         range(stats.mass(), .1, 12_800); range(stats.thrust(), 0, 128_000);
         range(stats.lift(), 0, 128_000); range(stats.capacity(), 0, 12_800_000); range(stats.stability(), 0, 1);
@@ -61,17 +66,18 @@ public final class SpeederMotion {
                 + Math.abs(input.throttle()) * stats.thrust() * settings.thrustEnergy()
                 + Math.abs(input.steering()) * settings.steeringEnergy();
         // An empty seat parks the vehicle without paying for a levitation engine left running.
+        demand *= environmentEnergy;
         double spent = input.occupied() ? Math.min(previous.energy(), demand) : 0;
         double power = spent / demand;
         double acceleration = Math.min(settings.maxAcceleration(), stats.thrust() / stats.mass() * settings.accelerationScale());
         double speed = previous.speed();
         boolean braking = !input.occupied() || power == 0 || speed * input.throttle() < 0;
         speed *= braking ? settings.brakingDrag() : settings.drag();
-        speed += acceleration * input.throttle() * power;
+        speed += acceleration * input.throttle() * power * environmentSpeed;
         // Lost propulsion brakes toward its reduced limit without erasing momentum in one tick.
         double residual = Math.abs(previous.speed()) * settings.brakingDrag();
-        speed = Math.clamp(speed, -Math.min(settings.reverseSpeed(), Math.max(settings.reverseSpeed() * engineFactor, residual)),
-                Math.min(settings.forwardSpeed(), Math.max(settings.forwardSpeed() * engineFactor, residual)));
+        speed = Math.clamp(speed, -Math.min(settings.reverseSpeed(), Math.max(settings.reverseSpeed() * engineFactor * environmentSpeed, residual)),
+                Math.min(settings.forwardSpeed(), Math.max(settings.forwardSpeed() * engineFactor * environmentSpeed, residual)));
         double yaw = wrap(previous.yaw() - input.steering() * settings.turnDegrees() * stats.stability() * power);
 
         double vertical = previous.verticalSpeed() - settings.gravity();

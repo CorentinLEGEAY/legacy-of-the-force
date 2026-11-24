@@ -3,6 +3,11 @@
   "minVersion": "0.8",
   "package": "com.legacyoftheforce.force.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": ["ItemOwnershipAccessor"],
-  "injectors": {"defaultRequire": 1}
+  "mixins": [
+    "ItemOwnershipAccessor",
+    "MobSuspensionMovementMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

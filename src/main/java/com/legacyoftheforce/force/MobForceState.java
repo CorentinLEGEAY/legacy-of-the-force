@@ -10,6 +10,7 @@ public final class MobForceState implements INBTSerializable<CompoundTag> {
     private long cooldownUntil;
     private boolean active;
     private CompoundTag unknown;
+    private CompoundTag retained=new CompoundTag();
     public boolean supported() { return unknown == null; }
     public boolean available(long now) { return unknown == null && now >= cooldownUntil; }
     public boolean active() { return active; }
@@ -21,11 +22,12 @@ public final class MobForceState implements INBTSerializable<CompoundTag> {
     public void stop() { active = false; }
     @Override public CompoundTag serializeNBT(HolderLookup.Provider provider) {
         if (unknown != null) return unknown.copy();
-        var tag = new CompoundTag(); tag.putInt("schemaVersion", 1); tag.putLong("cooldownUntil", cooldownUntil); tag.putBoolean("active", active); return tag;
+        var tag = retained.copy(); tag.putInt("schemaVersion", 1); tag.putLong("cooldownUntil", cooldownUntil); tag.putBoolean("active", active); return tag;
     }
     @Override public void deserializeNBT(HolderLookup.Provider provider, CompoundTag tag) {
-        if (!tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") != 1
-                || !tag.contains("cooldownUntil", Tag.TAG_LONG) || !tag.contains("active", Tag.TAG_BYTE) || tag.getLong("cooldownUntil") < 0) {
+        retained=tag.copy();
+        if (tag.sizeInBytes()>2048 || !tag.contains("schemaVersion", Tag.TAG_INT) || tag.getInt("schemaVersion") != 1
+                || !tag.contains("cooldownUntil", Tag.TAG_LONG) || !tag.contains("active", Tag.TAG_BYTE) || tag.getByte("active")<0 || tag.getByte("active")>1 || tag.getLong("cooldownUntil") < 0) {
             unknown = tag.copy(); active = false; return;
         }
         unknown = null; cooldownUntil = tag.getLong("cooldownUntil"); active = tag.getBoolean("active");

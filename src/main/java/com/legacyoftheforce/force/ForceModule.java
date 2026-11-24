@@ -84,7 +84,7 @@ public final class ForceModule {
     }
     @SubscribeEvent public void entityTick(EntityTickEvent.Pre event) {
         if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof net.minecraft.world.entity.item.ItemEntity item) items.beforeTick(item);
-        if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof Mob mob) mobs.beforeTick(mob);
+        if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof Mob mob) { advanced.beforeTick(mob); mobs.beforeTick(mob); }
     }
     @SubscribeEvent public void serverTick(ServerTickEvent.Post event) { mobs.cleanup(event.getServer()); items.cleanup(); vehicles.cleanup(); advanced.tick(event.getServer()); }
     @SubscribeEvent public void entityJoin(EntityJoinLevelEvent event) {

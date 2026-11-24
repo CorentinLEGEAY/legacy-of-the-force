@@ -13,6 +13,8 @@ public final class ForceConfig {
     public static final ModConfigSpec.DoubleValue TIER_RANGE_CAP, LOW_LEVEL_RANGE, VERY_LIGHT_MASS, HEAVY_MASS, EXTREME_MASS, DISTANCE_COST, DISTANCE_REFERENCE, DISTANCE_COST_CAP, MASS_SLOWDOWN;
     public static final ModConfigSpec.IntValue HEAVY_LEVEL, EXTREME_LEVEL, ITEM_LEVEL, ITEM_TICKS, ITEM_COOLDOWN, ITEM_BUDGET;
     public static final ModConfigSpec.DoubleValue ITEM_MASS, ITEM_STACK_MASS, ITEM_SPEED, ITEM_BASE_COST, ITEM_HOLD_COST, ITEM_PRACTICE_DISTANCE;
+    public static final ModConfigSpec.IntValue MOB_LIFT_TICKS;
+    public static final ModConfigSpec.DoubleValue MOB_LIFT_RISE, MOB_LIFT_STEP, MOB_LIFT_MASS, MOB_LIFT_PRACTICE_RISE;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.IntValue VEHICLE_STABILIZE_LEVEL, VEHICLE_BRAKE_LEVEL, VEHICLE_COOLDOWN;
     public static final ModConfigSpec.DoubleValue VEHICLE_MAX_MASS, VEHICLE_BASE_COST, VEHICLE_MASS_COST, VEHICLE_RETENTION;
@@ -107,6 +109,11 @@ public final class ForceConfig {
         ITEM_PRACTICE_DISTANCE = builder.defineInRange("item.minimumPracticeTravel",1.5d,.5,6);
         ITEM_BASE_COST = builder.defineInRange("item.baseCost",2d,.1,100);
         ITEM_HOLD_COST = builder.defineInRange("item.prepaidHoldCostPerMassSecond",.8d,.1,4);
+        MOB_LIFT_TICKS = builder.defineInRange("mob.suspensionMaximumTicks",100,10,100);
+        MOB_LIFT_RISE = builder.defineInRange("mob.suspensionMaximumRise",2.5d,.25,2.5);
+        MOB_LIFT_STEP = builder.defineInRange("mob.suspensionStepPerTick",.1d,.02,.2);
+        MOB_LIFT_MASS = builder.defineInRange("mob.suspensionMaximumMass",8d,.1,32);
+        MOB_LIFT_PRACTICE_RISE = builder.defineInRange("mob.suspensionMinimumPracticeRise",.5d,.1,2.5);
         SPEC = builder.build();
     }
     private ForceConfig() {}

@@ -152,3 +152,6 @@ Formes avancées et deux lames : des holocrons d’expédition enseignent Préci
 
 
 Force débutant : **V** attire un objet lâché visé, puis libère la prise ; G annule. `/lotf force item` cible explicitement un item. L’objet existant se déplace, ses règles de propriété/collecte restent natives. `/lotf force status` affiche portée et budget réels. Cinq masses et les paliers de portée sont maintenant codés (maximum24 au niveau100), avec limites de nombre/masse, distance et coût serveur. Compilation réussie, campagne native encore à faire ; voir09 pour les changements de configuration de portée.
+
+
+Le soulèvement appris des mobs utilise maintenant une suspension physique bornée plutôt qu’une potion : la cible monte, reste tenue brièvement et reprend sa physique après G/V ou expiration. Le maintien revalide trajet/permissions et coûte de la Force. Ce nouveau garde natif compile ; son chargement et ses parcours attendent la campagne globale.

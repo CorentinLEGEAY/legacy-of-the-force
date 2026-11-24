@@ -17,6 +17,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /** Learned abilities execute on the server; channels revalidate visibility, ownership and energy. */
 final class AdvancedPowers {
+    private final MobSuspensionController suspensions;
     private final PlayerProgressService progress;private final ProtectedWorldService protection;private final java.util.function.Predicate<UUID> otherControl;
     private final Map<UUID,Channel> channels=new HashMap<>();private final Map<UUID,Long> controlRecovery=new HashMap<>(),requests=new HashMap<>();
     private record Channel(String power,UUID target,long end,long next) {}
@@ -24,8 +25,12 @@ final class AdvancedPowers {
     private record Practice(String power,UUID context,net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension,
             net.minecraft.world.phys.Vec3 start,net.minecraft.world.phys.Vec3 previous,long end,int hurtAtStart,boolean defense,double rise,float previousHealth) {}
     AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection) {this(progress,protection,id->false);}
-    AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection,java.util.function.Predicate<UUID> otherControl) {this.progress=progress;this.protection=protection;this.otherControl=otherControl;}
-    boolean channeling(UUID actor){return channels.containsKey(actor);}
+    AdvancedPowers(PlayerProgressService progress,ProtectedWorldService protection,java.util.function.Predicate<UUID> otherControl) {this.progress=progress;this.protection=protection;this.otherControl=otherControl;
+        this.suspensions=new MobSuspensionController(progress,protection,
+                (actor,mob)->progress.power("legacyoftheforce:levitate").map(def->valid(actor,mob,def)).orElse(false),
+                (actor,mob)->progress.power("legacyoftheforce:levitate").ifPresent(def->credit(actor,mob,def)));}
+    boolean channeling(UUID actor){return channels.containsKey(actor)||suspensions.holding(actor);}
+    void beforeTick(Mob mob){suspensions.beforeTick(mob);}
     void commands(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("skill")
             .then(Commands.literal("list").executes(ctx->{var actor=ctx.getSource().getPlayerOrException();for(var def:progress.powers())actor.sendSystemMessage(Component.translatable("power.legacyoftheforce.entry",Component.translatable("power.legacyoftheforce."+path(def.id())),def.requirement().requiredLevel(),def.points(),progress.hasLearnedPower(actor.getUUID(),def.id())?"✓":progress.knowsPower(actor.getUUID(),def.id())?"~":"—"));return 1;}))
@@ -38,7 +43,7 @@ final class AdvancedPowers {
     ForceResult cast(ServerPlayer actor,String power) {
         if(!actor.server.isSameThread()||!actor.isAlive()||actor.isFakePlayer()||actor.isSpectator()||!PlayerInventoryHooks.ready(actor)||!rate(actor))return ForceResult.no("cooldown");
         var definition=progress.power(power);if(definition.isEmpty()||!progress.hasLearnedPower(actor.getUUID(),power))return ForceResult.no("power_locked");var def=definition.get();String action=path(power);
-        if(channels.containsKey(actor.getUUID())||otherControl.test(actor.getUUID())&&!Set.of("sense","leap","speed","protect","heal","support","reflexes").contains(action))return ForceResult.no("already_holding");
+        if(channels.containsKey(actor.getUUID())||(suspensions.holding(actor.getUUID())||otherControl.test(actor.getUUID()))&&!Set.of("sense","leap","speed","protect","heal","support","reflexes").contains(action))return ForceResult.no("already_holding");
         Mob target=null;boolean self=Set.of("leap","speed","protect","heal","support","reflexes").contains(action);
         if(action.equals("leap")&&(!actor.onGround()||actor.isPassenger()))return ForceResult.no("invalid_target");
         if(action.equals("heal")&&actor.getHealth()>=actor.getMaxHealth())return ForceResult.no("invalid_target");
@@ -47,6 +52,7 @@ final class AdvancedPowers {
         boolean control=Set.of("freeze","levitate","throw","wave","dominate","fear","choke").contains(action);
         if(control&&target!=null&&!controlReady(actor,target))return ForceResult.no("resistant_target");
         if(action.equals("wave")) {area=area.stream().filter(mob->controlReady(actor,mob)).toList();if(area.isEmpty())return ForceResult.no("resistant_target");}
+        if(action.equals("levitate")&&!suspensions.canBegin(actor,target,def))return ForceResult.no("resistant_target");
         boolean channel=Set.of("lightning","chain_lightning","drain","choke").contains(action);if(channel&&channels.size()>=ForceConfig.MOB_BUDGET.get())return ForceResult.no("budget");
         double distance=target!=null?ForceRules.distanceCost(actor,target.position()):area.stream().mapToDouble(mob->ForceRules.distanceCost(actor,mob.position())).max().orElse(1);
         if(!progress.tryStartPower(actor.getUUID(),power,distance*def.energy()*progress.mastery(actor.getUUID(),power).energyMultiplier()*CrystalAffinityAccess.get(actor).advancedCost(),def.cooldown()))return ForceResult.no("not_enough_force");
@@ -61,7 +67,7 @@ final class AdvancedPowers {
             case "wave" -> area.forEach(mob->impulse(actor,mob,def));
             case "throw" -> {impulse(actor,target,def);float before=target.getHealth();target.hurt(actor.damageSources().indirectMagic(actor,actor),(float)def.magnitude());if(before-target.getHealth()>=ServerConfig.MASTERY_MIN_HEALTH_CHANGE.get())credit(actor,target,def);}
             case "freeze","dominate" -> {reserveControl(actor,target,def);if(target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,def.duration(),4)))credit(actor,target,def);}
-            case "levitate" -> {reserveControl(actor,target,def);if(target.addEffect(new MobEffectInstance(MobEffects.LEVITATION,def.duration(),0)))credit(actor,target,def);}
+            case "levitate" -> {if(!suspensions.begin(actor,target,def))return ForceResult.no("blocked_path");controlRecovery.put(target.getUUID(),actor.server.overworld().getGameTime()+Math.min(def.duration(),ForceConfig.MOB_LIFT_TICKS.get())+ForceConfig.MOB_COOLDOWN.get());}
             case "fear" -> {reserveControl(actor,target,def);if(target.getTarget()==actor){target.setTarget(null);used(actor,power,target.getUUID(),false);}target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS,def.duration(),0));impulse(actor,target,def);}
             case "lightning","chain_lightning","drain","choke" -> {if(control)reserveControl(actor,target,def);channels.put(actor.getUUID(),new Channel(power,target.getUUID(),actor.server.overworld().getGameTime()+def.duration(),actor.server.overworld().getGameTime()));progress.setChanneling(actor.getUUID(),true);}
             default -> {return ForceResult.no("invalid_target");}
@@ -107,7 +113,7 @@ final class AdvancedPowers {
     }
     private void impulse(ServerPlayer actor,Mob mob,PowerDefinition def) {var velocity=mob.position().subtract(actor.position()).multiply(1,0,1).normalize().scale(Math.min(ForceConfig.MOB_MAX_SPEED.get(),def.magnitude())).add(0,ForceConfig.MOB_LIFT.get(),0);var sweep=mob.getBoundingBox().expandTowards(velocity).deflate(.001);if(!mob.level().noCollision(mob,sweep))return;double cells=(Math.ceil(sweep.getXsize())+1)*(Math.ceil(sweep.getYsize())+1)*(Math.ceil(sweep.getZsize())+1);if(!Double.isFinite(cells)||cells>ForceConfig.MOB_PATH_CELLS.get())return;var positions=net.minecraft.core.BlockPos.betweenClosedStream(sweep).iterator();while(positions.hasNext()) {var position=positions.next();if(!actor.serverLevel().hasChunkAt(position)||!protection.mayMoveEntity(actor,mob,position))return;}reserveControl(actor,mob,def);mob.setDeltaMovement(velocity);mob.hasImpulse=true;mob.hurtMarked=true;credit(actor,mob,def);}
     void tick(MinecraftServer server) {
-        long now=server.overworld().getGameTime();controlRecovery.entrySet().removeIf(entry->entry.getValue()<now);practiceTick(server,now);
+        suspensions.cleanup();long now=server.overworld().getGameTime();controlRecovery.entrySet().removeIf(entry->entry.getValue()<now);practiceTick(server,now);
         for(var entry:List.copyOf(channels.entrySet())) {var actor=server.getPlayerList().getPlayer(entry.getKey());var channel=entry.getValue();var definition=progress.power(channel.power());
             if(actor==null||!actor.isAlive()||actor.isRemoved()||definition.isEmpty()||now>=channel.end()||!progress.hasLearnedPower(entry.getKey(),channel.power())) {cancel(entry.getKey());continue;}
             var entity=actor.serverLevel().getEntity(channel.target());var def=definition.get();if(!(entity instanceof Mob target)||!valid(actor,target,def)) {cancel(entry.getKey());continue;}if(now<channel.next())continue;
@@ -120,6 +126,6 @@ final class AdvancedPowers {
             actor.serverLevel().sendParticles(ParticleTypes.ELECTRIC_SPARK,target.getX(),target.getEyeY(),target.getZ(),3,.15,.2,.15,.02);channels.put(entry.getKey(),new Channel(channel.power(),channel.target(),channel.end(),now+ForceConfig.CHANNEL_INTERVAL.get()));
         }
     }
-    void cancel(UUID actor) {channels.remove(actor);requests.remove(actor);practice.remove(actor);progress.setChanneling(actor,false);}
-    void stop() {for(var actor:List.copyOf(channels.keySet()))cancel(actor);controlRecovery.clear();requests.clear();practice.clear();}
+    void cancel(UUID actor) {suspensions.cancel(actor);channels.remove(actor);requests.remove(actor);practice.remove(actor);progress.setChanneling(actor,false);}
+    void stop() {suspensions.stopAll();for(var actor:List.copyOf(channels.keySet()))cancel(actor);controlRecovery.clear();requests.clear();practice.clear();}
 }

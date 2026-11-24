@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 3,
+  "title": "quest.legacyoftheforce.path.title",
+  "origin": "quest.legacyoftheforce.path.origin",
+  "clue": "quest.legacyoftheforce.path.clue",
+  "unlockWith": "legacyoftheforce:echo_of_ilum",
+  "repeatable": false,
+  "dependencies": [],
+  "rewards": {
+    "xp": 0,
+    "alignmentTenths": 0
+  },
+  "steps": [
+    {
+      "id": "assembled",
+      "text": "quest.legacyoftheforce.path.assembled",
+      "condition": "MILESTONE",
+      "subject": "legacyoftheforce:saber_assembled"
+    },
+    {
+      "id": "mounted",
+      "text": "quest.legacyoftheforce.path.mounted",
+      "condition": "MILESTONE",
+      "subject": "legacyoftheforce:crystal_mounted"
+    },
+    {
+      "id": "force",
+      "text": "quest.legacyoftheforce.path.force",
+      "condition": "MILESTONE",
+      "subject": "legacyoftheforce:force_block_used"
+    },
+    {
+      "id": "speeder",
+      "text": "quest.legacyoftheforce.path.speeder",
+      "condition": "MILESTONE",
+      "subject": "legacyoftheforce:speeder_assembled"
+    },
+    {
+      "id": "help",
+      "text": "quest.legacyoftheforce.path.help",
+      "condition": "MILESTONE",
+      "subject": "legacyoftheforce:help_confirmed"
+    }
+  ]
+}

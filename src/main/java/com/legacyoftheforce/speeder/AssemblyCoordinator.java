@@ -49,6 +49,11 @@ final class AssemblyCoordinator {
         if (value.phase() == Phase.PREPARED) record = journal.advance(record, Phase.PAID);
         finish(port, record);
     }
+    boolean completed(UUID owner,AssemblyReceipt receipt)throws IOException {
+        var stamp=receipt.stamp();if(stamp.isEmpty()||stamp.get().revision()==0)return false;
+        var entry=journal.read(owner);if(entry.isEmpty())return false;var value=entry.get().view();
+        return value.phase()==Phase.DONE&&value.after().getCompound("receipt").equals(receipt.tag());
+    }
     private void finish(Port port, AssemblyTransaction record) throws IOException {
         var value = record.view();
         if (value.phase() == Phase.PAID) {

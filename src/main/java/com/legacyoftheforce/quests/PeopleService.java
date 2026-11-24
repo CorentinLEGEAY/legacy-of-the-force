@@ -77,6 +77,7 @@ public final class PeopleService {
             com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Conversation payment/relations save uncertain; live aggregate retained",failure);
             actor.connection.disconnect(Component.translatable("people.legacyoftheforce.save_pending"));return false;
         }
+        com.legacyoftheforce.core.api.AdventureMilestones.changed(actor);
         actor.inventoryMenu.broadcastChanges();return true;
     }
     @SubscribeEvent public void logout(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent e){if(e.getEntity() instanceof ServerPlayer actor){var map=NEXT.get(actor.server);if(map!=null)map.remove(actor.getUUID());}}

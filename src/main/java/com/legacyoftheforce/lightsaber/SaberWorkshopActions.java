@@ -71,7 +71,14 @@ final class SaberWorkshopActions {
     }
     private static SaberWorkshopMenu.Status commit(ServerPlayer actor,ItemStack[] planned,SaberWorkshopMenu.Status success) {
         for(int slot=0;slot<planned.length;slot++)actor.getInventory().setItem(slot,planned[slot]);actor.getInventory().setChanged();
-        try {new VerifiedPlayerSaveBarrier().persist(actor);}catch(java.io.IOException|RuntimeException uncertain) {LegacyOfTheForce.LOGGER.error("Workshop inventory save uncertain; retaining native before/after aggregate",uncertain);actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.menu_recovery"));return SaberWorkshopMenu.Status.INVALID;}
+        var witness=success==SaberWorkshopMenu.Status.READY?com.legacyoftheforce.core.api.AdventureMilestones.stage(actor,com.legacyoftheforce.core.api.AdventureMilestones.Flag.SABER_ASSEMBLED):com.legacyoftheforce.core.api.AdventureMilestones.state(actor);
+        var expected=actor.getInventory().save(new net.minecraft.nbt.ListTag());
+        try {
+            var saved=new VerifiedPlayerSaveBarrier().persist(actor);
+            if(!expected.equals(saved.get("Inventory"))||!expected.equals(actor.getInventory().save(new net.minecraft.nbt.ListTag())))throw new java.io.IOException("Native workshop inventory differs");
+            com.legacyoftheforce.core.api.AdventureMilestones.requireProof(actor,saved,witness);
+        }catch(java.io.IOException|RuntimeException uncertain) {LegacyOfTheForce.LOGGER.error("Workshop inventory save uncertain; retaining native aggregate",uncertain);actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.menu_recovery"));return SaberWorkshopMenu.Status.INVALID;}
+        if(success==SaberWorkshopMenu.Status.READY)com.legacyoftheforce.core.api.AdventureMilestones.changed(actor);
         actor.inventoryMenu.broadcastChanges();return success;
     }
     private SaberWorkshopActions() {}

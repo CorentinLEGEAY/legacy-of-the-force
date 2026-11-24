@@ -45,6 +45,9 @@ public final class QuestLifecycle {
     @SubscribeEvent public void dimension(PlayerEvent.PlayerChangedDimensionEvent event) { if (event.getEntity() instanceof ServerPlayer actor) enqueue(actor); }
     @SubscribeEvent public void teaching(HolocronDiscovered event){var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();if(server!=null&&server.isSameThread()){var actor=server.getPlayerList().getPlayer(event.playerId);if(actor!=null)enqueue(actor);}}
     @SubscribeEvent public void victory(BossDefeated event){var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();if(server!=null&&server.isSameThread())for(var id:event.participants){var actor=server.getPlayerList().getPlayer(id);if(actor!=null)enqueue(actor);}}
+    @SubscribeEvent public void business(AdventureProgressChanged event){wake(event.actor);}
+    @SubscribeEvent public void practice(PowerUseCommitted event){wake(event.actor);}
+    private static void wake(UUID id){var server=net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();if(server!=null&&server.isSameThread()){var actor=server.getPlayerList().getPlayer(id);if(actor!=null)enqueue(actor);}}
     @SubscribeEvent public void respawn(PlayerEvent.PlayerRespawnEvent event){if(event.getEntity() instanceof ServerPlayer actor)enqueue(actor);}
     @SubscribeEvent public void tick(ServerTickEvent.Post event) {
         var pending=PENDING.get(event.getServer());if(pending==null)return;var deferred=new ArrayList<UUID>();
@@ -91,7 +94,10 @@ public final class QuestLifecycle {
                 var value=CrystalIdentityAccess.inspect(actor.getInventory().getItem(slot));
                 if(value.isPresent()&&value.get().origin()!=null&&QuestState.PLANETS.contains(value.get().origin()))crystals.putIfAbsent(value.get().origin(),value.get().id());
             }
-            next=before.observe(known,actor.level().dimension().location(),crystals,evidence.rewardedBosses());
+            var milestones=new HashSet<>(evidence.milestones());
+            var relations=actor.getData(QuestContent.RELATIONS).view();
+            if(relations.isPresent()&&!relations.get().helped().isEmpty())milestones.add(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:help_confirmed"));
+            next=before.observe(known,actor.level().dimension().location(),crystals,evidence.rewardedBosses(),milestones);
         } catch(RuntimeException invalid) {actor.displayClientMessage(Component.translatable("quest.legacyoftheforce.unavailable"),false);return false;}
         if(next.equals(before))return true;
         actor.setData(QuestContent.KNOWLEDGE.get(),next);

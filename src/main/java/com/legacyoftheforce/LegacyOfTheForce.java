@@ -36,6 +36,7 @@ public final class LegacyOfTheForce {
         container.registerConfig(ModConfig.Type.SERVER, ForceConfig.SPEC, "legacyoftheforce-force.toml");
         TransactionContent.register(modBus);
         com.legacyoftheforce.core.operation.PlayerSaveCheckpoint.register(modBus);
+        com.legacyoftheforce.core.api.AdventureMilestones.register(modBus);
         SaberContent.register(modBus);
         com.legacyoftheforce.bosses.BossContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.bosses.BossConfig.SPEC, "legacyoftheforce-bosses.toml");
@@ -75,7 +76,15 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.KyberAffinities::register);
         com.legacyoftheforce.core.api.CrystalAffinityAccess.install(com.legacyoftheforce.lightsaber.KyberAffinities::read);
         com.legacyoftheforce.core.api.PlanetaryCrystals.install(com.legacyoftheforce.lightsaber.PlanetaryCrystalLoot::create);
-        com.legacyoftheforce.core.api.AdventureHooks.installReader(actor->new com.legacyoftheforce.core.api.AdventureHooks.Evidence(SaberContent.knownHolocrons(actor),new ProgressService().rewardedBosses(actor.getUUID())));
+        com.legacyoftheforce.core.api.AdventureHooks.installReader(actor->{
+            var milestones=new java.util.HashSet<>(com.legacyoftheforce.core.api.AdventureMilestones.inspect(actor));
+            var built=com.legacyoftheforce.core.api.AdventureMilestones.Flag.SPEEDER_ASSEMBLED.id();
+            if(!milestones.contains(built)&&com.legacyoftheforce.speeder.SpeederAssemblyLifecycle.completed(actor))milestones.add(built);
+            var progress=new ProgressService();
+            if(progress.mastery(actor.getUUID(),"legacyoftheforce:block_telekinesis").significantUses()>0||progress.mastery(actor.getUUID(),"legacyoftheforce:block_group").significantUses()>0)
+                milestones.add(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:force_block_used"));
+            return new com.legacyoftheforce.core.api.AdventureHooks.Evidence(SaberContent.knownHolocrons(actor),progress.rewardedBosses(actor.getUUID()),milestones);
+        });
         com.legacyoftheforce.core.api.AdventureHooks.installGuides(com.legacyoftheforce.quests.QuestLifecycle::readGuide);
         com.legacyoftheforce.core.api.CombatHolocrons.install(SaberContent::holocron);
         com.legacyoftheforce.core.api.SaberDesigns.install(type -> {

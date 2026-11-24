@@ -7,8 +7,9 @@ import net.minecraft.server.level.ServerPlayer;
 
 /** Read-only evidence supplied by its owner; guides cannot grant skills, XP or boss rewards. */
 public final class AdventureHooks {
-    public record Evidence(Set<ResourceLocation> teachings,Set<ResourceLocation> rewardedBosses) {
-        public Evidence {if(teachings.size()>32||rewardedBosses.size()>64)throw new IllegalArgumentException("Adventure evidence budget exceeded");teachings=Set.copyOf(teachings);rewardedBosses=Set.copyOf(rewardedBosses);}
+    public record Evidence(Set<ResourceLocation> teachings,Set<ResourceLocation> rewardedBosses,Set<ResourceLocation> milestones) {
+        public Evidence(Set<ResourceLocation> teachings,Set<ResourceLocation> bosses){this(teachings,bosses,Set.of());}
+        public Evidence {if(teachings.size()>32||rewardedBosses.size()>64||milestones.size()>16)throw new IllegalArgumentException("Adventure evidence budget exceeded");teachings=Set.copyOf(teachings);rewardedBosses=Set.copyOf(rewardedBosses);milestones=Set.copyOf(milestones);}
     }
     private static Function<ServerPlayer,Evidence> reader=actor->new Evidence(Set.of(),Set.of());
     private static BiPredicate<ServerPlayer,ResourceLocation> guides=(actor,id)->false;

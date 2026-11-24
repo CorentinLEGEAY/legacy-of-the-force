@@ -55,6 +55,10 @@ public final class SpeederAssemblyLifecycle {
             actor.connection.disconnect(Component.translatable("message.legacyoftheforce.recharge_pending"));
         }
     }
+    public static boolean completed(ServerPlayer actor){
+        var service=SERVICES.get(actor.server);if(service==null)return false;
+        try{return service.completed(actor);}catch(java.io.IOException unavailable){throw new IllegalStateException("Assembly evidence unavailable; journal retained",unavailable);}
+    }
     public static SpeederAssemblyService.Result build(ServerPlayer actor, BlockPos garage, SpeederBlueprint blueprint) {
         var service = SERVICES.get(actor.server); return service == null ? SpeederAssemblyService.Result.UNAVAILABLE : service.build(actor, garage, blueprint);
     }

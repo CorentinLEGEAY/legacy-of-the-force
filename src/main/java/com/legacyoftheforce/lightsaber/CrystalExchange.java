@@ -9,7 +9,7 @@ final class CrystalExchange {
     public enum Result { INSERTED, REPLACED, NO_SABER, NO_CRYSTAL, INVALID, DUPLICATE }
     private CrystalExchange() {}
     public static Result install(ServerPlayer actor) {
-        if (!actor.server.isSameThread() || actor.isFakePlayer() || !actor.isAlive() || actor.isSpectator()) return Result.INVALID;
+        if (!actor.server.isSameThread() || actor.isFakePlayer() || !actor.isAlive() || actor.isSpectator() || !com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)) return Result.INVALID;
         var inventory = actor.getInventory(); var stack = actor.getMainHandItem();
         if (!stack.is(SaberContent.SABER.get())) return Result.NO_SABER;
         var saber = stack.get(SaberContent.ASSEMBLY.get());
@@ -39,6 +39,17 @@ final class CrystalExchange {
         if (old.isPresent()) { returned = new ItemStack(SaberContent.KYBER.get()); returned.set(SaberContent.KYBER_DATA.get(), old.get()); }
         var updated = saber.withCrystal(crystal);
         stack.set(SaberContent.ASSEMBLY.get(), updated); inventory.setItem(input, returned); inventory.setChanged();
+        var witness=com.legacyoftheforce.core.api.AdventureMilestones.stage(actor,com.legacyoftheforce.core.api.AdventureMilestones.Flag.CRYSTAL_MOUNTED);
+        var expected=inventory.save(new net.minecraft.nbt.ListTag());
+        try {
+            var saved=new com.legacyoftheforce.core.operation.VerifiedPlayerSaveBarrier().persist(actor);
+            if(!expected.equals(saved.get("Inventory"))||!expected.equals(inventory.save(new net.minecraft.nbt.ListTag())))throw new java.io.IOException("Native crystal exchange differs");
+            com.legacyoftheforce.core.api.AdventureMilestones.requireProof(actor,saved,witness);
+        }catch(java.io.IOException|RuntimeException uncertain){
+            com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Crystal exchange save uncertain; live UUID locations retained",uncertain);
+            actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("saber.legacyoftheforce.menu_recovery"));return Result.INVALID;
+        }
+        com.legacyoftheforce.core.api.AdventureMilestones.changed(actor);
         return old.isPresent() ? Result.REPLACED : Result.INSERTED;
     }
 }

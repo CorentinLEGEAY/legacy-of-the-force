@@ -823,5 +823,13 @@
   "people.legacyoftheforce.hunter.welcome": "Bounty hunter: “We can talk without commitment. Do you seek advice, or wish to help our travelers?”",
   "people.legacyoftheforce.hunter.trusted": "Your help has been noticed. You remain free to follow our advice or choose your own path.",
   "people.legacyoftheforce.hunter.cautious": "Our beliefs differ, but I will listen. Practical help can change our relationship; your travels remain free.",
-  "people.legacyoftheforce.hunter.clue": "Victory requires real participation. The reliquary and personal cooldown limit rewards; other bosses remain available."
+  "people.legacyoftheforce.hunter.clue": "Victory requires real participation. The reliquary and personal cooldown limit rewards; other bosses remain available.",
+  "quest.legacyoftheforce.path.title": "The traveler’s workbench",
+  "quest.legacyoftheforce.path.origin": "Optional guide from the Ilum echo; freely ordered steps without additional rewards.",
+  "quest.legacyoftheforce.path.clue": "Craft a workshop and terminal, explore Ilum, then return to install kyber. A speeder blueprint remains reusable. Possession or a click does not prove fabrication; unverifiable older history is never invented.",
+  "quest.legacyoftheforce.path.assembled": "Assemble a saber at the workshop using real parts.",
+  "quest.legacyoftheforce.path.mounted": "Install identified kyber in a compatible saber.",
+  "quest.legacyoftheforce.path.force": "Actually move and deposit a permitted block or group using the Force.",
+  "quest.legacyoftheforce.path.speeder": "Fabricate a paid, published and activated speeder from a valid blueprint.",
+  "quest.legacyoftheforce.path.help": "Optional: confirm help for an NPC, earning separate relational reputation."
 }

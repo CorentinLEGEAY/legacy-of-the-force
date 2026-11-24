@@ -45,6 +45,7 @@ public final class SpeederAssemblyService {
         try {
             var port = new NativePort(actor); coordinator.recover(port);
             if(!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor))return Result.UNAVAILABLE;
+            rememberCompleted(actor);
             var quote = AssemblyMaterials.quote(actor, validated);
             if (!quote.valid()) return switch (quote.error()) { case MISSING_MATERIAL -> Result.MISSING; case INVENTORY_TOO_LARGE -> Result.UNAVAILABLE; default -> Result.INVALID; };
             var receipt = actor.getData(SpeederContent.ASSEMBLY_RECEIPT.get()); if (receipt.stamp().isEmpty()) return Result.UNAVAILABLE;
@@ -55,7 +56,7 @@ public final class SpeederAssemblyService {
             port.persist(before);
             var transaction = AssemblyTransaction.prepare(actor.getUUID(), operation, before, after, vehicle.get());
             nextBuild = server.overworld().getGameTime() + SpeederConfig.BUILD_INTERVAL.get();
-            coordinator.execute(port, transaction); return Result.BUILT;
+            coordinator.execute(port, transaction); rememberCompleted(actor); return Result.BUILT;
         } catch (IOException | RuntimeException failure) {
             LegacyOfTheForce.LOGGER.error("Speeder assembly retained for recovery: {}", failure.getMessage());
             try { coordinator.recover(new NativePort(actor)); }
@@ -68,6 +69,25 @@ public final class SpeederAssemblyService {
     public void recover(ServerPlayer actor) throws IOException {
         if (actor.server != server || !server.isSameThread()) throw new IOException("Assembly recovery on wrong server/thread");
         coordinator.recover(new NativePort(actor));
+        if(PlayerInventoryHooks.ready(actor))rememberCompleted(actor);
+    }
+    public boolean completed(ServerPlayer actor)throws IOException {
+        if(actor.server!=server||!server.isSameThread())return false;
+        return coordinator.completed(actor.getUUID(),actor.getData(SpeederContent.ASSEMBLY_RECEIPT.get()));
+    }
+    private void rememberCompleted(ServerPlayer actor)throws IOException {
+        if(!completed(actor)||AdventureMilestones.inspect(actor).contains(AdventureMilestones.Flag.SPEEDER_ASSEMBLED.id()))return;
+        var before=AdventureMilestones.state(actor);var witness=AdventureMilestones.stage(actor,AdventureMilestones.Flag.SPEEDER_ASSEMBLED);
+        if(witness.equals(before))return; // Future optional schema remains inactive.
+        var expected=actor.getInventory().save(new ListTag());
+        try {
+            var saved=players.persist(actor);AdventureMilestones.requireProof(actor,saved,witness);
+            if(!expected.equals(saved.get("Inventory"))||!expected.equals(actor.getInventory().save(new ListTag())))throw new IOException("Completed assembly witness changed inventory");
+        }catch(IOException|RuntimeException uncertain){
+            actor.connection.disconnect(net.minecraft.network.chat.Component.translatable("message.legacyoftheforce.assembly_pending"));
+            throw new IOException("Completed factory witness save uncertain; live aggregate retained",uncertain);
+        }
+        AdventureMilestones.changed(actor);
     }
     private Optional<VehicleState> findSpawn(ServerPlayer actor, BlockPos garage, SpeederBlueprint blueprint, double charge, UUID operation) {
         var level = actor.serverLevel(); var facing = actor.getDirection();

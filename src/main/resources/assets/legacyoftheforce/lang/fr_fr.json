@@ -823,5 +823,13 @@
   "people.legacyoftheforce.hunter.welcome": "Chasseur de primes : « Nous pouvons discuter sans engagement. Vous cherchez un conseil, ou souhaitez-vous aider nos voyageurs ? »",
   "people.legacyoftheforce.hunter.trusted": "Votre aide a été remarquée. Vous êtes libre de suivre nos conseils ou de poursuivre votre propre voie.",
   "people.legacyoftheforce.hunter.cautious": "Nos convictions divergent, mais je vous écouterai. Une aide concrète peut changer nos relations ; vos voyages restent libres.",
-  "people.legacyoftheforce.hunter.clue": "La victoire exige une participation réelle. Le reliquaire et la récupération personnelle limitent les récompenses ; les autres boss restent accessibles."
+  "people.legacyoftheforce.hunter.clue": "La victoire exige une participation réelle. Le reliquaire et la récupération personnelle limitent les récompenses ; les autres boss restent accessibles.",
+  "quest.legacyoftheforce.path.title": "L’établi du voyageur",
+  "quest.legacyoftheforce.path.origin": "Guide facultatif issu de l’écho d’Ilum ; étapes libres, sans récompense supplémentaire.",
+  "quest.legacyoftheforce.path.clue": "Fabriquez un atelier et un terminal, explorez Ilum, puis revenez sertir le cristal. Un plan de speeder reste réutilisable. Une simple possession ou un clic ne prouve pas une fabrication ; les traces anciennes non démontrables ne sont pas inventées.",
+  "quest.legacyoftheforce.path.assembled": "Assembler un sabre à l’atelier, avec ses vrais composants.",
+  "quest.legacyoftheforce.path.mounted": "Sertir un cristal identifié dans un sabre compatible.",
+  "quest.legacyoftheforce.path.force": "Déplacer puis déposer réellement un bloc ou groupe autorisé avec la Force.",
+  "quest.legacyoftheforce.path.speeder": "Fabriquer un speeder payé, publié et activé depuis un plan valide.",
+  "quest.legacyoftheforce.path.help": "Facultatif : confirmer une aide à un PNJ, avec réputation relationnelle distincte."
 }

@@ -26,6 +26,10 @@ public final class CombatHolocronItem extends Item {
             com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Combat teaching save uncertain; native aggregate retained",failure);
             actor.connection.disconnect(Component.translatable("saber.legacyoftheforce.menu_recovery"));return InteractionResultHolder.fail(stack);
         }
+        var id=SaberContent.id("holocron_"+form.key());
+        var receipt=java.util.UUID.nameUUIDFromBytes((actor.getUUID()+":holocron:"+id).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try{net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.legacyoftheforce.core.api.HolocronDiscovered(actor.getUUID(),receipt,id));}
+        catch(RuntimeException failure){com.legacyoftheforce.LegacyOfTheForce.LOGGER.error("Combat holocron consumer failed after durable teaching; reconcile discipline knowledge",failure);}
         actor.containerMenu.broadcastChanges();actor.sendSystemMessage(Component.translatable("saber.legacyoftheforce.form_learned",Component.translatable("saber.legacyoftheforce.form_"+form.key())));
         return InteractionResultHolder.success(stack);
     }

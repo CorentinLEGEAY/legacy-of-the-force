@@ -72,7 +72,7 @@ public final class QuestLifecycle {
     }
     /** Reconcile authoritative possession and current dimension; never accept IDs from a packet. */
     static boolean observe(ServerPlayer actor, net.minecraft.resources.ResourceLocation holocron) {
-        if (!valid(actor)) return false;
+        if (!valid(actor) || !PlayerInventoryHooks.ready(actor)) return false;
         var before = actor.getData(QuestContent.KNOWLEDGE.get()); var view = before.view();
         if (view.isEmpty()) { actor.displayClientMessage(Component.translatable("quest.legacyoftheforce.unavailable"), false); return false; }
         UUID crystal = null;

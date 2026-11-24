@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "family": "engine",
+  "mass": 4.5,
+  "thrust": 48,
+  "lift": 40,
+  "capacity": 0,
+  "stability": 0.12,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:iron_nugget",
+      "count": 18
+    },
+    {
+      "item": "legacyoftheforce:mustafar_slag",
+      "count": 1
+    }
+  ]
+}

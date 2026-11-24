@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:compass"
+    },
+    {
+      "item": "minecraft:paper"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:obsidian"
+    }
+  ],
+  "result": {
+    "id": "legacyoftheforce:mustafar_coordinates",
+    "count": 1
+  }
+}

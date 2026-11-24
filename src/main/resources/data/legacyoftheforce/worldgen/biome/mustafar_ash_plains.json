@@ -1,0 +1,63 @@
+{
+  "has_precipitation": false,
+  "temperature": 2,
+  "downfall": 0,
+  "effects": {
+    "fog_color": 6699824,
+    "sky_color": 5912113,
+    "water_color": 7816502,
+    "water_fog_color": 3481114,
+    "particle": {
+      "probability": 0.004,
+      "options": {
+        "type": "minecraft:ash"
+      }
+    }
+  },
+  "carvers": {
+    "air": [
+      "legacyoftheforce:mustafar_caves"
+    ]
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "legacyoftheforce:mustafar_volcanoes"
+    ]
+  ],
+  "spawn_costs": {},
+  "spawners": {
+    "creature": [
+      {
+        "type": "minecraft:strider",
+        "weight": 4,
+        "minCount": 1,
+        "maxCount": 2
+      }
+    ],
+    "monster": [
+      {
+        "type": "minecraft:magma_cube",
+        "weight": 30,
+        "minCount": 1,
+        "maxCount": 2
+      },
+      {
+        "type": "minecraft:blaze",
+        "weight": 5,
+        "minCount": 1,
+        "maxCount": 1
+      }
+    ],
+    "ambient": []
+  }
+}

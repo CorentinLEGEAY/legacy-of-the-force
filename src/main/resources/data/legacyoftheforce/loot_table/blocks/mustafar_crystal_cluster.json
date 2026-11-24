@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:block",
+  "random_sequence": "legacyoftheforce:blocks/mustafar_crystal_cluster",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "legacyoftheforce:ilum_crystal",
+          "functions": [
+            {
+              "function": "legacyoftheforce:identify_ilum_crystal",
+              "planet": "legacyoftheforce:mustafar"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:location_check",
+          "predicate": {
+            "dimension": "legacyoftheforce:mustafar"
+          }
+        },
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "items": "#minecraft:pickaxes"
+          }
+        },
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "legacyoftheforce:block/mustafar_slag_ore"
+  }
+}

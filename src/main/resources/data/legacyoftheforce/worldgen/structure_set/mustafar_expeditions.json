@@ -1,0 +1,31 @@
+{
+  "structures": [
+    {
+      "structure": "legacyoftheforce:mustafar_crystal_vault",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:mustafar_refinery",
+      "weight": 2
+    },
+    {
+      "structure": "legacyoftheforce:mustafar_ruins",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:mustafar_jedi_temple",
+      "weight": 1
+    },
+    {
+      "structure": "legacyoftheforce:mustafar_sith_sanctum",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 903717,
+    "spacing": 14,
+    "separation": 7,
+    "spread_type": "linear"
+  }
+}

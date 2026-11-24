@@ -1,0 +1,42 @@
+{
+  "type": "legacyoftheforce:mustafar",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "legacyoftheforce:mustafar",
+    "biome_source": {
+      "type": "minecraft:multi_noise",
+      "biomes": [
+        {
+          "biome": "legacyoftheforce:mustafar_lava_rifts",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              -1,
+              0.15
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        },
+        {
+          "biome": "legacyoftheforce:mustafar_ash_plains",
+          "parameters": {
+            "temperature": 0,
+            "humidity": 0,
+            "continentalness": [
+              0.15,
+              1
+            ],
+            "erosion": 0,
+            "depth": 0,
+            "weirdness": 0,
+            "offset": 0
+          }
+        }
+      ]
+    }
+  }
+}

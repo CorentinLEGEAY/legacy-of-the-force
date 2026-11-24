@@ -62,6 +62,20 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
                     planned.set(5, crystal);
                 }
             }
+            if (getBlockState().getBlock() instanceof BossAltarBlock block && block.kind().volcanic()) {
+                planned.set(0, new ItemStack(BossContent.VOLCANIC_RELIC.get()));
+                planned.set(2, new ItemStack(com.legacyoftheforce.content.PlanetaryMaterials.item("mustafar_slag"), BossConfig.VOLCANIC_MATERIALS.get()));
+                var design = com.legacyoftheforce.core.api.SaberDesigns.create("crossguard");
+                if (design.isEmpty()) throw new IllegalStateException("Missing volcanic design reward");
+                planned.set(3, design);
+                planned.set(4, new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.parse("legacyoftheforce:dagobah_coordinates"))));
+                if (Math.floorMod(event.hashCode(), 100) < BossConfig.VOLCANIC_CRYSTAL_CHANCE.get()) {
+                    var identity = UUID.nameUUIDFromBytes(("expedition-crystal/" + block.kind().dimension() + "/" + event).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    var crystal = com.legacyoftheforce.core.api.PlanetaryCrystals.create(block.kind().dimension(), identity);
+                    if (crystal.isEmpty()) throw new IllegalStateException("Missing volcanic crystal reward");
+                    planned.set(5, crystal);
+                }
+            }
         }
         items = planned; lootVictory = event; setChanged();
     }

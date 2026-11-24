@@ -1,0 +1,169 @@
+{
+  "textures": {
+    "body": "legacyoftheforce:block/mustafar_slag_ore",
+    "glyph": "legacyoftheforce:item/navigation/mustafar",
+    "particle": "legacyoftheforce:block/mustafar_slag_ore"
+  },
+  "elements": [
+    {
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        4,
+        15
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        3,
+        4,
+        3
+      ],
+      "to": [
+        13,
+        10,
+        13
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        2,
+        10,
+        2
+      ],
+      "to": [
+        14,
+        12,
+        14
+      ],
+      "faces": {
+        "up": {
+          "texture": "#glyph"
+        },
+        "down": {
+          "texture": "#glyph"
+        },
+        "north": {
+          "texture": "#glyph"
+        },
+        "south": {
+          "texture": "#glyph"
+        },
+        "east": {
+          "texture": "#glyph"
+        },
+        "west": {
+          "texture": "#glyph"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        12,
+        5
+      ],
+      "to": [
+        6,
+        14,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    },
+    {
+      "from": [
+        10,
+        12,
+        5
+      ],
+      "to": [
+        12,
+        14,
+        11
+      ],
+      "faces": {
+        "up": {
+          "texture": "#body"
+        },
+        "down": {
+          "texture": "#body"
+        },
+        "north": {
+          "texture": "#body"
+        },
+        "south": {
+          "texture": "#body"
+        },
+        "east": {
+          "texture": "#body"
+        },
+        "west": {
+          "texture": "#body"
+        }
+      }
+    }
+  ]
+}

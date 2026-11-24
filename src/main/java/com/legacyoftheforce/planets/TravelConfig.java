@@ -8,6 +8,8 @@ public final class TravelConfig {
     public static final ModConfigSpec.BooleanValue REQUIRE_PORTABLE;
     public static final ModConfigSpec.BooleanValue DESERT_HEAT, DESERT_DUST;
     public static final ModConfigSpec.IntValue HEAT_EXPOSURE, HEAT_DURATION;
+    public static final ModConfigSpec.BooleanValue VOLCANIC_HEAT;
+    public static final ModConfigSpec.IntValue VOLCANIC_EXPOSURE, VOLCANIC_DURATION;
     static {
         var builder = new ModConfigSpec.Builder();
         OUTBOUND_CELLS = builder.defineInRange("outboundEnergyCells", 1, 1, 32);
@@ -21,6 +23,9 @@ public final class TravelConfig {
         DESERT_DUST = builder.define("environment.tatooine.dustEnabled", true);
         HEAT_EXPOSURE = builder.defineInRange("environment.tatooine.exposureTicks", 600, 100, 2400);
         HEAT_DURATION = builder.defineInRange("environment.tatooine.weaknessTicks", 60, 20, 100);
+        VOLCANIC_HEAT = builder.define("environment.mustafar.heatEnabled", true);
+        VOLCANIC_EXPOSURE = builder.defineInRange("environment.mustafar.exposureTicks", 200, 100, 1200);
+        VOLCANIC_DURATION = builder.defineInRange("environment.mustafar.weaknessTicks", 60, 20, 100);
         SPEC = builder.build();
     }
     private TravelConfig() {}

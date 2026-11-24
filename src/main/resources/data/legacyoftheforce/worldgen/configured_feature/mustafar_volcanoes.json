@@ -1,0 +1,8 @@
+{
+  "type": "legacyoftheforce:mustafar_landscape",
+  "config": {
+    "volcano_chance": 12,
+    "minimum_height": 8,
+    "maximum_height": 16
+  }
+}

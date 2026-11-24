@@ -1,0 +1,11 @@
+{
+  "type": "legacyoftheforce:mustafar_site",
+  "site_kind": 4,
+  "biomes": [
+    "legacyoftheforce:mustafar_lava_rifts",
+    "legacyoftheforce:mustafar_ash_plains"
+  ],
+  "spawn_overrides": {},
+  "step": "surface_structures",
+  "terrain_adaptation": "none"
+}

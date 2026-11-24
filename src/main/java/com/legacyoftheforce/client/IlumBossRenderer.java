@@ -14,7 +14,22 @@ public final class IlumBossRenderer extends MobRenderer<IlumBossEntity, IlumBoss
     private static final ResourceLocation MATERIAL = ResourceLocation.withDefaultNamespace("textures/block/white_concrete.png");
     private final BossKind kind;
     public IlumBossRenderer(EntityRendererProvider.Context context, BossKind kind) { super(context, new Model(kind), .45f); this.kind = kind; }
-    @Override public ResourceLocation getTextureLocation(IlumBossEntity boss) { return kind.desert() || kind.forest() ? ResourceLocation.fromNamespaceAndPath("legacyoftheforce", "textures/entity/" + kind.path + ".png") : MATERIAL; }
+    @Override public void render(IlumBossEntity boss, float yaw, float partial, PoseStack poses, net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
+        super.render(boss, yaw, partial, poses, buffers, light); if (kind.volcanic()) VolcanicHeatRenderer.render(boss, partial, poses, buffers);
+    }
+    @Override public boolean shouldRender(IlumBossEntity boss, net.minecraft.client.renderer.culling.Frustum frustum, double x, double y, double z) {
+        if (super.shouldRender(boss, frustum, x, y, z)) return true;
+        if (!kind.volcanic() || boss.distanceToSqr(x, y, z) > 16384) return false;
+        var zones = boss.heatProjection().getList("zones", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        if (zones.size() > 2) return false;
+        for (var raw : zones) {
+            var zone = (net.minecraft.nbt.CompoundTag)raw; double r = zone.getDouble("radius");
+            if (Double.isFinite(r) && r >= 1 && r <= 12 && frustum.isVisible(new net.minecraft.world.phys.AABB(zone.getDouble("x") - r, zone.getDouble("y"), zone.getDouble("z") - r,
+                    zone.getDouble("x") + r, zone.getDouble("y") + .2, zone.getDouble("z") + r))) return true;
+        }
+        return false;
+    }
+    @Override public ResourceLocation getTextureLocation(IlumBossEntity boss) { return kind.desert() || kind.forest() || kind.volcanic() ? ResourceLocation.fromNamespaceAndPath("legacyoftheforce", "textures/entity/" + kind.path + ".png") : MATERIAL; }
     public static final class Model extends HierarchicalModel<IlumBossEntity> {
         private final ModelPart root, head, arm, otherArm, leftLeg, rightLeg, blade, visor;
         private final BossKind kind;
@@ -35,10 +50,16 @@ public final class IlumBossRenderer extends MobRenderer<IlumBossEntity, IlumBoss
             } else if (kind == BossKind.NIGHT_ASSASSIN) {
                 body.addBox(-4.5f,0,-3,9,10,1).addBox(-4,8,-2.7f,8,2,5.4f).addBox(-4,9,2,8,8,1.5f).addBox(-6,-1,-2.5f,3,4,5);
                 headPart.addOrReplaceChild("cowl", CubeListBuilder.create().texOffs(0,0).addBox(-4.5f,-8.5f,-4.5f,9,1,9).addBox(-4.5f,-7.5f,3,9,8,2).addBox(-3,-2,-4.5f,6,2,1), PartPose.ZERO);
+            } else if (kind == BossKind.RUINS_PROTECTOR) {
+                body.addBox(-6,-1,-3.5f,12,5,7).addBox(-5,9,-3,10,5,6).addBox(-4,3,-3,8,6,1.5f);
+                headPart.addOrReplaceChild("helm", CubeListBuilder.create().texOffs(0,0).addBox(-4.5f,-9,-4.5f,9,2,9).addBox(-5,-7,-3,1,6,7).addBox(4,-7,-3,1,6,7), PartPose.ZERO);
+            } else if (kind == BossKind.FLAME_LORD) {
+                body.addBox(-5,-1,1,10,17,2).addBox(-5,10,-3,10,7,6).addBox(-5,0,-3,10,3,1);
+                headPart.addOrReplaceChild("cinder_mask", CubeListBuilder.create().texOffs(0,0).addBox(-3,-7,-5,6,6,1).addBox(-4,-11,-2,2,4,3).addBox(2,-11,-2,2,4,3), PartPose.ZERO);
             } else body.addBox(-5,9,-3,10,7,6).addBox(-5,-1,1,10,14,2);
             rootPart.addOrReplaceChild("body", body, PartPose.ZERO);
             if (kind == BossKind.GUARDIAN) headPart.addOrReplaceChild("hood", CubeListBuilder.create().texOffs(0,0).addBox(-4.5f,-8.5f,-3,9,1,8), PartPose.ZERO);
-            else if (!kind.desert() && !kind.forest()) headPart.addOrReplaceChild("crest", CubeListBuilder.create().texOffs(0,0).addBox(-1,-10,-2,2,3,5), PartPose.ZERO);
+            else if (!kind.desert() && !kind.forest() && !kind.volcanic()) headPart.addOrReplaceChild("crest", CubeListBuilder.create().texOffs(0,0).addBox(-1,-10,-2,2,3,5), PartPose.ZERO);
             var swordArm = rootPart.addOrReplaceChild("right_arm", CubeListBuilder.create().texOffs(0,0).addBox(-3,-2,-2,4,12,4), PartPose.offset(-5,2,0));
             swordArm.addOrReplaceChild("blade", CubeListBuilder.create().texOffs(0,0).addBox(-1.4f,8,-17,.8f,.8f,17), PartPose.ZERO);
             rootPart.addOrReplaceChild("left_arm", CubeListBuilder.create().texOffs(0,0).addBox(-1,-2,-2,4,12,4), PartPose.offset(5,2,0));
@@ -59,12 +80,14 @@ public final class IlumBossRenderer extends MobRenderer<IlumBossEntity, IlumBoss
             if (entity.attack() == BossAttack.RENEWAL || entity.attack() == BossAttack.ROOT_SNARE || entity.attack() == BossAttack.VERDANT_GUARD) otherArm.xRot = -1.4f;
             if (entity.attack() == BossAttack.AMBUSH || entity.attack() == BossAttack.SHADOW_DASH) { arm.zRot = -.6f; otherArm.zRot = .4f; }
             else otherArm.zRot = 0;
+            if (entity.attack() == BossAttack.FIRE_BOLT || entity.attack() == BossAttack.ERUPTION || entity.attack() == BossAttack.TERRAIN_SEAL) otherArm.xRot = -1.4f;
+            if (entity.attack() == BossAttack.BASTION_GUARD) { arm.zRot = -.8f; otherArm.zRot = .8f; }
         }
         @Override public void renderToBuffer(PoseStack poses, VertexConsumer vertices, int light, int overlay, int color) {
             blade.visible = false; visor.visible = false;
-            root.render(poses, vertices, light, overlay, kind.desert() || kind.forest() ? 0xffffffff : kind == BossKind.GUARDIAN ? 0xffb0c9d2 : 0xff42365c);
+            root.render(poses, vertices, light, overlay, kind.desert() || kind.forest() || kind.volcanic() ? 0xffffffff : kind == BossKind.GUARDIAN ? 0xffb0c9d2 : 0xff42365c);
             visor.visible = true; poses.pushPose(); root.translateAndRotate(poses); head.translateAndRotate(poses); visor.render(poses, vertices, light, overlay, 0xff172432); poses.popPose();
-            blade.visible = true; poses.pushPose(); root.translateAndRotate(poses); arm.translateAndRotate(poses); blade.render(poses, vertices, 15728880, overlay, kind == BossKind.NATURE_KEEPER ? 0xff63e589 : kind == BossKind.WANDERING_KNIGHT ? 0xffffd257 : kind == BossKind.GUARDIAN ? 0xff54dfff : 0xffff5068); poses.popPose();
+            blade.visible = true; poses.pushPose(); root.translateAndRotate(poses); arm.translateAndRotate(poses); blade.render(poses, vertices, 15728880, overlay, kind == BossKind.RUINS_PROTECTOR ? 0xffffa451 : kind == BossKind.NATURE_KEEPER ? 0xff63e589 : kind == BossKind.WANDERING_KNIGHT ? 0xffffd257 : kind == BossKind.GUARDIAN ? 0xff54dfff : 0xffff5068); poses.popPose();
         }
     }
 }

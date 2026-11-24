@@ -17,6 +17,8 @@ public final class BossConfig {
     public static final ModConfigSpec.IntValue DESERT_CRYSTAL_CHANCE;
     public static final ModConfigSpec.DoubleValue NATURE_HEALTH, ASSASSIN_HEALTH, FOREST_DAMAGE, FOREST_STEP, FOREST_HEAL, FOREST_WARD;
     public static final ModConfigSpec.IntValue FOREST_XP, FOREST_MATERIALS, FOREST_CRYSTAL_CHANCE, ROOT_TICKS, ROOT_RECOVERY, ILLUSION_TICKS, FOREST_WARD_TICKS;
+    public static final ModConfigSpec.DoubleValue PROTECTOR_HEALTH, FLAME_HEALTH, VOLCANIC_DAMAGE, VOLCANIC_STEP, BASTION_FACTOR, EMBER_SPEED;
+    public static final ModConfigSpec.IntValue VOLCANIC_XP, VOLCANIC_MATERIALS, VOLCANIC_CRYSTAL_CHANCE, VOLCANIC_COUNTER, HEAT_ZONE_TICKS, HEAT_ZONE_INTERVAL, EMBER_BURN_SECONDS, BASTION_TICKS;
     private record AttackValues(ModConfigSpec.IntValue windup, ModConfigSpec.IntValue cooldown, ModConfigSpec.DoubleValue range, ModConfigSpec.DoubleValue damage, ModConfigSpec.IntValue energy) {}
     private static final java.util.Map<BossAttack, AttackValues> ATTACKS = new java.util.EnumMap<>(BossAttack.class);
     static {
@@ -58,6 +60,20 @@ public final class BossConfig {
         ROOT_TICKS = b.defineInRange("endor.rootSlowTicks", 24, 10, 40);
         ROOT_RECOVERY = b.defineInRange("endor.rootRecoveryTicks", 160, 80, 400);
         ILLUSION_TICKS = b.defineInRange("endor.illusionTicks", 80, 20, 120);
+        PROTECTOR_HEALTH = b.defineInRange("mustafar.protectorHealth", 300d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        FLAME_HEALTH = b.defineInRange("mustafar.flameLordHealth", 320d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH);
+        VOLCANIC_DAMAGE = b.defineInRange("mustafar.baseDamage", 6d, 1, 40);
+        VOLCANIC_STEP = b.defineInRange("mustafar.maximumStepDistance", 2.4d, .5, 3);
+        BASTION_FACTOR = b.defineInRange("mustafar.bastionDamageMultiplier", .3d, .2, .8);
+        BASTION_TICKS = b.defineInRange("mustafar.bastionTicks", 50, 20, 80);
+        EMBER_SPEED = b.defineInRange("mustafar.emberSpeed", .32d, .12, .5);
+        EMBER_BURN_SECONDS = b.defineInRange("mustafar.emberBurnSeconds", 1, 0, 2);
+        VOLCANIC_XP = b.defineInRange("mustafar.rewardXp", 1500, 1, 100000);
+        VOLCANIC_MATERIALS = b.defineInRange("mustafar.rewardSlag", 3, 1, 16);
+        VOLCANIC_CRYSTAL_CHANCE = b.defineInRange("mustafar.expeditionCrystalChancePercent", 25, 0, 100);
+        VOLCANIC_COUNTER = b.defineInRange("mustafar.counterWindowTicks", 140, 30, 200);
+        HEAT_ZONE_TICKS = b.defineInRange("mustafar.heatZoneTicks", 60, 20, 100);
+        HEAT_ZONE_INTERVAL = b.defineInRange("mustafar.heatPulseTicks", 20, 15, 40);
         DESERT_STEP = b.defineInRange("tatooine.stepDistance", 1.6d, .4, 2.5);
         SAND_PUSH = b.defineInRange("tatooine.pushSpeed", .24d, .05, .4);
         DESERT_COUNTER_WINDOW = b.defineInRange("tatooine.counterWindowTicks", 100, 20, 200);
@@ -82,13 +98,13 @@ public final class BossConfig {
     }
     static int windup(BossAttack attack) { return Math.max(WINDUP.get(), ATTACKS.get(attack).windup.get()); }
     static double health(BossKind kind, int participants) {
-        if (!kind.desert() && !kind.forest()) return health(participants);
-        double base = switch (kind) { case WANDERING_KNIGHT -> KNIGHT_HEALTH.get(); case DESERT_EXILE -> EXILE_HEALTH.get(); case NATURE_KEEPER -> NATURE_HEALTH.get(); default -> ASSASSIN_HEALTH.get(); }, extra = GROUP_HEALTH.get();
+        if (!kind.desert() && !kind.forest() && !kind.volcanic()) return health(participants);
+        double base = switch (kind) { case WANDERING_KNIGHT -> KNIGHT_HEALTH.get(); case DESERT_EXILE -> EXILE_HEALTH.get(); case NATURE_KEEPER -> NATURE_HEALTH.get(); case NIGHT_ASSASSIN -> ASSASSIN_HEALTH.get(); case RUINS_PROTECTOR -> PROTECTOR_HEALTH.get(); default -> FLAME_HEALTH.get(); }, extra = GROUP_HEALTH.get();
         return BossHealthRules.scaled(Double.isFinite(base) ? Math.clamp(base, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH) : 250,
                 Double.isFinite(extra) ? Math.clamp(extra, 0, 1) : .35, participants);
     }
-    static int xp(BossKind kind) { return kind.forest() ? FOREST_XP.get() : kind.desert() ? DESERT_XP.get() : XP.get(); }
-    static float damage(BossKind kind, BossAttack attack) { return kind.forest() ? (float)(FOREST_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : kind.desert() ? (float)(DESERT_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : damage(attack); }
+    static int xp(BossKind kind) { return kind.volcanic() ? VOLCANIC_XP.get() : kind.forest() ? FOREST_XP.get() : kind.desert() ? DESERT_XP.get() : XP.get(); }
+    static float damage(BossKind kind, BossAttack attack) { return kind.volcanic() ? (float)(VOLCANIC_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : kind.forest() ? (float)(FOREST_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : kind.desert() ? (float)(DESERT_DAMAGE.get() * ATTACKS.get(attack).damage.get()) : damage(attack); }
     static int cooldown(BossAttack attack) { return ATTACKS.get(attack).cooldown.get(); }
     static double range(BossAttack attack) { return ATTACKS.get(attack).range.get(); }
     static float damage(BossAttack attack) { return (float)(DAMAGE.get() * ATTACKS.get(attack).damage.get()); }

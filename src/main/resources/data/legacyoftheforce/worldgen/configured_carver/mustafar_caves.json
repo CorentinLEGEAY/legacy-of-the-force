@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:cave",
+  "config": {
+    "probability": 0.12,
+    "y": {
+      "type": "minecraft:uniform",
+      "min_inclusive": {
+        "absolute": -32
+      },
+      "max_inclusive": {
+        "absolute": 96
+      }
+    },
+    "yScale": 0.6,
+    "lava_level": {
+      "above_bottom": 8
+    },
+    "replaceable": "#legacyoftheforce:mustafar_carver_replaceables",
+    "horizontal_radius_multiplier": 1.2,
+    "vertical_radius_multiplier": 0.9,
+    "floor_level": -0.7
+  }
+}

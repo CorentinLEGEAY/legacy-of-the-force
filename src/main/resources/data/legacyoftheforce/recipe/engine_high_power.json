@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SIS",
+    "CEC",
+    "SIS"
+  ],
+  "key": {
+    "S": {
+      "item": "legacyoftheforce:mustafar_slag"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "E": {
+      "item": "legacyoftheforce:engine_standard"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:engine_high_power",
+    "count": 1
+  }
+}

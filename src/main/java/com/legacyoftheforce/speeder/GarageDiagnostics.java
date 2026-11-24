@@ -10,8 +10,9 @@ import net.minecraft.world.phys.AABB;
 /** Read-only inspection of a loaded, owned instance. Selection never loads or creates an entity. */
 public final class GarageDiagnostics {
     public enum Status { NONE, READY, OCCUPIED, UNSUPPORTED, DENIED, LOST }
-    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules, int primary, int secondary,int accent,int lighting,int pattern) {
-        public Report(Status status,UUID vehicle,double energy,double capacity,int integrity,int damaged,int modules,int primary,int secondary){this(status,vehicle,energy,capacity,integrity,damaged,modules,primary,secondary,SpeederBlueprint.DEFAULT_ACCENT,SpeederBlueprint.DEFAULT_LIGHTING,0);}
+    public record Report(Status status, UUID vehicle, double energy, double capacity, int integrity, int damaged, int modules, int primary, int secondary,int accent,int lighting,int pattern,double turnResponse,double thrustTrim) {
+        public Report(Status status,UUID vehicle,double energy,double capacity,int integrity,int damaged,int modules,int primary,int secondary){this(status,vehicle,energy,capacity,integrity,damaged,modules,primary,secondary,SpeederBlueprint.DEFAULT_ACCENT,SpeederBlueprint.DEFAULT_LIGHTING,0,1,0);}
+        public Report(Status status,UUID vehicle,double energy,double capacity,int integrity,int damaged,int modules,int primary,int secondary,int accent,int lighting,int pattern){this(status,vehicle,energy,capacity,integrity,damaged,modules,primary,secondary,accent,lighting,pattern,1,0);}
         static Report unavailable(Status status) { return new Report(status, null, 0, 0, 0, 0, 0, 0, 0); }
     }
     public static Report inspect(ServerPlayer actor, BlockPos garage, UUID selected, ProtectedWorldService protection) {
@@ -37,9 +38,12 @@ public final class GarageDiagnostics {
         int integrity = state.health().stream().mapToInt(Integer::intValue).sum() / state.health().size();
         int damaged = (int)state.health().stream().filter(health -> health < 100).count();
         var performance = SpeederPerformance.inspect(state, SpeederCatalog.definitions()).orElseThrow();
+        boolean pilot=vehicle.getPassengers().contains(actor);SpeederHandling.Analysis handling;
+        try{handling=SpeederHandling.inspect(state,SpeederCatalog.definitions(),pilot,vehicle.getPassengers().size()-(pilot?1:0),SpeederConfig.handling());}
+        catch(IllegalArgumentException invalid){return Report.unavailable(Status.UNSUPPORTED);}
         return new Report(vehicle.getPassengers().isEmpty() ? Status.READY : Status.OCCUPIED, vehicle.getUUID(),
                 state.motion().energy(), performance.stats().capacity(), integrity, damaged, state.health().size(),
-                state.blueprint().plan().orElseThrow().primary(), state.blueprint().plan().orElseThrow().secondary(),state.blueprint().plan().orElseThrow().accent(),state.blueprint().plan().orElseThrow().lighting(),state.blueprint().plan().orElseThrow().pattern());
+                state.blueprint().plan().orElseThrow().primary(), state.blueprint().plan().orElseThrow().secondary(),state.blueprint().plan().orElseThrow().accent(),state.blueprint().plan().orElseThrow().lighting(),state.blueprint().plan().orElseThrow().pattern(),handling.response(),handling.thrustTrim());
     }
     private GarageDiagnostics() {}
 }

@@ -842,5 +842,9 @@
   "speeder.legacyoftheforce.pattern_1": "Twin stripes",
   "speeder.legacyoftheforce.pattern_2": "Chevrons",
   "speeder.legacyoftheforce.pattern_3": "Circuit",
-  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · consumed dye: %2$s (selected in a color zone)."
+  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · consumed dye: %2$s (selected in a color zone).",
+  "speeder.legacyoftheforce.handling": "Steering %1$s%% · trim %2$s%%",
+  "speeder.legacyoftheforce.handling_response": "Steer %s%%",
+  "speeder.legacyoftheforce.handling_trim": "Trim %s%%",
+  "speeder.legacyoftheforce.handling_help": "Spread-out mass slows steering; bring heavy modules closer. Off-center thrust creates a slight turning tendency: balance thrusters around the mass center or add stabilizers. Cargo and riders count. Steering softens at higher speed. These values come from the server; paint has no effect."
 }

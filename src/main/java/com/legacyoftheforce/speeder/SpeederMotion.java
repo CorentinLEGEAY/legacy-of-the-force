@@ -55,6 +55,11 @@ public final class SpeederMotion {
     }
     public static Step tick(State previous,Input input,BlueprintValidator.Stats stats,OptionalDouble groundClearance,
             Settings settings,double engineFactor,double environmentSpeed,double environmentEnergy) {
+        return tick(previous,input,stats,groundClearance,settings,engineFactor,environmentSpeed,environmentEnergy,1,0,0);
+    }
+    public static Step tick(State previous,Input input,BlueprintValidator.Stats stats,OptionalDouble groundClearance,Settings settings,
+            double engineFactor,double environmentSpeed,double environmentEnergy,double turnResponse,double thrustTrim,double speedSteeringLoss){
+        range(turnResponse,.5,1);range(thrustTrim,-.35,.35);range(speedSteeringLoss,0,.5);
         range(environmentSpeed,.8,1);range(environmentEnergy,1,1.25);
         range(engineFactor, 0, 1);
         range(stats.mass(), .1, 12_800); range(stats.thrust(), 0, 128_000);
@@ -78,7 +83,9 @@ public final class SpeederMotion {
         double residual = Math.abs(previous.speed()) * settings.brakingDrag();
         speed = Math.clamp(speed, -Math.min(settings.reverseSpeed(), Math.max(settings.reverseSpeed() * engineFactor * environmentSpeed, residual)),
                 Math.min(settings.forwardSpeed(), Math.max(settings.forwardSpeed() * engineFactor * environmentSpeed, residual)));
-        double yaw = wrap(previous.yaw() - input.steering() * settings.turnDegrees() * stats.stability() * power);
+        double speedRatio=Math.clamp(Math.abs(speed)/(speed<0?settings.reverseSpeed():settings.forwardSpeed()),0,1);
+        double authority=settings.turnDegrees()*stats.stability()*turnResponse*(1-speedSteeringLoss*speedRatio)*power;
+        double yaw = wrap(previous.yaw() - input.steering()*authority + thrustTrim*input.throttle()*authority);
 
         double vertical = previous.verticalSpeed() - settings.gravity();
         if (power > 0 && groundClearance.isPresent()) {

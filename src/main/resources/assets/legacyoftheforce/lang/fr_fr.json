@@ -842,5 +842,9 @@
   "speeder.legacyoftheforce.pattern_1": "Doubles bandes",
   "speeder.legacyoftheforce.pattern_2": "Chevrons",
   "speeder.legacyoftheforce.pattern_3": "Circuit",
-  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · teinture consommée : %2$s (choisie dans une zone couleur)."
+  "speeder.legacyoftheforce.pattern_cost_hint": "%1$s · teinture consommée : %2$s (choisie dans une zone couleur).",
+  "speeder.legacyoftheforce.handling": "Direction %1$s%% · biais %2$s%%",
+  "speeder.legacyoftheforce.handling_response": "Dir. %s%%",
+  "speeder.legacyoftheforce.handling_trim": "Biais %s%%",
+  "speeder.legacyoftheforce.handling_help": "Une masse dispersée ralentit la direction ; rapprochez les pièces lourdes. Une poussée décentrée crée une légère tendance à tourner : équilibrez les propulseurs autour du centre de masse ou ajoutez des stabilisateurs. La cargaison et les occupants comptent. À grande vitesse, la direction s’adoucit. Ces valeurs viennent du serveur, sans effet des peintures."
 }

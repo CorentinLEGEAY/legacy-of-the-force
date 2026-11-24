@@ -37,6 +37,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
     public boolean forceControlled() { return lift != null; }
     private long lastInput = Long.MIN_VALUE;
     private long nextDamage;
+    private boolean handlingWarning;
     private com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Effect environment = com.legacyoftheforce.core.api.VehicleEnvironmentHooks.Effect.CLEAR;
     private long nextEnvironmentSample, nextEnvironmentNotice;
     private UUID environmentPilot;
@@ -308,7 +309,13 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
                 pilot.displayClientMessage(Component.translatable("speeder.legacyoftheforce.environment."+environment.kind().name().toLowerCase(Locale.ROOT),Math.round((1-environment.speed())*100),Math.round((environment.energy()-1)*100)),true);
             environmentPilot=pilot.getUUID();announcedEnvironment=environment.kind();nextEnvironmentNotice=now+200;
         }
-        var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor(),environment.speed(),environment.energy());
+        SpeederHandling.Analysis handling;
+        try{handling=SpeederHandling.inspect(snapshot.get(),SpeederCatalog.definitions(),pilot!=null,getPassengers().size()-(pilot!=null?1:0),SpeederConfig.handling());handlingWarning=false;}
+        catch(IllegalArgumentException invalid){
+            if(!handlingWarning)com.legacyoftheforce.LegacyOfTheForce.LOGGER.warn("Speeder handling unavailable for {}; preserving instance and ejecting riders",getUUID());
+            handlingWarning=true;ejectPassengers();setDeltaMovement(Vec3.ZERO);return;
+        }
+        var step = SpeederMotion.tick(snapshot.get().motion(), command, loadedStats, clearance(), SpeederConfig.motion(), performance.engineFactor(),environment.speed(),environment.energy(),handling.response(),handling.thrustTrim(),SpeederConfig.SPEED_STEERING_LOSS.get());
         double dx = step.dx(), dy = step.dy(), dz = step.dz();
         var target = getBoundingBox().expandTowards(dx, dy, dz);
         for(var rider:getPassengers()) target=target.minmax(rider.getBoundingBox().expandTowards(dx,dy,dz));

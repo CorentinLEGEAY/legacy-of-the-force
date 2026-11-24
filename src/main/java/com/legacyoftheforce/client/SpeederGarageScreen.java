@@ -131,6 +131,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
                 graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.instance", menu.inspectedVehicle().toString().substring(0, 8)), 8, 42, 0xc9f5ff, false);
                 graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.charge", String.format(Locale.ROOT, "%.1f", menu.instanceEnergy()), String.format(Locale.ROOT, "%.1f", menu.instanceCapacity())), 8, 58, 0xc9f5ff, false);
                 graphics.drawString(font, Component.translatable("speeder.legacyoftheforce.integrity", menu.integrity(), menu.damaged(), menu.modules()), 8, 74, 0xc9f5ff, false);
+                graphics.drawString(font,Component.translatable("speeder.legacyoftheforce.handling",Math.round(menu.handlingResponse()*100),String.format(Locale.ROOT,"%+.1f",menu.handlingTrim()*100)),8,90,0xb9dfb4,false);
             }
             var result = Component.translatable("speeder.legacyoftheforce.recharge_" + menu.rechargeStatus().name().toLowerCase(Locale.ROOT));
             graphics.drawString(font, font.plainSubstrByWidth(result.getString(), 240), 8, 114, 0xffd085, false);
@@ -138,9 +139,16 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         }
         var stats = Component.translatable("speeder.legacyoftheforce.stats", String.format(Locale.ROOT, "%.1f", menu.mass()), String.format(Locale.ROOT, "%.1f", menu.thrust()));
         graphics.drawString(font, font.plainSubstrByWidth(stats.getString(), 140), 8, 106, 0xc9f5ff, false);
+        graphics.drawString(font,Component.translatable("speeder.legacyoftheforce.handling_response",Math.round(menu.handlingResponse()*100)),148,106,0xb9dfb4,false);
+        graphics.drawString(font,Component.translatable("speeder.legacyoftheforce.handling_trim",String.format(Locale.ROOT,"%+.1f",menu.handlingTrim()*100)),148,117,0xb9dfb4,false);
         String key = menu.status() != SpeederGarageMenu.Status.EDITING ? menu.status().name().toLowerCase(Locale.ROOT) : "error_" + menu.error().name().toLowerCase(Locale.ROOT);
         graphics.drawString(font, font.plainSubstrByWidth(Component.translatable("speeder.legacyoftheforce." + key).getString(), 140), 8, 117, 0xffd085, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xd5e9e9, false);
+    }
+    private void handlingTooltip(GuiGraphics g,int mouseX,int mouseY){
+        int x=mouseX-leftPos,y=mouseY-topPos;
+        if(menu.diagnostic()?x>=8&&x<248&&y>=88&&y<102:x>=148&&x<252&&y>=104&&y<130)
+            g.renderTooltip(font,font.split(Component.translatable("speeder.legacyoftheforce.handling_help"),230),mouseX,mouseY);
     }
     private static int contrast(int rgb) {
         int brightness = ((rgb >>> 16) & 255) * 299 + ((rgb >>> 8) & 255) * 587 + (rgb & 255) * 114;
@@ -148,7 +156,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        if (menu.diagnostic()) { renderTooltip(graphics, mouseX, mouseY); return; }
+        if (menu.diagnostic()) { renderTooltip(graphics, mouseX, mouseY);handlingTooltip(graphics,mouseX,mouseY); return; }
         int step=cellStep();
         for (int z = 0; z < menu.gridDepth(); z++) for (int x = 0; x < menu.gridWidth(); x++) {
             int part = menu.gridModuleAt(x,layer,z);
@@ -161,6 +169,7 @@ public final class SpeederGarageScreen extends AbstractContainerScreen<SpeederGa
         int selectedRow = menu.selected() == SpeederContent.PART_NAMES.size() ? 4 : menu.selected() - partPage * 4;
         if (selectedRow >= 0 && selectedRow < 5) graphics.fill(leftPos + 150, topPos + 21 + selectedRow * 18, leftPos + 153, topPos + 35 + selectedRow * 18, 0xff4ae0dd);
         renderTooltip(graphics, mouseX, mouseY);
+        handlingTooltip(graphics,mouseX,mouseY);
         if (mouseX >= leftPos + 8 && mouseX < leftPos + 168 && mouseY >= topPos + 104 && mouseY < topPos + 116)
             graphics.renderTooltip(font, List.of(Component.translatable("speeder.legacyoftheforce.power", String.format(Locale.ROOT, "%.1f", menu.lift()), String.format(Locale.ROOT, "%.0f", menu.capacity())),
                     Component.translatable("speeder.legacyoftheforce.stability", String.format(Locale.ROOT, "%.0f%%", menu.stability() * 100)),

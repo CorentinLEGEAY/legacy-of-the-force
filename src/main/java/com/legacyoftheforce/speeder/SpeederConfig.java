@@ -4,6 +4,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class SpeederConfig {
     public static final ModConfigSpec SPEC;
+    public static final ModConfigSpec.DoubleValue INERTIA_PENALTY,REFERENCE_RADIUS,MINIMUM_RESPONSE,MAXIMUM_TRIM,STABILIZER_DAMPING,SPEED_STEERING_LOSS;
     public static final ModConfigSpec.DoubleValue ARMOR_CAP;
     public static final ModConfigSpec.DoubleValue LIGHT_CLASS_MASS, UTILITY_CLASS_MASS;
     public static final ModConfigSpec.IntValue CARGO_MAX_SLOTS,CARGO_INTERVAL;
@@ -65,6 +66,13 @@ public final class SpeederConfig {
         STEERING_ENERGY = builder.defineInRange("steeringEnergyPerTick", motion.steeringEnergy(), 0, 10);
         MASS_ENERGY = builder.defineInRange("energyPerMass", motion.massEnergy(), 0, 1);
         builder.pop();
+        var handling=SpeederHandling.Settings.defaults();
+        INERTIA_PENALTY=builder.defineInRange("handling.inertiaPenalty",handling.inertiaPenalty(),0,1);
+        REFERENCE_RADIUS=builder.defineInRange("handling.referenceRadiusSquared",handling.referenceRadiusSquared(),0,4);
+        MINIMUM_RESPONSE=builder.defineInRange("handling.minimumResponse",handling.minimumResponse(),.5,1);
+        MAXIMUM_TRIM=builder.defineInRange("handling.maximumThrustTrimFraction",handling.maximumTrim(),0,.35);
+        STABILIZER_DAMPING=builder.defineInRange("handling.stabilizerDamping",handling.stabilizerDamping(),0,1);
+        SPEED_STEERING_LOSS=builder.defineInRange("handling.maximumSpeedSteeringLoss",.25,0,.5);
         SPEC = builder.build();
     }
     public static BlueprintValidator.Limits limits() { return new BlueprintValidator.Limits(12, 7, 5, 128, MAX_MASS.get(), LIFT_RATIO.get(), STABILITY.get()); }
@@ -74,5 +82,6 @@ public final class SpeederConfig {
                 Math.min(BRAKING_DRAG.get(), DRAG.get()), HOVER_HEIGHT.get(), HOVER_GAIN.get(), VERTICAL_DAMPING.get(),
                 VERTICAL_SPEED.get(), GRAVITY.get(), IDLE_ENERGY.get(), THRUST_ENERGY.get(), STEERING_ENERGY.get(), MASS_ENERGY.get());
     }
+    public static SpeederHandling.Settings handling(){return new SpeederHandling.Settings(INERTIA_PENALTY.get(),REFERENCE_RADIUS.get(),MINIMUM_RESPONSE.get(),MAXIMUM_TRIM.get(),STABILIZER_DAMPING.get(),CARGO_MASS_PER_ITEM.get(),PILOT_MASS.get());}
     private SpeederConfig() {}
 }

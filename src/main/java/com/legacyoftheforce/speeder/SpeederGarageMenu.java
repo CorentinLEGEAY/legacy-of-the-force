@@ -32,6 +32,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     private final DataSlot[] cells = new DataSlot[420], owned = new DataSlot[SpeederContent.PART_NAMES.size()];
     private final DataSlot gridWidth=DataSlot.standalone(),gridHeight=DataSlot.standalone(),gridDepth=DataSlot.standalone(),vehicleClass=DataSlot.standalone(),seats=DataSlot.standalone();
     private final DataSlot selected = DataSlot.standalone(), rotation = DataSlot.standalone(), status = DataSlot.standalone(), error = DataSlot.standalone();
+    private final ProjectedFloat handlingResponse=new ProjectedFloat(),handlingTrim=new ProjectedFloat();
     private final ProjectedFloat mass = new ProjectedFloat(), thrust = new ProjectedFloat(), lift = new ProjectedFloat(), capacity = new ProjectedFloat(), stability = new ProjectedFloat();
     private final class ProjectedFloat {
         private final DataSlot high = DataSlot.standalone(), low = DataSlot.standalone();
@@ -91,6 +92,8 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
     public int pattern(){return Math.clamp(diagnostic()?instancePattern.get():draftPattern.get(),0,3);}
     public int accentColor(){return diagnostic()?instanceAccent.get():draftAccent.get();}
     public int lightingColor(){return diagnostic()?instanceLighting.get():draftLighting.get();}
+    public float handlingResponse(){return handlingResponse.get();}
+    public float handlingTrim(){return handlingTrim.get();}
     public boolean primaryZone() { return paintZone.get() == 0; }
     public int dyeCost() { return dyeCost.get(); }
     public boolean recycleArmed() { return recycleArmed.get() != 0; }
@@ -122,7 +125,7 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
                 if (inspectedVehicle == null && report.vehicle() != null) inspectedVehicle = report.vehicle();
                 diagnosticStatus.set(report.status().ordinal()); instanceEnergy.set(report.energy()); instanceCapacity.set(report.capacity());
                 integrity.set(report.integrity()); damaged.set(report.damaged()); modules.set(report.modules());
-                instancePrimary.set(report.primary()); instanceSecondary.set(report.secondary());instanceAccent.set(report.accent());instanceLighting.set(report.lighting());instancePattern.set(report.pattern());
+                instancePrimary.set(report.primary()); instanceSecondary.set(report.secondary());instanceAccent.set(report.accent());instanceLighting.set(report.lighting());instancePattern.set(report.pattern());handlingResponse.set(report.turnResponse());handlingTrim.set(report.thrustTrim());
                 var id = report.vehicle() == null ? new UUID(0, 0) : report.vehicle();
                 for (int i = 0; i < 4; i++) { vehicleId[i].set((short)(id.getMostSignificantBits() >>> (48 - i * 16))); vehicleId[i + 4].set((short)(id.getLeastSignificantBits() >>> (48 - i * 16))); }
                 nextInspection = actor.server.overworld().getGameTime() + 10;
@@ -137,6 +140,10 @@ public final class SpeederGarageMenu extends AbstractContainerMenu {
             for (int part = 0; part < owned.length; part++) { int count = 0; for (int slot = 0; slot < inventory.getContainerSize(); slot++) if (inventory.getItem(slot).is(SpeederContent.part(part))) count += inventory.getItem(slot).getCount(); owned[part].set(count); }
             var result = BlueprintValidator.inspect(draft, SpeederCatalog.definitions(), SpeederConfig.limits()); error.set(result.error().ordinal());
             if(result.valid()) {var plan=draft.plan().orElseThrow();vehicleClass.set(SpeederClass.of(plan,result.stats().mass(),SpeederCatalog.definitions()).ordinal());seats.set((int)plan.modules().stream().filter(p->{var family=SpeederCatalog.definitions().get(p.kind()).family();return family==SpeederModule.Family.PILOT||family==SpeederModule.Family.PASSENGER;}).count());} else seats.set(0);
+            if(!diagnostic()){
+                if(result.valid()){var handling=SpeederHandling.draft(draft.plan().orElseThrow(),SpeederCatalog.definitions(),SpeederConfig.handling());handlingResponse.set(handling.response());handlingTrim.set(handling.thrustTrim());}
+                else {handlingResponse.set(1);handlingTrim.set(0);}
+            }
             mass.set(result.stats().mass()); thrust.set(result.stats().thrust()); lift.set(result.stats().lift()); capacity.set(result.stats().capacity()); stability.set(result.stats().stability());
         }
         super.broadcastChanges();

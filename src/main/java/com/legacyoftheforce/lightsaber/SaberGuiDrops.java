@@ -25,9 +25,9 @@ public final class SaberGuiDrops {
     public static void clicked(AbstractContainerMenu menu,int slot,int button,ClickType type,Player player,Operation<Void> original) {
         if(player instanceof ServerPlayer actor&&menu!=actor.inventoryMenu&&!SaberMenuState.foreignReady(actor)) {actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cursor_waiting"),true);menu.broadcastFullState();return;}
         if(SaberStorageTransactions.clicked(menu,slot,button,type,player,original))return;
-        boolean potential=type==ClickType.PICKUP&&slot==-999&&menu.getCarried().is(SaberContent.SABER.get())
-                ||type==ClickType.THROW&&slot>0&&slot<menu.slots.size()&&menu.getSlot(slot).getItem().is(SaberContent.SABER.get());
-        if(!(player instanceof ServerPlayer actor)||menu!=actor.inventoryMenu||!potential||FRAMES.containsKey(actor)) {original.call(slot,button,type,player);return;}
+        boolean potential=type==ClickType.PICKUP&&slot==-999&&RareItemIdentity.relevant(menu.getCarried())
+                ||type==ClickType.THROW&&slot>=0&&(slot>0||menu!=player.inventoryMenu)&&slot<menu.slots.size()&&RareItemIdentity.relevant(menu.getSlot(slot).getItem());
+        if(!(player instanceof ServerPlayer actor)||!SaberMenuState.playerOnlyMenu(actor,menu)||!potential||FRAMES.containsKey(actor)) {original.call(slot,button,type,player);return;}
         if(!SaberItemTransfers.canMenuDrop(actor)) {actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.transfer_unavailable"),true);menu.broadcastFullState();return;}
         Frame frame;
         try {frame=new Frame(actor);}catch(RuntimeException invalid) {LegacyOfTheForce.LOGGER.error("Personal saber drop refused: current menu image cannot be saved",invalid);actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.transfer_unavailable"),true);menu.broadcastFullState();return;}
@@ -79,7 +79,7 @@ public final class SaberGuiDrops {
     private static final class Frame {
         final ServerPlayer actor;final ListTag inventory;final CompoundTag menu;ItemEntity entity;boolean refused,closing;
         Frame(ServerPlayer actor) {this.actor=actor;inventory=actor.getInventory().save(new ListTag());menu=SaberMenuState.capture(actor);}
-        void restore() {actor.getInventory().load(inventory);SaberMenuState.apply(actor,menu);actor.getInventory().setChanged();actor.inventoryMenu.broadcastFullState();}
+        void restore() {actor.getInventory().load(inventory);SaberMenuState.apply(actor,menu);actor.getInventory().setChanged();actor.inventoryMenu.broadcastFullState();if(actor.containerMenu!=actor.inventoryMenu)actor.containerMenu.broadcastFullState();}
         void finish() {
             if(entity==null&&!refused)return;
             if(refused||!SaberItemTransfers.validMenuItem(entity)) {restore();return;}
@@ -95,7 +95,7 @@ public final class SaberGuiDrops {
             actor.getInventory().load(post);SaberMenuState.apply(actor,postMenu);actor.getInventory().setChanged();
             var outcome=SaberItemTransfers.commitMenuDrop(actor,entity);
             if(outcome==SaberItemTransfers.DropOutcome.REFUSED)restore();
-            else if(outcome==SaberItemTransfers.DropOutcome.COMMITTED)actor.inventoryMenu.broadcastFullState();
+            else if(outcome==SaberItemTransfers.DropOutcome.COMMITTED){actor.inventoryMenu.broadcastFullState();if(actor.containerMenu!=actor.inventoryMenu)actor.containerMenu.broadcastFullState();}
         }
     }
     private SaberGuiDrops() {}

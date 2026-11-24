@@ -15,7 +15,7 @@ public final class SaberConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue MINED_PURITY_MIN, MINED_PURITY_MAX, MINED_STABILITY_MIN, MINED_STABILITY_MAX;
     public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY, TRANSFER_LOAD_TIMEOUT;
-    public static final ModConfigSpec.IntValue STORAGE_INTERVAL;
+    public static final ModConfigSpec.IntValue STORAGE_INTERVAL,TRANSFER_INTERVAL;
     public static final ModConfigSpec.IntValue ACTIVATION_INTERVAL;
     public static final ModConfigSpec.IntValue WEAR_PER_ATTACK, MAINTENANCE_IRON, MAINTENANCE_REDSTONE;
     public static final ModConfigSpec.DoubleValue DISMANTLE_RETURN, MINIMUM_CONDITION_DAMAGE;
@@ -111,6 +111,7 @@ public final class SaberConfig {
         ATTACKS_PER_SECOND = builder.defineInRange("combat.attacksPerSecond", 1.6, 0.1, 4.0);
         BLUE_PARRY_BONUS = builder.defineInRange("ilum.parryBonus", 0.1, 0.0, 0.3);
         SOUND_VOLUME = builder.defineInRange("soundVolume", 0.5, 0.0, 1.0);
+        TRANSFER_INTERVAL=builder.defineInRange("transfer.minimumActionIntervalTicks",10,1,1200);
         SPEC = builder.build();
     }
     private SaberConfig() {}

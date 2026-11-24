@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Virtual recipe selection: components stay in the player's inventory until the atomic server action. */
-public final class SaberWorkshopMenu extends AbstractContainerMenu {
+public final class SaberWorkshopMenu extends AbstractContainerMenu implements com.legacyoftheforce.core.api.PlayerInventoryOnlyMenu {
     public enum Status { READY, MISSING, FULL, INCOMPATIBLE, TOO_FAR, COOLDOWN, INVALID, NO_SABER, NO_CRYSTAL, DUPLICATE, INSERTED, REPLACED, AWAKENED, SPECIALIZED, RITUAL_MATERIALS, BOND_NOT_READY, MODIFIED, DISMANTLED, MAINTAINED, NO_BLUEPRINT, PLAN_SAVED, PLAN_LOADED, UNCHANGED, TYPE_LOCKED, CORRUPTED, PURIFIED, RITUAL_ALIGNMENT, RITUAL_LEVEL, FINISHED, FINISH_MATERIALS, FINISH_UNAVAILABLE }
     private final DataSlot styleZone=DataSlot.standalone(),engraving=DataSlot.standalone();
     private final DataSlot[] finishes=new DataSlot[5],colorHigh=new DataSlot[5],colorLow=new DataSlot[5];

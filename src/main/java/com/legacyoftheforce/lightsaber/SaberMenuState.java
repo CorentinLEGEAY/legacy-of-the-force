@@ -43,6 +43,9 @@ public final class SaberMenuState {
         // An autosave before login restoration must preserve the loaded image, including future formats.
         return carrier.legacyoftheforce$menuPending()?carrier.legacyoftheforce$loadedMenu().copy():capture(actor);
     }
+    public static boolean playerOnlyMenu(ServerPlayer actor,net.minecraft.world.inventory.AbstractContainerMenu menu){
+        return menu==actor.inventoryMenu||menu instanceof com.legacyoftheforce.core.api.PlayerInventoryOnlyMenu&&menu.slots.stream().allMatch(slot->slot.container==actor.getInventory());
+    }
     public static boolean ready(ServerPlayer actor) {return !((SaberMenuStateCarrier)actor).legacyoftheforce$menuPending();}
     public static void apply(ServerPlayer actor,CompoundTag image) {
         var items=validate(image);var decoded=new ItemStack[6];Arrays.fill(decoded,ItemStack.EMPTY);

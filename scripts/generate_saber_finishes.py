@@ -98,5 +98,7 @@ def prices_and_language():
 
 def main():
     materials();models();prices_and_language()
+    import runpy
+    runpy.run_path(str(Path(__file__).with_name("generate_rare_transfer_labels.py")),run_name="__main__")
 
 if __name__=='__main__':main()

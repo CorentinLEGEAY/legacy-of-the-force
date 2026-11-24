@@ -3,6 +3,18 @@
   "minVersion": "0.8",
   "package": "com.legacyoftheforce.lightsaber.mixin",
   "compatibilityLevel": "JAVA_21",
-  "mixins": ["PlayerMenuStateMixin", "PersonalMenuDropMixin", "PersonalMenuCloseMixin", "ExternalMenuCloseMixin", "CompoundStorageAccessor", "StorageInventoryLockMixin"],
-  "injectors": {"defaultRequire": 1}
+  "mixins": [
+    "PlayerMenuStateMixin",
+    "PersonalMenuDropMixin",
+    "PersonalMenuCloseMixin",
+    "ExternalMenuCloseMixin",
+    "CompoundStorageAccessor",
+    "StorageInventoryLockMixin",
+    "RareItemPickupMixin",
+    "RareItemMovementMixin",
+    "HopperRarePickupMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

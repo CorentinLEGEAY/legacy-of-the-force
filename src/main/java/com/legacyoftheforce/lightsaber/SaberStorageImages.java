@@ -58,15 +58,15 @@ final class SaberStorageImages {
         var result=new HashMap<CompoundTag,Integer>();add(result,player.getList("Inventory",Tag.TAG_COMPOUND));add(result,SaberMenuState.fromPlayer(player));for(var image:containers)add(result,image.getList("items",Tag.TAG_COMPOUND));return result;
     }
     static void validateRare(ServerPlayer actor,CompoundTag player,List<CompoundTag> containers) {
-        var seen=new HashSet<UUID>();
-        for(var entry:stock(player,containers).entrySet())if(entry.getKey().getString("id").equals("legacyoftheforce:lightsaber")) {
-            var encoded=entry.getKey().copy();encoded.putInt("count",entry.getValue());var stack=ItemStack.parse(actor.registryAccess(),encoded).orElseThrow(()->new IllegalArgumentException("Unreadable stored saber"));var data=stack.get(SaberContent.ASSEMBLY.get());
-            if(entry.getValue()!=1||data==null||!data.supported()||!seen.add(data.tag().getUUID("saberId")))throw new IllegalArgumentException("Conflicting or unsupported saber identity; original retained");
+        var seen=new HashSet<RareItemIdentity.Key>();
+        for(var entry:stock(player,containers).entrySet())if(RareItemIdentity.encodedRelevant(entry.getKey())){
+            var encoded=entry.getKey().copy();encoded.putInt("count",entry.getValue());
+            for(var key:RareItemIdentity.keys(encoded,actor.registryAccess()))if(!seen.add(key))throw new IllegalArgumentException("Conflicting saber or crystal identity; original retained");
         }
     }
     private static void add(Map<CompoundTag,Integer> stock,ListTag items) {for(var raw:items) {var image=((CompoundTag)raw).copy();int count=image.getInt("count");image.remove("Slot");image.remove("count");stock.merge(image,count,Integer::sum);}}
     static void addItem(Map<CompoundTag,Integer> stock,ItemStack item,ServerPlayer actor) {var entries=new ListTag();entries.add(item.save(actor.registryAccess()));add(stock,entries);}
-    static boolean rare(ItemStack stack) {return stack.is(SaberContent.SABER.get());}
+    static boolean rare(ItemStack stack) {return RareItemIdentity.relevant(stack);}
     static boolean containsRare(AbstractContainerMenu menu) {if(rare(menu.getCarried()))return true;for(var slot:menu.slots)if(rare(slot.getItem()))return true;return false;}
     static boolean worldDrop(AbstractContainerMenu menu,int slot,ClickType type) {return type==ClickType.PICKUP&&slot==-999||type==ClickType.THROW;}
     static boolean rareDrop(AbstractContainerMenu menu,int slot,ClickType type) {return type==ClickType.PICKUP&&slot==-999&&rare(menu.getCarried())||type==ClickType.THROW&&slot>=0&&slot<menu.slots.size()&&rare(menu.getSlot(slot).getItem());}

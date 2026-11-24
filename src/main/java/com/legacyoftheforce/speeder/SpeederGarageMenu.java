@@ -6,7 +6,7 @@ import net.minecraft.world.entity.player.*;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 
-public final class SpeederGarageMenu extends AbstractContainerMenu {
+public final class SpeederGarageMenu extends AbstractContainerMenu implements com.legacyoftheforce.core.api.PlayerInventoryOnlyMenu {
     public enum Status { EDITING, SAVED, HOLD_BLUEPRINT, READ_ONLY, CHANGED, TOO_FAR, COOLDOWN,
         BUILD_BUILT, BUILD_INVALID, BUILD_SAVE_FIRST, BUILD_CLEAR_CURSOR, BUILD_MISSING, BUILD_SPACE, BUILD_PERMISSION, BUILD_BUSY, BUILD_UNAVAILABLE, BUILD_PENDING }
     private final Inventory inventory;

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FCF",
+    "ATA",
+    "F F"
+  ],
+  "key": {
+    "F": {
+      "item": "legacyoftheforce:ilum_frost_alloy"
+    },
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "A": {
+      "item": "minecraft:amethyst_shard"
+    },
+    "T": {
+      "item": "legacyoftheforce:thruster_vector"
+    }
+  },
+  "result": {
+    "id": "legacyoftheforce:thruster_cryo",
+    "count": 1
+  }
+}

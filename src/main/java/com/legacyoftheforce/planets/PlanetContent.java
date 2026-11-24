@@ -27,6 +27,9 @@ public final class PlanetContent {
     public static final Supplier<GalacticTerminalBlock> TERMINAL = BLOCKS.register("galactic_terminal", () -> new GalacticTerminalBlock(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
     public static final Supplier<BlockItem> TERMINAL_ITEM = ITEMS.register("galactic_terminal", () -> new BlockItem(TERMINAL.get(), new Item.Properties()));
     public static final Supplier<Item> COORDINATES = ITEMS.register("ilum_coordinates", () -> new Item(new Item.Properties().stacksTo(16)));
+    public static final Supplier<Item> FROST_FRAGMENT = ITEMS.register("ilum_frost_fragment", () -> new Item(new Item.Properties()));
+    public static final Supplier<PlanetFieldNotesItem> FROST_NOTES = ITEMS.register("ilum_field_notes", () -> new PlanetFieldNotesItem(PlanetId.ILUM, new Item.Properties().stacksTo(1)));
+    public static final Supplier<net.minecraft.world.level.block.Block> FROST_ORE = BLOCKS.register("ilum_frost_ore", () -> new net.minecraft.world.level.block.Block(BlockBehaviour.Properties.of().strength(3.5f).requiresCorrectToolForDrops()));
     public static final Supplier<PlanetFieldNotesItem> DESERT_NOTES = ITEMS.register("tatooine_field_notes", () -> new PlanetFieldNotesItem(PlanetId.TATOOINE, new Item.Properties().stacksTo(1)));
     public static final Supplier<PlanetFieldNotesItem> FOREST_NOTES = ITEMS.register("endor_field_notes", () -> new PlanetFieldNotesItem(PlanetId.ENDOR, new Item.Properties().stacksTo(1)));
     public static final Supplier<PlanetFieldNotesItem> VOLCANIC_NOTES = ITEMS.register("mustafar_field_notes", () -> new PlanetFieldNotesItem(PlanetId.MUSTAFAR, new Item.Properties().stacksTo(1)));
@@ -87,6 +90,8 @@ public final class PlanetContent {
         bus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey().equals(CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(TERMINAL_ITEM.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(COORDINATES.get());
+            if (event.getTabKey().equals(CreativeModeTabs.INGREDIENTS)) event.accept(FROST_FRAGMENT.get());
+            if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(FROST_NOTES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(DESERT_NOTES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(FOREST_NOTES.get());
             if (event.getTabKey().equals(CreativeModeTabs.TOOLS_AND_UTILITIES)) event.accept(VOLCANIC_NOTES.get());

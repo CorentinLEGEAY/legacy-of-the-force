@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": {
+    "item": "legacyoftheforce:ilum_frost_fragment"
+  },
+  "result": {
+    "id": "legacyoftheforce:ilum_frost_alloy",
+    "count": 1
+  },
+  "experience": 0.5,
+  "cookingtime": 200
+}

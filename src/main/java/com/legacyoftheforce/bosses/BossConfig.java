@@ -5,6 +5,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class BossConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue HEALTH, DAMAGE, MIN_DAMAGE;
+    public static final ModConfigSpec.IntValue CRYO_MATERIALS, CRYO_CRYSTAL_CHANCE;
     public static final ModConfigSpec.IntValue XP, REWARD_COOLDOWN, ARENA_COOLDOWN, RESET_DELAY, WINDUP, MAX_PLAYERS;
     public static final ModConfigSpec.DoubleValue SPEED, ENERGY_REGEN, GROUP_HEALTH, ICE_SPEED, ICE_HEALTH, PULL_SPEED, AIM_RADIUS, GUARD_FACTOR;
     public static final ModConfigSpec.IntValue ICE_LIFETIME, VULNERABILITY, CONTROL_IMMUNITY;
@@ -31,6 +32,8 @@ public final class BossConfig {
         var b = new ModConfigSpec.Builder();
         HEALTH = b.defineInRange("ilum.health", 220d, BossHealthRules.MIN_HEALTH, BossHealthRules.MAX_HEALTH); DAMAGE = b.defineInRange("ilum.baseDamage", 5d, 1, 40);
         MIN_DAMAGE = b.defineInRange("rewards.minimumContributionDamage", 2d, .1, 100);
+        CRYO_CRYSTAL_CHANCE = b.defineInRange("ilum.expeditionCrystalChancePercent", 25, 0, 100);
+        CRYO_MATERIALS = b.defineInRange("ilum.rewardFrostAlloy", 3, 1, 16);
         XP = b.defineInRange("ilum.rewardXp", 800, 1, 100000);
         REWARD_COOLDOWN = b.defineInRange("rewards.perPlayerBossCooldownTicks", 72000, 1200, 1728000);
         ARENA_COOLDOWN = b.defineInRange("arena.respawnCooldownTicks", 12000, 200, 1728000);

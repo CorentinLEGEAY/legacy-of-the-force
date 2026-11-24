@@ -109,3 +109,6 @@ Dans `[rpg]` du fichier `config/legacyoftheforce-server.toml` (surcharge native 
 
 ### Jedha — réglages initiaux du lot C, non équilibrés en campagne
 Gardien310PV, Seigneur300PV, dégâts de base6, XP1700, trois poussières, cristal violet25% par victoire éligible partagée. Garde60ticks, multiplicateur0,4, pas1,6bloc, poussée0,2 ; contre140ticks. Canal36ticks avec impact toutes12ticks (premier au début), coûte30énergie ou40 pour tempête et reste exclusif des autres attaques. Drain tenté une seule fois par phase2/3, soin ≤3PV et ≤PV effectivement retirés. Tous ces nombres sont dans la configuration serveur bosses ; ±25 reste une décision verrouillée. Les limites techniques2 objets, masque de phases et absence d’objets exportables sont des invariants.
+
+
+Ilum, complément du lot C : minerai fixe3 par nouvelle caverne,1fragment par bloc sans bonus Fortune/Silk,1alliage par fonte (200ticks four/100 haut-fourneau, XP vanilla0,5). Victoire éligible : alliages3 configurables et chance25% de cristal bleu configurée, sans toucher aux ±25 verrouillés. Propulseur cryogénique2,5kg/poussée8/portance14/stabilité0,08, vectoriel1,5/10/8/0,1. JSON et recette serveur ; chiffres non validés en campagne.

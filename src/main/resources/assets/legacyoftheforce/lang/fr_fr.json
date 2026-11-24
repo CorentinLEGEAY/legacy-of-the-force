@@ -654,5 +654,14 @@
   "boss.legacyoftheforce.attack.relic_lightning": "Éclairs des Reliques",
   "boss.legacyoftheforce.attack.relic_drain": "Drain limité",
   "boss.legacyoftheforce.attack.relic_step": "Pas des Reliques",
-  "boss.legacyoftheforce.attack.relic_storm": "Tempête du reliquaire"
+  "boss.legacyoftheforce.attack.relic_storm": "Tempête du reliquaire",
+  "block.legacyoftheforce.ilum_frost_ore": "Minerai de métal gelé",
+  "item.legacyoftheforce.ilum_frost_fragment": "Éclat de métal gelé",
+  "item.legacyoftheforce.thruster_cryo": "Propulseur cryogénique d’Ilum",
+  "item.legacyoftheforce.ilum_field_notes": "Carnet d’expédition : Ilum",
+  "notes.legacyoftheforce.ilum.0": "Les tours d’accès mènent aux cavernes rares. Les sources bleues sont entourées de glace dense.",
+  "notes.legacyoftheforce.ilum.1": "Les veines de métal gelé sont dans les sols des nouvelles cavernes. Une pioche de fer permet de récupérer des éclats à fondre.",
+  "notes.legacyoftheforce.ilum.2": "Le propulseur cryogénique favorise la portance, avec plus de masse et moins de poussée que le vectoriel standard.",
+  "notes.legacyoftheforce.ilum.3": "Les autels du Gardien et du Seigneur du Givre lancent un défi. Glaçons protecteurs et projectiles sont de vrais objets temporaires.",
+  "notes.legacyoftheforce.ilum.4": "Une victoire éligible fournit du métal, des coordonnées et parfois un cristal bleu. Les récompenses ont un délai personnel et une recharge d’arène."
 }

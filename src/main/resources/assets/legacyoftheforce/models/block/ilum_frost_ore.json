@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "legacyoftheforce:block/ilum_frost_ore"
+  }
+}

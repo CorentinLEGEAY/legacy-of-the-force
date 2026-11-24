@@ -1,0 +1,153 @@
+{
+  "textures": {
+    "ore": "legacyoftheforce:block/ilum_frost_ore",
+    "metal": "legacyoftheforce:item/saber/alloy",
+    "particle": "legacyoftheforce:block/ilum_frost_ore"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        1,
+        4
+      ],
+      "to": [
+        10,
+        5,
+        10
+      ],
+      "faces": {
+        "up": {
+          "texture": "#ore"
+        },
+        "down": {
+          "texture": "#ore"
+        },
+        "north": {
+          "texture": "#ore"
+        },
+        "south": {
+          "texture": "#ore"
+        },
+        "east": {
+          "texture": "#ore"
+        },
+        "west": {
+          "texture": "#ore"
+        }
+      }
+    },
+    {
+      "from": [
+        8,
+        2,
+        7
+      ],
+      "to": [
+        13,
+        7,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#metal"
+        },
+        "down": {
+          "texture": "#metal"
+        },
+        "north": {
+          "texture": "#metal"
+        },
+        "south": {
+          "texture": "#metal"
+        },
+        "east": {
+          "texture": "#metal"
+        },
+        "west": {
+          "texture": "#metal"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        5,
+        5
+      ],
+      "to": [
+        8,
+        8,
+        8
+      ],
+      "faces": {
+        "up": {
+          "texture": "#ore"
+        },
+        "down": {
+          "texture": "#ore"
+        },
+        "north": {
+          "texture": "#ore"
+        },
+        "south": {
+          "texture": "#ore"
+        },
+        "east": {
+          "texture": "#ore"
+        },
+        "west": {
+          "texture": "#ore"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        25,
+        225,
+        0
+      ],
+      "translation": [
+        0,
+        -0.5,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.7,
+        0.7,
+        0.7
+      ]
+    }
+  }
+}

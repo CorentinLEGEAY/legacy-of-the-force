@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "family": "thruster",
+  "mass": 2.5,
+  "thrust": 8,
+  "lift": 14,
+  "capacity": 0,
+  "stability": 0.08,
+  "connectors": [
+    "up",
+    "down",
+    "north",
+    "south",
+    "east",
+    "west"
+  ],
+  "salvage": [
+    {
+      "item": "minecraft:copper_ingot",
+      "count": 1
+    },
+    {
+      "item": "legacyoftheforce:ilum_frost_alloy",
+      "count": 1
+    }
+  ]
+}

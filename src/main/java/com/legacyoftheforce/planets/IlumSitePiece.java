@@ -49,6 +49,7 @@ public final class IlumSitePiece extends StructurePiece {
         put(world, clip, Blocks.SEA_LANTERN, 8, 5, 9); put(world, clip, Blocks.SEA_LANTERN, 1, 14, 3);
         for (int x = 6; x <= 8; x++) for (int z = 7; z <= 9; z++) for (int y = 1; y <= 2; y++) put(world, clip, Blocks.BLUE_ICE, x, y, z);
         put(world, clip, PlanetContent.CRYSTAL.get(), 7, 1, 8);
+        for (int x = 2; x <= 4; x++) put(world, clip, PlanetContent.FROST_ORE.get(), x, 0, 8);
     }
     private void building(WorldGenLevel world, BoundingBox clip) {
         var wall = kind == 2 ? Blocks.DEEPSLATE_BRICKS : Blocks.QUARTZ_BRICKS;

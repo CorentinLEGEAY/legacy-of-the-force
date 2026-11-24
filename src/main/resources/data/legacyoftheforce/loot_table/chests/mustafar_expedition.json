@@ -109,6 +109,20 @@
           "type": "minecraft:empty"
         }
       ]
+    },
+    {
+      "name": "legacyoftheforce:combat_holocron",
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "legacyoftheforce:holocron_momentum"
+        },
+        {
+          "type": "minecraft:empty",
+          "weight": 3
+        }
+      ]
     }
   ]
 }

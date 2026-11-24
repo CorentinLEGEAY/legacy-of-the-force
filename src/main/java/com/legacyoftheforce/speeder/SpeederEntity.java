@@ -106,7 +106,7 @@ public final class SpeederEntity extends Entity implements VehicleForceTargetPro
                 return tickLift();
             }
             @Override public void dampMotion(ServerPlayer actor, ForceAction action, double retention) {
-                if (!Double.isFinite(retention) || retention < 0 || retention > 1 || !canManipulate(actor, action)) throw new IllegalArgumentException("Invalid vehicle damping");
+                if ((action != ForceAction.STABILIZE && action != ForceAction.BRAKE) || !Double.isFinite(retention) || retention < 0 || retention > 1 || !canManipulate(actor, action)) throw new IllegalArgumentException("Invalid vehicle damping");
                 var snapshot = state.snapshot().orElseThrow(); var motion = snapshot.motion(); var delta = getDeltaMovement();
                 boolean vertical = action == ForceAction.STABILIZE;
                 state = state.withMotion(new VehicleState.Pose(level().dimension().location(), getX(), getY(), getZ()),

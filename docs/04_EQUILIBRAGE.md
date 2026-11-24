@@ -115,3 +115,6 @@ Ilum, complément du lot C : minerai fixe3 par nouvelle caverne,1fragment par bl
 
 
 Soulèvement de véhicule70 : défaut60ticks prépayés, montée1,2bloc à0,08/tick, masse maximale20 (et limite globale existante), léger vide uniquement. Coût Force20+masse×(vehicle.massCost+durée/20×0,8) puis maîtrise/affinité ; cooldown maximum entre délai habituel et durée. Les limites de bail sont configurables dans Force, avec plafonds absolus contrôlés par spec. Pas de dépense/recharge batterie, pas de remboursement anticipé, pas de projection95. Valeurs non validées en jeu.
+
+
+Formes du lot B, non équilibrées en campagne : Précision25 dégâts0,95/coût attaque0,9/garde1/parade+0,03 ; Protection30 dégâts0,9/coût attaque1,05/garde0,85/parade+0,05 ; Élan40 dégâts1,08/coût attaque1,18/garde1,15/parade−0,02 ; Deux lames35 dégâts1,04/coût attaque1,2/garde1,25/parade+0,01. Paramètres serveur `forms.*` bornés, fondamentale neutre. Deuxième coup explicite : facteur coût1,6 et dégâts1,1, délai partagé et cap global ; rien n’est doublé simplement en équipant la seconde lame. Holocron consommé une fois pour apprendre, sélection sous délai80ticks ; chance25% de coffre et un enseignement physique de victoire sous cooldown.

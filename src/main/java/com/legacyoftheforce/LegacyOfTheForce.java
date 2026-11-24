@@ -68,6 +68,7 @@ public final class LegacyOfTheForce {
         NeoForge.EVENT_BUS.addListener(com.legacyoftheforce.lightsaber.KyberAffinities::register);
         com.legacyoftheforce.core.api.CrystalAffinityAccess.install(com.legacyoftheforce.lightsaber.KyberAffinities::read);
         com.legacyoftheforce.core.api.PlanetaryCrystals.install(com.legacyoftheforce.lightsaber.PlanetaryCrystalLoot::create);
+        com.legacyoftheforce.core.api.CombatHolocrons.install(SaberContent::holocron);
         com.legacyoftheforce.core.api.SaberDesigns.install(type -> {
             var stack = new net.minecraft.world.item.ItemStack(SaberContent.BLUEPRINT.get());
             stack.set(SaberContent.BLUEPRINT_DATA.get(), com.legacyoftheforce.lightsaber.SaberBlueprintData.create(

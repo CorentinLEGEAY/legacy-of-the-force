@@ -21,6 +21,7 @@ public final class SaberContent {
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberTransferReceipt>> STORAGE_RECEIPT = ATTACHMENTS.register("saber_storage_receipt", () -> net.neoforged.neoforge.attachment.AttachmentType.builder(SaberTransferReceipt::empty).serialize(SaberTransferReceipt.CODEC).copyOnDeath().build());
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberEndurance>> ENDURANCE = ATTACHMENTS.register("saber_endurance", () -> net.neoforged.neoforge.attachment.AttachmentType.serializable(SaberEndurance::new).copyOnDeath().build());
     public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberKnowledge>> KNOWLEDGE=ATTACHMENTS.register("saber_knowledge",()->net.neoforged.neoforge.attachment.AttachmentType.serializable(SaberKnowledge::new).copyOnDeath().build());
+    public static final Supplier<net.neoforged.neoforge.attachment.AttachmentType<SaberDiscipline>> DISCIPLINE=ATTACHMENTS.register("saber_discipline",()->net.neoforged.neoforge.attachment.AttachmentType.serializable(SaberDiscipline::new).copyOnDeath().build());
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LegacyOfTheForce.MOD_ID);
@@ -28,6 +29,9 @@ public final class SaberContent {
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, LegacyOfTheForce.MOD_ID);
     private static final DeferredRegister<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>> LOOT_FUNCTIONS = DeferredRegister.create(Registries.LOOT_FUNCTION_TYPE, LegacyOfTheForce.MOD_ID);
     public static final Supplier<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<IdentifyIlumCrystal>> IDENTIFY_ILUM = LOOT_FUNCTIONS.register("identify_ilum_crystal", () -> new net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<>(IdentifyIlumCrystal.CODEC));
+    private static final Map<SaberForm,Supplier<CombatHolocronItem>> HOLOCRONS=new EnumMap<>(SaberForm.class);
+    static {for(var form:SaberForm.values())if(form!=SaberForm.BASIC)HOLOCRONS.put(form,ITEMS.register("holocron_"+form.key(),()->new CombatHolocronItem(form,new Item.Properties().stacksTo(16).rarity(Rarity.RARE))));}
+    public static ItemStack holocron(String key){return SaberForm.parse(key).filter(form->form!=SaberForm.BASIC).map(form->new ItemStack(HOLOCRONS.get(form).get())).orElse(ItemStack.EMPTY);}
     public static final Supplier<SoundEvent> IGNITE = SOUNDS.register("saber_ignite", () -> SoundEvent.createVariableRangeEvent(id("saber_ignite")));
     public static final Supplier<SoundEvent> EXTINGUISH = SOUNDS.register("saber_extinguish", () -> SoundEvent.createVariableRangeEvent(id("saber_extinguish")));
     public static final Supplier<DataComponentType<KyberData>> KYBER_DATA = COMPONENTS.register("kyber", () ->
@@ -81,6 +85,7 @@ public final class SaberContent {
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) PART_NAMES.forEach(name -> event.accept(partItem(name)));
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(KYBER.get());
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.INGREDIENTS)) event.accept(BLUEPRINT.get());
+        if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.TOOLS_AND_UTILITIES)) HOLOCRONS.values().forEach(item->event.accept(item.get()));
         if (event.getTabKey().equals(net.minecraft.world.item.CreativeModeTabs.FUNCTIONAL_BLOCKS)) event.accept(WORKSHOP_ITEM.get());
     }
     private SaberContent() {}

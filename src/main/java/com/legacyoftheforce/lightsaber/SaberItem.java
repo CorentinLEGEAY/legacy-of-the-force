@@ -16,7 +16,7 @@ public final class SaberItem extends Item {
         var stack = player.getItemInHand(hand);
         if (level.isClientSide()) return InteractionResultHolder.success(stack);
         if (!(player instanceof ServerPlayer actor) || actor.isFakePlayer() || !actor.isAlive() || actor.isSpectator()
-                || !actor.server.isSameThread() || actor.getCooldowns().isOnCooldown(this) || stack.getCount() != 1) return InteractionResultHolder.fail(stack);
+                || !actor.server.isSameThread() || !com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor) || actor.getCooldowns().isOnCooldown(this) || stack.getCount() != 1) return InteractionResultHolder.fail(stack);
         var saber = stack.get(SaberContent.ASSEMBLY.get());
         if (saber == null || !saber.supported() || !saber.compatible(SaberCatalog.parts()) || saber.crystal().isEmpty() || saber.condition()==0) {
             actor.displayClientMessage(Component.translatable("saber.legacyoftheforce.cannot_activate"), true); return InteractionResultHolder.fail(stack);

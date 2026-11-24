@@ -8,6 +8,10 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue DEFENSIVE_DAMAGE,AGGRESSIVE_DAMAGE,DEFENSIVE_ATTACK_COST,AGGRESSIVE_ATTACK_COST,DEFENSIVE_GUARD_COST,AGGRESSIVE_GUARD_COST,DEFENSIVE_PARRY,AGGRESSIVE_PARRY;
     public static final ModConfigSpec.DoubleValue COUNTER_COST,COUNTER_BONUS,COMBO_BONUS,COMBO_COST,COMBO_MIN_DAMAGE,MELEE_DAMAGE_CAP,DODGE_COST,DODGE_DISTANCE,DEFLECT_COST,DEFLECT_SPEED,DEFLECT_RETENTION,DEFLECT_DAMAGE_CAP;
     public static final ModConfigSpec.IntValue STYLE_INTERVAL,COUNTER_WINDOW,COMBO_WINDOW,COMBO_HITS,DODGE_COOLDOWN,DEFLECT_GRACE,TECHNIQUE_PATH_CELLS;
+    public record FormValues(ModConfigSpec.IntValue level,ModConfigSpec.DoubleValue damage,ModConfigSpec.DoubleValue attackCost,ModConfigSpec.DoubleValue guardCost,ModConfigSpec.DoubleValue parry) {}
+    public static final java.util.Map<SaberForm,FormValues> FORMS=new java.util.EnumMap<>(SaberForm.class);
+    public static final ModConfigSpec.IntValue FORM_INTERVAL;
+    public static final ModConfigSpec.DoubleValue TWIN_OFFHAND_COST,TWIN_OFFHAND_DAMAGE;
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.DoubleValue MINED_PURITY_MIN, MINED_PURITY_MAX, MINED_STABILITY_MIN, MINED_STABILITY_MAX;
     public static final ModConfigSpec.IntValue CRAFT_INTERVAL, TRANSFER_BUDGET, TRANSFER_RETRY, TRANSFER_LOAD_TIMEOUT;
@@ -22,6 +26,13 @@ public final class SaberConfig {
     public static final ModConfigSpec.DoubleValue CRYSTAL_PURITY, CRYSTAL_STABILITY, BASE_DAMAGE, PURITY_DAMAGE, ATTACKS_PER_SECOND, BLUE_PARRY_BONUS, SOUND_VOLUME;
     static {
         var builder = new ModConfigSpec.Builder();
+        FORM_INTERVAL=builder.defineInRange("forms.changeIntervalTicks",80,20,400);
+        TWIN_OFFHAND_COST=builder.defineInRange("forms.twin.offhandCostMultiplier",1.6,1.2,2.5);
+        TWIN_OFFHAND_DAMAGE=builder.defineInRange("forms.twin.offhandDamageMultiplier",1.1,1,1.3);
+        for(var form:SaberForm.values())if(form!=SaberForm.BASIC){String key="forms."+form.key()+".";FORMS.put(form,new FormValues(
+                builder.defineInRange(key+"requiredLevel",form.level,1,100),builder.defineInRange(key+"damageMultiplier",form.damage,.5,1.3),
+                builder.defineInRange(key+"attackCostMultiplier",form.attackCost,.7,2),builder.defineInRange(key+"guardCostMultiplier",form.guardCost,.6,2),
+                builder.defineInRange(key+"parryBonus",form.parry,-.1,.1)));}
         CORRUPT_LEVEL=builder.defineInRange("ritual.corruptionMinimumLevel",35,1,100);
         PURIFY_LEVEL=builder.defineInRange("ritual.purificationMinimumLevel",35,1,100);
         CORRUPT_ALIGNMENT=builder.defineInRange("ritual.corruptionMaximumAlignmentTenths",-500,-1000,-1);

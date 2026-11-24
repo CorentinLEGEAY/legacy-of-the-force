@@ -12,8 +12,11 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class KyberBondService {
     static boolean record(ServerPlayer actor, KyberBond.Activity activity, UUID target) {
-        if (!PlayerInventoryHooks.ready(actor) || SaberCombat.profile(actor.getMainHandItem()).isEmpty()) return false;
-        var stack = actor.getMainHandItem(); var saber = stack.get(SaberContent.ASSEMBLY.get()); var crystal = saber.crystal().orElseThrow();
+        return record(actor,activity,target,net.minecraft.world.InteractionHand.MAIN_HAND);
+    }
+    private static boolean record(ServerPlayer actor,KyberBond.Activity activity,UUID target,net.minecraft.world.InteractionHand hand) {
+        if (!PlayerInventoryHooks.ready(actor) || SaberCombat.profile(actor.getItemInHand(hand)).isEmpty()) return false;
+        var stack = actor.getItemInHand(hand); var saber = stack.get(SaberContent.ASSEMBLY.get()); var crystal = saber.crystal().orElseThrow();
         KyberData updated;
         try { updated = KyberBond.practice(crystal, activity, target, actor.server.overworld().getGameTime(), SaberConfig.bondRules()); }
         catch (IllegalArgumentException invalidRules) { return false; }
@@ -29,7 +32,7 @@ public final class KyberBondService {
         var actor = actor(event.playerId());
         if (actor != null && event.reward().accepted() && event.reward().xpAwarded() > 0
                 && (event.category() == RewardCategory.HOSTILE || event.category() == RewardCategory.ELITE)
-                && dangerous(actor.serverLevel().getEntity(event.eventId()))) record(actor, KyberBond.Activity.COMBAT, event.eventId());
+                && dangerous(actor.serverLevel().getEntity(event.eventId()))) record(actor, KyberBond.Activity.COMBAT, event.eventId(),SaberCombat.strikeHand(actor,event.eventId()));
     }
     @SubscribeEvent public void force(ForceImpulseCommitted event) {
         var actor = actor(event.actorId());

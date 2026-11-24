@@ -8,6 +8,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
 public final class ForceKeys {
+    private static final KeyMapping SABER_FORM = new KeyMapping("key.legacyoftheforce.saber_form", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
+    private static final KeyMapping SABER_OFFHAND = new KeyMapping("key.legacyoftheforce.saber_offhand", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
     private static final KeyMapping SABER_STYLE=new KeyMapping("key.legacyoftheforce.saber_style",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_Y,"key.categories.legacyoftheforce");
     private static final KeyMapping SABER_COUNTER=new KeyMapping("key.legacyoftheforce.saber_counter",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_M,"key.categories.legacyoftheforce");
     private static final KeyMapping DODGE_BACK=new KeyMapping("key.legacyoftheforce.dodge_back",InputConstants.Type.KEYSYM,GLFW.GLFW_KEY_LEFT_ALT,"key.categories.legacyoftheforce");
@@ -29,9 +31,11 @@ public final class ForceKeys {
     private static final KeyMapping STABILIZE = new KeyMapping("key.legacyoftheforce.force_stabilize", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_J, "key.categories.legacyoftheforce");
     private static final KeyMapping VEHICLE_LIFT = new KeyMapping("key.legacyoftheforce.vehicle_lift", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.categories.legacyoftheforce");
     private static final KeyMapping BRAKE = new KeyMapping("key.legacyoftheforce.force_brake", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "key.categories.legacyoftheforce");
-    public void register(RegisterKeyMappingsEvent event) { event.register(SABER_STYLE);event.register(SABER_COUNTER);event.register(DODGE_BACK);event.register(DODGE_LEFT);event.register(DODGE_RIGHT);event.register(GROUP); event.register(ROTATE); event.register(THROW_BLOCKS); event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(VEHICLE_LIFT); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
+    public void register(RegisterKeyMappingsEvent event) { event.register(SABER_STYLE);event.register(SABER_FORM);event.register(SABER_OFFHAND);event.register(SABER_COUNTER);event.register(DODGE_BACK);event.register(DODGE_LEFT);event.register(DODGE_RIGHT);event.register(GROUP); event.register(ROTATE); event.register(THROW_BLOCKS); event.register(TOGGLE); event.register(CANCEL); event.register(PUSH); event.register(PULL); event.register(GUARD); event.register(STABILIZE); event.register(BRAKE); event.register(VEHICLE_LIFT); event.register(POWER_NEXT);event.register(POWER_CAST);event.register(SKILLS); }
     public void tick(ClientTickEvent.Post event) {
         var minecraft = Minecraft.getInstance();
+        while(SABER_FORM.consumeClick())sendSaber(minecraft,"form");
+        while(SABER_OFFHAND.consumeClick())sendSaber(minecraft,"offhand");
         while(SABER_STYLE.consumeClick())sendSaber(minecraft,"style");
         while(SABER_COUNTER.consumeClick())sendSaber(minecraft,"counter");
         while(DODGE_BACK.consumeClick())sendSaber(minecraft,"dodge back");

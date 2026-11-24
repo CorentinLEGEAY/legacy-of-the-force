@@ -34,6 +34,8 @@ public final class IlumSitePiece extends StructurePiece {
     @Override public void postProcess(WorldGenLevel world, StructureManager structures, ChunkGenerator generator, RandomSource random, BoundingBox clip, ChunkPos chunk, BlockPos pivot) {
         if (kind < 0) return;
         if (kind == 0) cavern(world, clip); else building(world, clip);
+        if (kind == 3) createChest(world, clip, random, 2, 1, 6, net.minecraft.resources.ResourceKey.create(
+                net.minecraft.core.registries.Registries.LOOT_TABLE, PlanetContent.id("chests/ilum_expedition")));
     }
     private void put(WorldGenLevel world, BoundingBox clip, Block block, int x, int y, int z) { put(world, clip, block.defaultBlockState(), x, y, z); }
     private void put(WorldGenLevel world, BoundingBox clip, BlockState state, int x, int y, int z) { placeBlock(world, state, x, y, z, clip); }

@@ -26,6 +26,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public final class SaberCombat {
     private static final net.minecraft.resources.ResourceLocation STYLE_DAMAGE_ID=SaberContent.id("style_damage");
     private static final net.minecraft.resources.ResourceLocation REACH_ID=SaberContent.id("blade_reach");
+    private record SecondaryStrike(java.util.UUID actor,java.util.UUID target) {}
+    private static final ThreadLocal<SecondaryStrike> SECONDARY=new ThreadLocal<>();
+    static net.minecraft.world.InteractionHand strikeHand(ServerPlayer actor,java.util.UUID target) {
+        var context=SECONDARY.get();return context!=null&&context.actor().equals(actor.getUUID())&&context.target().equals(target)?net.minecraft.world.InteractionHand.OFF_HAND:net.minecraft.world.InteractionHand.MAIN_HAND;
+    }
     private final com.legacyoftheforce.core.api.ProtectedWorldService protection;
     public SaberCombat(){this(new com.legacyoftheforce.core.security.VanillaProtectedWorldService());}
     SaberCombat(com.legacyoftheforce.core.api.ProtectedWorldService protection){this.protection=java.util.Objects.requireNonNull(protection);}
@@ -48,7 +53,7 @@ public final class SaberCombat {
         reconcile(actor.getAttribute(Attributes.ATTACK_SPEED), SPEED_ID, stats.map(value -> value.attacksPerSecond() - 4));
         reconcile(actor.getAttribute(Attributes.ENTITY_INTERACTION_RANGE),REACH_ID,stats.map(value->value.reach()-3));
         var style=actor.getData(SaberContent.ENDURANCE).style();
-        reconcile(actor.getAttribute(Attributes.ATTACK_DAMAGE),STYLE_DAMAGE_ID,stats.map(value->Math.clamp(value.damage()*style.damage(),1,SaberConfig.MELEE_DAMAGE_CAP.get())-value.damage()));
+        reconcile(actor.getAttribute(Attributes.ATTACK_DAMAGE),STYLE_DAMAGE_ID,stats.map(value->Math.clamp(value.damage()*style.damage()*SaberForms.active(actor).damage(),1,SaberConfig.MELEE_DAMAGE_CAP.get())-value.damage()));
         return stats;
     }
     private static void reconcile(AttributeInstance attribute, net.minecraft.resources.ResourceLocation id, Optional<Double> amount) {
@@ -61,14 +66,15 @@ public final class SaberCombat {
     }
     @SubscribeEvent(priority = EventPriority.LOWEST) public void attack(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer actor)) return;
+        if (strikeHand(actor,event.getTarget().getUUID())==net.minecraft.world.InteractionHand.OFF_HAND) return;
         var stats = refreshAttributes(actor);
         if (!actor.getMainHandItem().is(SaberContent.SABER.get())) return;
         if (stats.isEmpty()) return; // An inactive hilt retains the ordinary unarmed vanilla attack.
         var target = event.getTarget();
         var state=actor.getData(SaberContent.ENDURANCE);var assembly=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());
-        int combo=assembly==null?0:state.comboStep(target.getUUID(),assembly.tag().getUUID("saberId"),now(actor));
-        double cost=SaberConfig.ATTACK_COST.get()*stats.get().costMultiplier()*state.style().attackCost()*(1+combo*SaberConfig.COMBO_COST.get())+(state.counterRequested(target.getUUID(),now(actor))?SaberConfig.COUNTER_COST.get():0);
-        if (!valid(actor) || !(target instanceof LivingEntity living) || !living.isAlive() || living.isInvulnerable()
+        int combo=assembly==null?0:state.comboStep(target.getUUID(),SaberForms.comboKey(actor),now(actor));
+        double cost=SaberConfig.ATTACK_COST.get()*stats.get().costMultiplier()*state.style().attackCost()*SaberForms.active(actor).attackCost()*(1+combo*SaberConfig.COMBO_COST.get())+(state.counterRequested(target.getUUID(),now(actor))?SaberConfig.COUNTER_COST.get():0);
+        if (!valid(actor) || actor.containerMenu!=actor.inventoryMenu || !com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor) || !(target instanceof LivingEntity living) || !living.isAlive() || living.isInvulnerable()
                 || target.level() != actor.level() || !actor.hasLineOfSight(target)
                 || target.getBoundingBox().distanceToSqr(actor.getEyePosition()) > actor.entityInteractionRange() * actor.entityInteractionRange()
                 || (target instanceof ServerPlayer player && !actor.canHarmPlayer(player))
@@ -78,14 +84,14 @@ public final class SaberCombat {
                         (int) Math.ceil(20 / stats.get().attacksPerSecond()), SaberConfig.RECOVERY_DELAY.get())) {
             event.setCanceled(true); return;
         }
-        state.authorizeHit(target.getUUID(),assembly.tag().getUUID("saberId"),now(actor));
+        state.authorizeHit(target.getUUID(),SaberForms.comboKey(actor),now(actor));
         feedback(actor, "saber.legacyoftheforce.endurance");
         if(assembly!=null&&SaberConfig.WEAR_PER_ATTACK.get()>0) {actor.getMainHandItem().set(SaberContent.ASSEMBLY.get(),assembly.withCondition(Math.max(0,assembly.condition()-SaberConfig.WEAR_PER_ATTACK.get())));actor.getInventory().setChanged();}
     }
     static boolean guard(ServerPlayer actor) {
         if (!valid(actor) || profile(actor.getMainHandItem()).isEmpty()) return false;
         var state=actor.getData(SaberContent.ENDURANCE);
-        boolean accepted = state.beginGuard(now(actor), SaberConfig.PARRY_COST.get()*profile(actor.getMainHandItem()).orElseThrow().costMultiplier()*state.style().guardCost(),
+        boolean accepted = state.beginGuard(now(actor), SaberConfig.PARRY_COST.get()*profile(actor.getMainHandItem()).orElseThrow().costMultiplier()*state.style().guardCost()*SaberForms.active(actor).guardCost(),
                 SaberConfig.PARRY_WINDOW.get(), SaberConfig.PARRY_COOLDOWN.get(), SaberConfig.RECOVERY_DELAY.get());
         feedback(actor, accepted ? "saber.legacyoftheforce.guard" : "saber.legacyoftheforce.guard_unavailable"); return accepted;
     }
@@ -101,8 +107,8 @@ public final class SaberCombat {
         if (actor.getLookAngle().multiply(1, 0, 1).normalize().dot(toward) < 0.5) return;
         endurance.endGuard(); // One hit per window; repeated hits cannot drain into an infinite block.
         endurance.noteParry(attacker.getUUID(), actor.getMainHandItem().get(SaberContent.ASSEMBLY.get()).crystal().orElseThrow().state().orElseThrow().id(), now(actor));
-        endurance.armCounter(attacker.getUUID(),actor.getMainHandItem().get(SaberContent.ASSEMBLY.get()).tag().getUUID("saberId"),now(actor));
-        event.setAmount((float) (event.getAmount() * (1 - Math.clamp(SaberConfig.PARRY_REDUCTION.get() + stats.get().parryBonus()+endurance.style().parryBonus(), 0, 0.9))));
+        endurance.armCounter(attacker.getUUID(),SaberForms.comboKey(actor),now(actor));
+        event.setAmount((float) (event.getAmount() * (1 - Math.clamp(SaberConfig.PARRY_REDUCTION.get() + stats.get().parryBonus()+endurance.style().parryBonus()+SaberForms.active(actor).parry(), 0, 0.9))));
         feedback(actor, "saber.legacyoftheforce.parried");
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new com.legacyoftheforce.core.api.MeleeParried(actor.getUUID(), attacker.getUUID(), now(actor)));
     }
@@ -110,11 +116,42 @@ public final class SaberCombat {
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("saber")
                 .then(Commands.literal("guard").executes(context -> guard(context.getSource().getPlayerOrException()) ? 1 : 0))
                 .then(Commands.literal("status").executes(context -> { feedback(context.getSource().getPlayerOrException(), "saber.legacyoftheforce.endurance"); return 1; }))));
+        var forms=Commands.literal("form").executes(context->{var actor=context.getSource().getPlayerOrException();boolean accepted=SaberForms.next(actor);if(!accepted)feedback(actor,"saber.legacyoftheforce.technique_unavailable");return accepted?1:0;});
+        forms.then(Commands.literal("list").executes(context->{SaberForms.list(context.getSource().getPlayerOrException());return 1;}));
+        for(var form:SaberForm.values())forms.then(Commands.literal(form.key()).executes(context->{var actor=context.getSource().getPlayerOrException();boolean accepted=SaberForms.select(actor,form);if(!accepted)feedback(actor,"saber.legacyoftheforce.technique_unavailable");return accepted?1:0;}));
+        var ignite=Commands.literal("ignite");
+        for(var hand:net.minecraft.world.InteractionHand.values())ignite.then(Commands.literal(hand==net.minecraft.world.InteractionHand.MAIN_HAND?"main":"offhand").executes(context->{var actor=context.getSource().getPlayerOrException();if(!valid(actor)||actor.containerMenu!=actor.inventoryMenu||!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)||!actor.getItemInHand(hand).is(SaberContent.SABER.get()))return 0;return SaberContent.SABER.get().use(actor.level(),actor,hand).getResult().consumesAction()?1:0;}));
+        event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("saber").then(forms).then(ignite).then(Commands.literal("offhand").executes(context->{var actor=context.getSource().getPlayerOrException();boolean accepted=offhand(actor);feedback(actor,accepted?"saber.legacyoftheforce.offhand_swing":"saber.legacyoftheforce.technique_unavailable");return accepted?1:0;}))));
         var style=Commands.literal("style").executes(context->{var actor=context.getSource().getPlayerOrException();return chooseStyle(actor,SaberStyle.values()[(actor.getData(SaberContent.ENDURANCE).style().ordinal()+1)%SaberStyle.values().length])?1:0;});
         for(var value:SaberStyle.values())style.then(Commands.literal(value.name().toLowerCase(java.util.Locale.ROOT)).executes(context->chooseStyle(context.getSource().getPlayerOrException(),value)?1:0));
         var dodge=Commands.literal("dodge");for(String direction:new String[]{"left","right","back","forward"})dodge.then(Commands.literal(direction).executes(context->{var actor=context.getSource().getPlayerOrException();boolean accepted=dodge(actor,direction);if(!accepted)feedback(actor,"saber.legacyoftheforce.technique_unavailable");return accepted?1:0;}));
         event.getDispatcher().register(Commands.literal("lotf").then(Commands.literal("saber").then(style).then(dodge)
                 .then(Commands.literal("counter").executes(context->{var actor=context.getSource().getPlayerOrException();boolean accepted=counter(actor);feedback(actor,accepted?"saber.legacyoftheforce.countered":"saber.legacyoftheforce.technique_unavailable");return accepted?1:0;}))));
+    }
+    private boolean offhand(ServerPlayer actor) {
+        if(SECONDARY.get()!=null||!valid(actor)||actor.containerMenu!=actor.inventoryMenu||!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)
+                ||SaberForms.active(actor).form()!=SaberForm.TWIN||actor.getAttackStrengthScale(.5f)<.9f)return false;
+        var profile=profile(actor.getOffhandItem()).orElseThrow();double reach=Math.min(actor.entityInteractionRange(),profile.reach());
+        var start=actor.getEyePosition();var delta=actor.getLookAngle().scale(reach);if(!loadedRay(actor,start,start.add(delta)))return false;
+        var hit=net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(actor,start,start.add(delta),actor.getBoundingBox().expandTowards(delta).inflate(1),entity->entity.isPickable()&&entity.isAlive()&&!entity.isSpectator(),reach*reach);
+        if(hit==null)return false;var target=hit.getEntity();
+        SECONDARY.set(new SecondaryStrike(actor.getUUID(),target.getUUID()));
+        try {
+            if(net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new AttackEntityEvent(actor,target)).isCanceled()
+                    ||!valid(actor)||actor.containerMenu!=actor.inventoryMenu||!com.legacyoftheforce.core.api.PlayerInventoryHooks.ready(actor)||SaberForms.active(actor).form()!=SaberForm.TWIN
+                    ||!target.isAlive()||target.isInvulnerable()||target.level()!=actor.level()||!actor.hasLineOfSight(target)
+                    ||target.getBoundingBox().distanceToSqr(actor.getEyePosition())>reach*reach||!protection.mayAttack(actor,target)
+                    ||target instanceof ServerPlayer player&&!actor.canHarmPlayer(player))return false;
+            var stack=actor.getOffhandItem();var saber=stack.get(SaberContent.ASSEMBLY.get());var stats=profile(stack).orElseThrow();var state=actor.getData(SaberContent.ENDURANCE);
+            var key=SaberForms.comboKey(actor);int combo=state.comboStep(target.getUUID(),key,now(actor));var form=SaberForms.active(actor);
+            double cost=SaberConfig.ATTACK_COST.get()*stats.costMultiplier()*state.style().attackCost()*form.attackCost()*SaberConfig.TWIN_OFFHAND_COST.get()*(1+combo*SaberConfig.COMBO_COST.get());
+            int interval=(int)Math.ceil(20/Math.min(stats.attacksPerSecond(),profile(actor.getMainHandItem()).orElseThrow().attacksPerSecond()));
+            if(!state.attacking(now(actor),cost,interval,SaberConfig.RECOVERY_DELAY.get()))return false;
+            state.authorizeHit(target.getUUID(),key,now(actor));actor.resetAttackStrengthTicker();actor.swing(net.minecraft.world.InteractionHand.OFF_HAND,true);
+            if(SaberConfig.WEAR_PER_ATTACK.get()>0){stack.set(SaberContent.ASSEMBLY.get(),saber.withCondition(Math.max(0,saber.condition()-SaberConfig.WEAR_PER_ATTACK.get())));actor.getInventory().setChanged();}
+            float damage=(float)Math.clamp(stats.damage()*state.style().damage()*form.damage()*SaberConfig.TWIN_OFFHAND_DAMAGE.get(),1,SaberConfig.MELEE_DAMAGE_CAP.get());
+            target.hurt(actor.damageSources().playerAttack(actor),damage);return true;
+        } finally {SECONDARY.remove();}
     }
     private boolean chooseStyle(ServerPlayer actor,SaberStyle style){
         boolean accepted=valid(actor)&&actor.getData(SaberContent.ENDURANCE).chooseStyle(style,now(actor));
@@ -128,7 +165,7 @@ public final class SaberCombat {
                 target->target instanceof LivingEntity&&target.isAlive()&&actor.hasLineOfSight(target),actor.entityInteractionRange()*actor.entityInteractionRange());
         if(hit==null||!protection.mayAttack(actor,hit.getEntity()))return false;
         var state=actor.getData(SaberContent.ENDURANCE);var saber=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());
-        if(!state.requestCounter(hit.getEntity().getUUID(),saber.tag().getUUID("saberId"),now(actor)))return false;
+        if(!state.requestCounter(hit.getEntity().getUUID(),SaberForms.comboKey(actor),now(actor)))return false;
         try{actor.attack(hit.getEntity());boolean accepted=state.counterAccepted(now(actor));if(accepted)actor.swing(net.minecraft.world.InteractionHand.MAIN_HAND,true);return accepted;}finally{state.clearCounterRequest();}
     }
     private boolean dodge(ServerPlayer actor,String direction){
@@ -151,16 +188,16 @@ public final class SaberCombat {
         for(int i=0;i<=steps;i++)if(!actor.serverLevel().hasChunkAt(net.minecraft.core.BlockPos.containing(start.lerp(end,(double)i/steps))))return false;return true;}
     @SubscribeEvent(priority=EventPriority.HIGH) public void techniqueDamage(LivingIncomingDamageEvent event){
         if(!(event.getSource().getEntity() instanceof ServerPlayer actor)||event.getSource().getDirectEntity()!=actor
-                ||!event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||profile(actor.getMainHandItem()).isEmpty())return;
+                ||!event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||profile(actor.getItemInHand(strikeHand(actor,event.getEntity().getUUID()))).isEmpty())return;
         if(!protection.mayAttack(actor,event.getEntity())){event.setCanceled(true);return;}
         double bonus=actor.getData(SaberContent.ENDURANCE).consumeHitBonus(event.getEntity().getUUID(),now(actor));
         if(Double.isFinite(event.getAmount())&&event.getAmount()>0)event.setAmount((float)Math.min(SaberConfig.MELEE_DAMAGE_CAP.get(),event.getAmount()*bonus));
     }
     @SubscribeEvent public void landed(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post event){
         if(!(event.getSource().getEntity() instanceof ServerPlayer actor)||event.getSource().getDirectEntity()!=actor
-                ||!event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||!Float.isFinite(event.getNewDamage())||event.getNewDamage()<SaberConfig.COMBO_MIN_DAMAGE.get()||profile(actor.getMainHandItem()).isEmpty())return;
-        var saber=actor.getMainHandItem().get(SaberContent.ASSEMBLY.get());
-        if(actor.getData(SaberContent.ENDURANCE).landedHit(event.getEntity().getUUID(),saber.tag().getUUID("saberId"),now(actor)))feedback(actor,"saber.legacyoftheforce.combo_hit");
+                ||!event.getSource().is(net.minecraft.world.damagesource.DamageTypes.PLAYER_ATTACK)||!Float.isFinite(event.getNewDamage())||event.getNewDamage()<SaberConfig.COMBO_MIN_DAMAGE.get()||profile(actor.getItemInHand(strikeHand(actor,event.getEntity().getUUID()))).isEmpty())return;
+        var saber=actor.getItemInHand(strikeHand(actor,event.getEntity().getUUID())).get(SaberContent.ASSEMBLY.get());
+        if(actor.getData(SaberContent.ENDURANCE).landedHit(event.getEntity().getUUID(),SaberForms.comboKey(actor),now(actor)))feedback(actor,"saber.legacyoftheforce.combo_hit");
     }
     @SubscribeEvent(priority=EventPriority.LOWEST) public void deflect(net.neoforged.neoforge.event.entity.ProjectileImpactEvent event){
         if(event.getProjectile().level().isClientSide()||!(event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult hit)
@@ -203,5 +240,5 @@ public final class SaberCombat {
     private static void clear(LivingEntity actor) { if (!actor.level().isClientSide() && actor.hasData(SaberContent.ENDURANCE)) actor.getData(SaberContent.ENDURANCE).clearCombat(); }
     private static boolean valid(ServerPlayer actor) { return actor.server.isSameThread() && actor.isAlive() && !actor.isSpectator() && !actor.isFakePlayer(); }
     private static long now(ServerPlayer actor) { return actor.server.overworld().getGameTime(); }
-    private static void feedback(ServerPlayer actor, String key) {var state=actor.getData(SaberContent.ENDURANCE);actor.displayClientMessage(Component.translatable(key,Math.round(state.energy())).append(Component.literal(" · ")).append(Component.translatable("saber.legacyoftheforce.style_"+state.style().name().toLowerCase(java.util.Locale.ROOT))),true);}
+    private static void feedback(ServerPlayer actor, String key) {var state=actor.getData(SaberContent.ENDURANCE);actor.displayClientMessage(Component.translatable(key,Math.round(state.energy())).append(Component.literal(" · ")).append(Component.translatable("saber.legacyoftheforce.style_"+state.style().name().toLowerCase(java.util.Locale.ROOT))).append(Component.literal(" / ")).append(Component.translatable("saber.legacyoftheforce.form_"+SaberForms.active(actor).form().key())),true);}
 }

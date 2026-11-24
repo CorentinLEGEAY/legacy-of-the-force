@@ -114,6 +114,17 @@ public final class BossAltarEntity extends BlockEntity implements WorldlyContain
                 planned.set(5, crystal);
             }
         }
+        if (getBlockState().getBlock() instanceof BossAltarBlock block) {
+            String form = switch (block.kind()) {
+                case GUARDIAN, NATURE_KEEPER, FORCE_HERMIT -> "ward";
+                case FROST_LORD, WANDERING_KNIGHT, ILLUSION_MASTER -> "precision";
+                case DESERT_EXILE, NIGHT_ASSASSIN, TEMPLE_GUARDIAN -> "twin";
+                default -> "momentum";
+            };
+            var holocron = com.legacyoftheforce.core.api.CombatHolocrons.create(form);
+            if (holocron.isEmpty()) throw new IllegalStateException("Missing combat holocron reward");
+            planned.set(6, holocron);
+        }
         items = planned; lootVictory = event; setChanged();
     }
 

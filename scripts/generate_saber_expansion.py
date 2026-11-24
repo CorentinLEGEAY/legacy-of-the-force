@@ -91,3 +91,5 @@ for locale,index in [('fr_fr',0),('en_us',1)]:
     for key,value in values.items():data['workshop.legacyoftheforce.'+key]=value
     data['workshop.legacyoftheforce.preview_stats']='Estimation du plan : portée %s · coups/s %s · coût ×%s. Sans cristal : aucun bonus de cristal ; activation impossible.' if index==0 else 'Design estimate: reach %s · attacks/s %s · cost ×%s. Without a crystal: no crystal bonus; activation unavailable.'
     write(path,data)
+
+runpy.run_path(str(HERE/'generate_saber_finishes.py'),run_name='__main__')

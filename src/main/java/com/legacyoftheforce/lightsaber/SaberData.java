@@ -17,10 +17,11 @@ public record SaberData(CompoundTag tag) {
         tag.put("parts", entries); return new SaberData(tag);
     }
     public Optional<Map<SaberSlot, ResourceLocation>> parts() {
-        if (!tag.contains("schemaVersion", Tag.TAG_INT) || (tag.getInt("schemaVersion") != 1&&tag.getInt("schemaVersion")!=2) || !tag.hasUUID("saberId")
+        if (!tag.contains("schemaVersion", Tag.TAG_INT) || (tag.getInt("schemaVersion") < 1||tag.getInt("schemaVersion")>3) || !tag.hasUUID("saberId")
                 || !tag.contains("type", Tag.TAG_STRING) || SaberType.parse(tag.getString("type")).isEmpty()
                 || !tag.contains("parts", Tag.TAG_COMPOUND) || tag.sizeInBytes() > 8192) return Optional.empty();
         if(tag.getInt("schemaVersion")==1&&type()!=SaberType.SINGLE)return Optional.empty();
+        if(appearance().isEmpty())return Optional.empty();
         if(type()==SaberType.DOUBLE?(secondaryEmitter().isEmpty()||tag.getString("secondaryEmitter").length()>128):tag.contains("secondaryEmitter"))return Optional.empty();
         var entries = tag.getCompound("parts");
         if (entries.size() != SaberSlot.values().length) return Optional.empty();
@@ -54,9 +55,21 @@ public record SaberData(CompoundTag tag) {
     public Optional<ResourceLocation> secondaryEmitter(){return tag.contains("secondaryEmitter",Tag.TAG_STRING)?Optional.ofNullable(ResourceLocation.tryParse(tag.getString("secondaryEmitter"))):Optional.empty();}
     public static SaberData create(UUID id,SaberType type,Map<SaberSlot,ResourceLocation> parts,ResourceLocation secondary){return create(id,parts).withDesign(type,parts,secondary);}
     public SaberData withDesign(SaberType type,Map<SaberSlot,ResourceLocation> parts,ResourceLocation secondary){
-        if(!supported()||type==null)throw new IllegalArgumentException("Unsupported saber");var updated=withParts(parts).tag();updated.putInt("schemaVersion",2);updated.putString("type",type.key());
+        if(!supported()||type==null)throw new IllegalArgumentException("Unsupported saber");var updated=withParts(parts).tag();updated.putInt("schemaVersion",tag.getInt("schemaVersion")==3?3:2);updated.putString("type",type.key());
         if(type==SaberType.DOUBLE&&secondary!=null)updated.putString("secondaryEmitter",secondary.toString());else updated.remove("secondaryEmitter");
         var result=new SaberData(updated);if(!result.supported())throw new IllegalArgumentException("Invalid saber design");return result;
+    }
+    public Optional<SaberAppearance> appearance(){
+        int schema=tag.getInt("schemaVersion");if(schema<1||schema>3)return Optional.empty();
+        if(schema<3)return tag.contains("appearance")?Optional.empty():Optional.of(SaberAppearance.original());
+        if(!tag.contains("appearance",Tag.TAG_COMPOUND))return Optional.empty();var value=new SaberAppearance(tag.getCompound("appearance"));return value.supported()?Optional.of(value):Optional.empty();
+    }
+    public SaberData withAppearance(SaberAppearance appearance){
+        if(!supported()||appearance==null||!appearance.supported())throw new IllegalArgumentException("Unsupported finish");
+        if(appearance().orElseThrow().equals(appearance))return this;
+        var style=tag.getInt("schemaVersion")==3?appearance().orElseThrow().tag():appearance.tag();
+        var chosen=appearance.tag();for(var key:List.of("finishes","colors","engraving"))style.put(key,chosen.get(key).copy());
+        var next=tag.copy();next.putInt("schemaVersion",3);next.put("appearance",style);var result=new SaberData(next);if(!result.supported())throw new IllegalArgumentException("Appearance budget exceeded");return result;
     }
     public Map<ResourceLocation,Integer> bill(){var result=new TreeMap<ResourceLocation,Integer>();parts().orElseThrow().values().forEach(id->result.merge(id,1,Integer::sum));secondaryEmitter().ifPresent(id->result.merge(id,1,Integer::sum));return Map.copyOf(result);}
     public SaberData withCondition(int condition) {if(!supported()||condition<0||condition>100)throw new IllegalArgumentException("Invalid maintenance state");var updated=tag.copy();updated.putInt("condition",condition);if(condition==0)updated.putBoolean("active",false);return new SaberData(updated);}

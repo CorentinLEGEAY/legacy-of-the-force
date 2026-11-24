@@ -27,22 +27,29 @@ final class SaberWorkshopActions {
             if(!actor.getData(SaberContent.KNOWLEDGE).knows(design.type()))return SaberWorkshopMenu.Status.TYPE_LOCKED;
             if(!design.compatible(SaberCatalog.parts())||design.bill().keySet().stream().anyMatch(id->SaberContent.partIndex(id)<0))return SaberWorkshopMenu.Status.INCOMPATIBLE;
             for(var entry:design.bill().entrySet())if(!consume(planned,SaberContent.partItem(entry.getKey().getPath()),entry.getValue(),-1))return SaberWorkshopMenu.Status.MISSING;
-            var output=new ItemStack(SaberContent.SABER.get());output.set(SaberContent.ASSEMBLY.get(),SaberData.create(UUID.randomUUID(),design.type(),design.parts().orElseThrow(),design.secondaryEmitter().orElse(null)));
+            var styleCost=payFinishes(planned,SaberAppearance.original(),design.appearance().orElseThrow(),-1);if(styleCost!=SaberWorkshopMenu.Status.READY)return styleCost;
+            var output=new ItemStack(SaberContent.SABER.get());output.set(SaberContent.ASSEMBLY.get(),SaberData.create(UUID.randomUUID(),design.type(),design.parts().orElseThrow(),design.secondaryEmitter().orElse(null)).withAppearance(design.appearance().orElseThrow()));
             if(!insert(planned,output))return SaberWorkshopMenu.Status.FULL;return commit(actor,planned,SaberWorkshopMenu.Status.READY);
         }
         if(!stack.is(SaberContent.SABER.get())||stack.getCount()!=1||saber==null)return SaberWorkshopMenu.Status.NO_SABER;
         if(!saber.supported()||!saber.compatible(SaberCatalog.parts())||saber.parts().orElseThrow().values().stream().anyMatch(id->!id.getNamespace().equals(LegacyOfTheForce.MOD_ID)||!SaberContent.PART_NAMES.contains(id.getPath())))return SaberWorkshopMenu.Status.INVALID;
         var saberIds=new HashSet<UUID>();var crystalIds=new HashSet<UUID>();var inspected=new ArrayList<ItemStack>(List.of(planned));inspected.add(actor.getOffhandItem());
         for(var item:inspected) {var assembly=item.get(SaberContent.ASSEMBLY.get());if(item.is(SaberContent.SABER.get())&&assembly!=null&&assembly.supported()&&!saberIds.add(assembly.tag().getUUID("saberId")))return SaberWorkshopMenu.Status.DUPLICATE;var crystal=com.legacyoftheforce.core.api.CrystalIdentityAccess.identified(item);if(crystal.isPresent()&&!crystalIds.add(crystal.get()))return SaberWorkshopMenu.Status.DUPLICATE;}
+        if(action==9){
+            SaberData updated;try{updated=saber.withAppearance(design.appearance().orElseThrow());}catch(IllegalArgumentException invalid){return SaberWorkshopMenu.Status.INVALID;}if(updated.equals(saber))return SaberWorkshopMenu.Status.UNCHANGED;
+            var payment=payFinishes(planned,saber.appearance().orElseThrow(),updated.appearance().orElseThrow(),held);if(payment!=SaberWorkshopMenu.Status.READY)return payment;
+            planned[held].set(SaberContent.ASSEMBLY.get(),updated);return commit(actor,planned,SaberWorkshopMenu.Status.FINISHED);
+        }
         if(action==4) {
             if(!actor.getData(SaberContent.KNOWLEDGE).knows(design.type()))return SaberWorkshopMenu.Status.TYPE_LOCKED;
-            var updated=saber.withDesign(design.type(),design.parts().orElseThrow(),design.secondaryEmitter().orElse(null));if(!updated.compatible(SaberCatalog.parts()))return SaberWorkshopMenu.Status.INCOMPATIBLE;
-            boolean changed=saber.type()!=updated.type()||!saber.parts().equals(updated.parts())||!saber.secondaryEmitter().equals(updated.secondaryEmitter());
+            SaberData updated;try{updated=saber.withDesign(design.type(),design.parts().orElseThrow(),design.secondaryEmitter().orElse(null)).withAppearance(design.appearance().orElseThrow());}catch(IllegalArgumentException invalid){return SaberWorkshopMenu.Status.INVALID;}if(!updated.compatible(SaberCatalog.parts()))return SaberWorkshopMenu.Status.INCOMPATIBLE;
+            boolean changed=saber.type()!=updated.type()||!saber.parts().equals(updated.parts())||!saber.secondaryEmitter().equals(updated.secondaryEmitter())||!saber.appearance().equals(updated.appearance());
             var returned=new ArrayList<ItemStack>();var previous=saber.bill();var next=updated.bill();var ids=new TreeSet<ResourceLocation>();ids.addAll(previous.keySet());ids.addAll(next.keySet());
             for(var id:ids){int delta=next.getOrDefault(id,0)-previous.getOrDefault(id,0);if(SaberContent.partIndex(id)<0)return SaberWorkshopMenu.Status.INVALID;
                 if(delta>0&&!consume(planned,SaberContent.partItem(id.getPath()),delta,held))return SaberWorkshopMenu.Status.MISSING;
                 if(delta<0)returned.add(new ItemStack(SaberContent.partItem(id.getPath()),-delta));}
             if(!changed)return SaberWorkshopMenu.Status.UNCHANGED;
+            var styleCost=payFinishes(planned,saber.appearance().orElseThrow(),updated.appearance().orElseThrow(),held);if(styleCost!=SaberWorkshopMenu.Status.READY)return styleCost;
             for(var part:returned)if(!insert(planned,part))return SaberWorkshopMenu.Status.FULL;
             planned[held].set(SaberContent.ASSEMBLY.get(),updated);return commit(actor,planned,SaberWorkshopMenu.Status.MODIFIED);
         }
@@ -61,6 +68,15 @@ final class SaberWorkshopActions {
             planned[held].set(SaberContent.ASSEMBLY.get(),saber.withCondition(100));return commit(actor,planned,SaberWorkshopMenu.Status.MAINTAINED);
         }
         return SaberWorkshopMenu.Status.INVALID;
+    }
+    private static SaberWorkshopMenu.Status payFinishes(ItemStack[] inventory,SaberAppearance before,SaberAppearance after,int excluded){
+        var quote=SaberFinishCatalog.quote(before,after);if(quote.isEmpty())return SaberWorkshopMenu.Status.FINISH_UNAVAILABLE;
+        for(var entry:quote.get().entrySet()){
+            int remaining=entry.getValue();var ordinary=new ItemStack(entry.getKey());
+            for(int slot=0;slot<inventory.length&&remaining>0;slot++)if(slot!=excluded&&ItemStack.isSameItemSameComponents(inventory[slot],ordinary)){int take=Math.min(remaining,inventory[slot].getCount());inventory[slot].shrink(take);remaining-=take;}
+            if(remaining>0)return SaberWorkshopMenu.Status.FINISH_MATERIALS;
+        }
+        return SaberWorkshopMenu.Status.READY;
     }
     private static boolean consume(ItemStack[] inventory,Item item,int count,int excluded) {
         for(int slot=0;slot<inventory.length&&count>0;slot++)if(slot!=excluded&&inventory[slot].is(item)) {int taken=Math.min(count,inventory[slot].getCount());inventory[slot].shrink(taken);count-=taken;}return count==0;

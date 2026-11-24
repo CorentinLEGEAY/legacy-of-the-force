@@ -14,9 +14,9 @@ public record SaberBlueprintData(CompoundTag tag) {
         var tag=new CompoundTag();tag.putInt("schemaVersion",1);tag.putString("type","single");var entries=new CompoundTag();parts.forEach((slot,id)->entries.putString(slot.key(),id.toString()));tag.put("parts",entries);return new SaberBlueprintData(tag);
     }
     public Optional<Map<SaberSlot,ResourceLocation>> parts() {
-        if(!tag.contains("schemaVersion",Tag.TAG_INT)||(tag.getInt("schemaVersion")!=1&&tag.getInt("schemaVersion")!=2)||tag.sizeInBytes()>4096||tag.contains("crystal")||tag.contains("saberId"))return Optional.empty();
+        if(!tag.contains("schemaVersion",Tag.TAG_INT)||(tag.getInt("schemaVersion")<1||tag.getInt("schemaVersion")>3)||tag.sizeInBytes()>4096||tag.contains("crystal")||tag.contains("saberId"))return Optional.empty();
         var assembly=tag.copy();assembly.putUUID("saberId",new UUID(0,0));return new SaberData(assembly).parts();
     }
-    public static SaberBlueprintData create(SaberData design){if(!design.supported())throw new IllegalArgumentException("Invalid design");var tag=create(design.parts().orElseThrow()).tag();tag.putInt("schemaVersion",2);tag.putString("type",design.type().key());design.secondaryEmitter().ifPresent(id->tag.putString("secondaryEmitter",id.toString()));return new SaberBlueprintData(tag);}
-    public Optional<SaberData> design(){return parts().map(parts->SaberData.create(new UUID(0,0),SaberType.parse(tag.getString("type")).orElseThrow(),parts,tag.contains("secondaryEmitter",Tag.TAG_STRING)?ResourceLocation.tryParse(tag.getString("secondaryEmitter")):null));}
+    public static SaberBlueprintData create(SaberData design){if(!design.supported())throw new IllegalArgumentException("Invalid design");var tag=create(design.parts().orElseThrow()).tag();tag.putInt("schemaVersion",design.tag().getInt("schemaVersion")==3?3:2);if(design.tag().getInt("schemaVersion")==3)tag.put("appearance",design.appearance().orElseThrow().tag());tag.putString("type",design.type().key());design.secondaryEmitter().ifPresent(id->tag.putString("secondaryEmitter",id.toString()));return new SaberBlueprintData(tag);}
+    public Optional<SaberData> design(){return parts().map(parts->SaberData.create(new UUID(0,0),SaberType.parse(tag.getString("type")).orElseThrow(),parts,tag.contains("secondaryEmitter",Tag.TAG_STRING)?ResourceLocation.tryParse(tag.getString("secondaryEmitter")):null).withAppearance(tag.getInt("schemaVersion")==3?new SaberAppearance(tag.getCompound("appearance")):SaberAppearance.original()));}
 }

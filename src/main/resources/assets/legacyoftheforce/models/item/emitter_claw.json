@@ -7,7 +7,8 @@
     "copper": "legacyoftheforce:item/saber/copper",
     "indicator": "legacyoftheforce:item/saber/indicator",
     "button": "legacyoftheforce:item/saber/button",
-    "particle": "legacyoftheforce:item/saber/alloy"
+    "particle": "legacyoftheforce:item/saber/alloy",
+    "etch": "legacyoftheforce:item/saber/finish/etch"
   },
   "elements": [
     {
@@ -29,7 +30,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#alloy",
@@ -38,7 +40,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#alloy",
@@ -47,7 +50,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#alloy",
@@ -56,7 +60,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#alloy",
@@ -65,7 +70,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#alloy",
@@ -74,7 +80,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -97,7 +104,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#alloy",
@@ -106,7 +114,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#alloy",
@@ -115,7 +124,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#alloy",
@@ -124,7 +134,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#alloy",
@@ -133,7 +144,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#alloy",
@@ -142,7 +154,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -165,7 +178,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#alloy",
@@ -174,7 +188,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#alloy",
@@ -183,7 +198,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#alloy",
@@ -192,7 +208,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#alloy",
@@ -201,7 +218,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#alloy",
@@ -210,7 +228,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -233,7 +252,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#edge",
@@ -242,7 +262,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#edge",
@@ -251,7 +272,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#edge",
@@ -260,7 +282,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#edge",
@@ -269,7 +292,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#edge",
@@ -278,7 +302,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -301,7 +326,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#edge",
@@ -310,7 +336,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#edge",
@@ -319,7 +346,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#edge",
@@ -328,7 +356,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#edge",
@@ -337,7 +366,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#edge",
@@ -346,7 +376,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -369,7 +400,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#edge",
@@ -378,7 +410,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#edge",
@@ -387,7 +420,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#edge",
@@ -396,7 +430,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#edge",
@@ -405,7 +440,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#edge",
@@ -414,7 +450,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -505,7 +542,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#copper",
@@ -514,7 +552,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#copper",
@@ -523,7 +562,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#copper",
@@ -532,7 +572,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#copper",
@@ -541,7 +582,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#copper",
@@ -550,7 +592,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -573,7 +616,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#copper",
@@ -582,7 +626,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#copper",
@@ -591,7 +636,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#copper",
@@ -600,7 +646,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#copper",
@@ -609,7 +656,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#copper",
@@ -618,7 +666,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -641,7 +690,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#copper",
@@ -650,7 +700,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#copper",
@@ -659,7 +710,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#copper",
@@ -668,7 +720,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#copper",
@@ -677,7 +730,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#copper",
@@ -686,7 +740,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -777,7 +832,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#alloy",
@@ -786,7 +842,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#alloy",
@@ -795,7 +852,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#alloy",
@@ -804,7 +862,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#alloy",
@@ -813,7 +872,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#alloy",
@@ -822,7 +882,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -845,7 +906,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#edge",
@@ -854,7 +916,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#edge",
@@ -863,7 +926,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#edge",
@@ -872,7 +936,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#edge",
@@ -881,7 +946,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#edge",
@@ -890,7 +956,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -913,7 +980,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#alloy",
@@ -922,7 +990,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#alloy",
@@ -931,7 +1000,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#alloy",
@@ -940,7 +1010,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#alloy",
@@ -949,7 +1020,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#alloy",
@@ -958,7 +1030,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     },
@@ -981,7 +1054,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "up": {
           "texture": "#edge",
@@ -990,7 +1064,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "north": {
           "texture": "#edge",
@@ -999,7 +1074,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "south": {
           "texture": "#edge",
@@ -1008,7 +1084,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "west": {
           "texture": "#edge",
@@ -1017,7 +1094,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         },
         "east": {
           "texture": "#edge",
@@ -1026,7 +1104,8 @@
             0,
             16,
             16
-          ]
+          ],
+          "tintindex": 0
         }
       }
     }
@@ -1049,5 +1128,37 @@
         1.35
       ]
     }
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "legacyoftheforce:finish": 1
+      },
+      "model": "legacyoftheforce:item/saber_finish/emitter_claw_1_0"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:finish": 2
+      },
+      "model": "legacyoftheforce:item/saber_finish/emitter_claw_2_0"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:finish": 3
+      },
+      "model": "legacyoftheforce:item/saber_finish/emitter_claw_3_0"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:finish": 4
+      },
+      "model": "legacyoftheforce:item/saber_finish/emitter_claw_4_0"
+    },
+    {
+      "predicate": {
+        "legacyoftheforce:finish": 5
+      },
+      "model": "legacyoftheforce:item/saber_finish/emitter_claw_5_0"
+    }
+  ]
 }

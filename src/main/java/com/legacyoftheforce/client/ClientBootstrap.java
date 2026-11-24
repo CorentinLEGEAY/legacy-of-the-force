@@ -24,6 +24,8 @@ public final class ClientBootstrap {
         NeoForge.EVENT_BUS.addListener(new SpeederControls()::tick);
         NeoForge.EVENT_BUS.addListener(new SpeederHud()::render);
         modBus.addListener(SpeederColors::register);
+        modBus.addListener(SaberFinishColors::register);
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event)->event.enqueueWork(SaberFinishColors::properties));
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event)->event.enqueueWork(SpeederColors::registerProperties));
         modBus.addListener(CompositeSaberRenderer::register);
         modBus.addListener((net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event)->event.enqueueWork(()->net.minecraft.client.renderer.item.ItemProperties.register(com.legacyoftheforce.lightsaber.SaberContent.KYBER.get(),com.legacyoftheforce.lightsaber.SaberContent.id("crystal_color"),(stack,level,entity,seed)->{

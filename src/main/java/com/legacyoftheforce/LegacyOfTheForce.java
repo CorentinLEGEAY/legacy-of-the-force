@@ -38,6 +38,7 @@ public final class LegacyOfTheForce {
         com.legacyoftheforce.core.operation.PlayerSaveCheckpoint.register(modBus);
         com.legacyoftheforce.core.api.AdventureMilestones.register(modBus);
         SaberContent.register(modBus);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.AddReloadListenerEvent event)->event.addListener(new com.legacyoftheforce.lightsaber.SaberFinishCatalog()));
         com.legacyoftheforce.bosses.BossContent.register(modBus);
         container.registerConfig(ModConfig.Type.SERVER, com.legacyoftheforce.bosses.BossConfig.SPEC, "legacyoftheforce-bosses.toml");
         var bosses = new com.legacyoftheforce.bosses.BossLifecycle(new ProgressService());
